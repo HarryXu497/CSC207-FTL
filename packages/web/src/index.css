@@ -1,0 +1,10 @@
+/* The entire stylesheet. Tailwind v4 needs exactly this one line - there is no
+   tailwind.config.js and no PostCSS setup. The Vite plugin scans our .tsx files
+   for class names and generates only the CSS we actually used. */
+@import 'tailwindcss';
+
+@layer base {
+  body {
+    @apply bg-slate-100 text-slate-900 antialiased;
+  }
+}

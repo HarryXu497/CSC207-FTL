@@ -1,0 +1,16 @@
+node_modules/
+dist/
+*.tsbuildinfo
+
+# secrets - never commit
+.env
+.env.local
+serviceAccount.json
+
+# local-only explainer, deliberately not pushed
+MVP-EXPLAINER.md
+
+.vscode/
+.idea/
+.DS_Store
+*.log
