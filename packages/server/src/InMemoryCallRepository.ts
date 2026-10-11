@@ -1,14 +1,10 @@
 /**
- * Storage implementation #1: a Map held in the Node process.
- *
- * A `Map` is JavaScript's dictionary - the closest thing to a Python dict.
- * Everything here vanishes when the server restarts, which is exactly what you
- * want while developing: every `npm run dev` starts from the same clean data.
+ * In memory implementation of the data layer
  */
 import type { Call } from '@recall/shared';
 import type { CallRepository } from './CallRepository';
 
-/** Two demo rows so the dashboard is never empty on first run. */
+/** Demo rows */
 const SEED: Call[] = [
   {
     id: 'call-1001',
@@ -27,8 +23,6 @@ const SEED: Call[] = [
 ];
 
 export class InMemoryCallRepository implements CallRepository {
-  /* `readonly` stops anyone reassigning the Map itself. It does NOT freeze the
-     contents - we still add entries below. */
   private readonly calls = new Map<string, Call>();
 
   constructor(seed: Call[] = SEED) {
@@ -37,12 +31,7 @@ export class InMemoryCallRepository implements CallRepository {
     }
   }
 
-  /* `async` makes a function return a Promise even when nothing inside it waits.
-     That is all these two need in order to satisfy the interface. */
-
   async listCalls(): Promise<Call[]> {
-    /* Newest first. Comparing ISO date strings alphabetically gives the same
-       answer as comparing the dates - which is why we store them that way. */
     return [...this.calls.values()].sort((a, b) => b.handledAt.localeCompare(a.handledAt));
   }
 

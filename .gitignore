@@ -7,7 +7,6 @@ dist/
 .env.local
 serviceAccount.json
 
-# local-only explainer, deliberately not pushed
 MVP-EXPLAINER.md
 
 .vscode/

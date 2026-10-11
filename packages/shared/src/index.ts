@@ -1,9 +1,5 @@
 /**
- * THE CONTRACT.
- *
- * This file is imported by BOTH the server and the browser, so there is exactly
- * one definition of what a "call" is. Rename a field here and both sides refuse
- * to compile until you fix them - which is the entire reason this package exists.
+ * Shared types between the frontend and backend.
  */
 
 /** One customer service call stored in the database. */
@@ -17,8 +13,6 @@ export interface Call {
   handledAt: string;
 }
 
-/* ---- One request/response pair per endpoint. ---- */
-
 /** GET /api/health */
 export interface HealthResponse {
   status: 'ok';
@@ -31,7 +25,7 @@ export interface ListCallsResponse {
   calls: Call[];
 }
 
-/** POST /api/calls - the fields the user supplies; the server adds id + handledAt. */
+/** POST /api/calls; server adds the id and handledAt fields */
 export interface CreateCallRequest {
   customerName: string;
   topic: string;
@@ -42,7 +36,7 @@ export interface CreateCallResponse {
   call: Call;
 }
 
-/** Every failed request comes back in this one shape. */
+/** Error shape */
 export interface ApiErrorBody {
   error: { message: string; details?: unknown };
 }
