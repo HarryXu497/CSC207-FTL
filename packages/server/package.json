@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@google-cloud/firestore": "^9.3.0",
     "@recall/shared": "*",
     "cors": "^2.8.6",
     "express": "^5.2.1",
