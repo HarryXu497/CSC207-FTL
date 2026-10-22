@@ -81,6 +81,83 @@ We are evaluating two Hugging Face transformer models for emotion classification
 Both models are candidates for identifying emotions expressed during calls. The final model will be selected based on classification quality and accuracy.
 The selected model will be integrated into the backend to analyze call transcripts and make emotion predictions available to the application.
 
+## Server Architecture
+
+The server is split into three layers:
+
+1. `repository`
+2. `service`
+3. `server`
+
+The full request-logic-response flow is as follows.
+
+```
+Express req ─► controller parses ─► input model (plain object)
+                                                       │
+                                                       ▼
+                                              service.handle(input)   ◄─►   repositories   ◄─►   data
+                                                       │
+                                                       ▼
+res.json(...) ◄─ controller serializes ◄─ output model (plain data)
+```
+
+A note about `index.ts`. There are many `index.ts` files that reexport things from other files. This is for convenience.
+
+Usually, you import from files like
+
+```ts
+// imports from 'src/repository/database/calls/CallRepository.ts'
+import { CallRepository } from 'src/repository/database/calls/CallRepository';
+```
+
+`index.ts` is a special file; it is what is imported when you write
+
+```ts
+// imports from 'src/repository/database/calls/index.ts', if it exists
+import { CallRepository } from 'src/repository/database/calls';
+```
+
+Therefore, it should exports or reexport all classes, types, objects, that should be available to the rest of the app.
+By having many `index.ts` that reexport things, it basically "flattens/combines" the import tree so you can do
+
+```ts
+import { CallRepository } from 'src/repository';
+```
+
+instead. It is important that when you add new files, to update these `index.ts` files accordingly.
+
+### `repository`
+
+The `repository` folder contains classes with low-level data logic, grouped by entity, called **repositories**. Repositories are how the application interfaces with sources of data (e.g. databases, external API class).
+
+Each **repository** corresponds to a folder containing the following files:
+
+1. **Repository Interface**. An interface that defines the available operations (e.g. `getCalls`, `getCall`, `deleteCall`)
+2. **Repository Implementations**. At least 1 implementation of the interface (e.g. Firebase-backed implementation, in-memory implementation)
+3. **Repository Tests**.
+4. **Repository Exports**. An `index.ts` file that exports all classes, types, objects, that should be available to the rest of the app
+
+We organize **repositories** in folders by component and entity (e.g. `database/calls`, `rag/ingestor`, etc). Repositories can rely on other repositories if necessary. Use your judgement when grouping repositories.
+
+### `service`
+
+The `service` subfolder contains classes, called **services** or **interactors**. Each service corresponds to **one** route/use case and contains the decoupled business logic for the route. These should take in plain objects, perform their logic, and return plain objects back as outputs. **There should be NO EXPRESS.JS-specific logic here; it should be framework-agnostic**.
+
+They should be grouped by "related routes" (e.g. the service classes for `GET /call`, `POST /call`, and `GET /call/:id` would be grouped together). **Each such group has its own folder**, which should contain
+
+1. All related service classes
+2. An index.ts file that combines all the service classes into one singleton object
+
+Each service can declare any dependencies (i.e. repositories) that it needs in the constructor; these should be passed in when the service is created as a form of manual **dependency injection**.
+
+### `server`
+
+The `server` subfolder contains the actual routing logic.
+
+The routers are in `routers` and are once again grouped into routers by relatedness (e.g. `GET /call`, `POST /call`, `GET /call/:id` would be in the `call` folder). **Each group has its own file** (not its own folder)
+
+The `app.ts` and `routes.ts` are responsible for merging all the routers into one and creating all the appropriate repository objects, etc.
+
 ## Database Structure
 
 ### Calls (Firestore / in-memory)

@@ -1,11 +1,11 @@
 /**
  * Integration tests
  */
+import type { ListCallsResponse } from '@recall/shared';
 import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
+import { createApp } from 'src/server/app';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import type { ListCallsResponse } from '@recall/shared';
-import { createApp } from './app';
 import { InMemoryCallRepository } from './InMemoryCallRepository';
 
 let server: Server;

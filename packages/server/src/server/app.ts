@@ -3,7 +3,7 @@
  */
 import cors from 'cors';
 import express, { type Express } from 'express';
-import type { CallRepository } from './CallRepository';
+import type { CallRepository } from 'src/repository';
 import { createRouter } from './routes';
 
 export function createApp(repo: CallRepository, backend: 'memory' | 'firestore'): Express {

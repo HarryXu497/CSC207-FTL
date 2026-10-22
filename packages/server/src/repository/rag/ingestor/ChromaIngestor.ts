@@ -5,7 +5,7 @@ import type { EmbeddingsInterface } from '@langchain/core/embeddings';
 import type { TextSplitter } from '@langchain/textsplitters';
 
 import { Chroma } from '@langchain/community/vectorstores/chroma';
-import type { Ingestor } from './types';
+import type { Ingestor } from './Ingestor';
 import type { Document } from 'langchain';
 
 export function buildChunkIds(chunks: Document[]): string[] {
