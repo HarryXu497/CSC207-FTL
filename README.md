@@ -81,6 +81,64 @@ We are evaluating two Hugging Face transformer models for emotion classification
 Both models are candidates for identifying emotions expressed during calls. The final model will be selected based on classification quality and accuracy.
 The selected model will be integrated into the backend to analyze call transcripts and make emotion predictions available to the application.
 
-## User Interface
+## Database Structure
 
-- [https://www.figma.com/proto/n3EWZRzY69BQXncX9dd25C/Mockups?node-id=143-376&p=f&viewport=-1008%2C235%2C0.19&t=xCFmZmMd4YGIehRA-0&scaling=min-zoom&content-scaling=fixed&starting-point-node-id=156%3A439]
+### Calls (Firestore / in-memory)
+
+#### Call
+
+| Field          | Type        | Description                            |
+| -------------- | ----------- | -------------------------------------- |
+| `title`        | string      | Short title of the call                |
+| `desc`         | string      | Description of the call                |
+| `messages`     | `Message[]` | The conversation in order              |
+| `agent`        | `Agent`     | The agent who handled the call         |
+| `sentiment`    | `Sentiment` | Sentiment analysis result for the call |
+| `customerName` | string      | Name of the customer on the call       |
+| `customerDesc` | string      | Description of the customer            |
+| `accuracy`     | `Accuracy`  | Accuracy result for the call           |
+
+#### Agent
+
+| Field   | Type     | Description                  |
+| ------- | -------- | ---------------------------- |
+| `name`  | string   | Agent's name                 |
+| `role`  | string   | Agent's role                 |
+| `calls` | `Call[]` | Calls this agent has handled |
+
+#### Message
+
+| Field     | Type      | Description               |
+| --------- | --------- | ------------------------- |
+| `speaker` | string    | Who sent the message      |
+| `text`    | string    | The message content       |
+| `time`    | timestamp | When the message was sent |
+
+#### Sentiment
+
+_TBD_
+
+#### Accuracy
+
+_TBD_
+
+#### Branch
+
+| Field      | Type        | Description                                  |
+| ---------- | ----------- | -------------------------------------------- |
+| `call`     | `Call`      | The call this branch belongs to              |
+| `title`    | string      | Short title of the branch                    |
+| `desc`     | string      | Description of the branch                    |
+| `start`    | int         | Index in the call's messages where it starts |
+| `messages` | `Message[]` | The branch's messages                        |
+
+### Documents (Chroma vector store)
+
+Reference documents (`.txt`, `.md`, `.pdf`) are ingested by `ChromaIngestor` for retrieval (RAG). Each file in the source directory is split into chunks, embedded, and stored in a Chroma collection.
+
+| Field       | Description                                                                                    |
+| ----------- | ---------------------------------------------------------------------------------------------- |
+| `id`        | `{source}::{n}`, where `source` is the file path and `n` is the chunk's index within that file |
+| `document`  | The chunk's text                                                                               |
+| `embedding` | Vector produced by the configured embeddings model                                             |
+| `metadata`  | Loader metadata for the chunk, including `source` (the originating file path)                  |
