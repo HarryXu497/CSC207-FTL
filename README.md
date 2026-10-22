@@ -80,3 +80,7 @@ We are evaluating two Hugging Face transformer models for emotion classification
 
 Both models are candidates for identifying emotions expressed during calls. The final model will be selected based on classification quality and accuracy.
 The selected model will be integrated into the backend to analyze call transcripts and make emotion predictions available to the application.
+
+## User Interface
+
+- [https://www.figma.com/proto/n3EWZRzY69BQXncX9dd25C/Mockups?node-id=143-376&p=f&viewport=-1008%2C235%2C0.19&t=xCFmZmMd4YGIehRA-0&scaling=min-zoom&content-scaling=fixed&starting-point-node-id=156%3A439]
