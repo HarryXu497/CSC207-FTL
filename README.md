@@ -78,5 +78,5 @@ We are evaluating two Hugging Face transformer models for emotion classification
 - [thomasrenault/emotion](https://huggingface.co/thomasrenault/emotion)
 - [djonuzi/goemotions-emotion-model](https://huggingface.co/djonuzi/goemotions-emotion-model)
 
-Both models are candidates for identifying emotions expressed during calls. The final model will be selected based on classification quality and accuracy. 
+Both models are candidates for identifying emotions expressed during calls. The final model will be selected based on classification quality and accuracy.
 The selected model will be integrated into the backend to analyze call transcripts and make emotion predictions available to the application.
