@@ -1,10 +1,10 @@
 /**
  * Server entry point
  */
-import { createApp } from './app';
-import type { CallRepository } from './CallRepository';
-import { FirestoreCallRepository } from './FirestoreCallRepository';
-import { InMemoryCallRepository } from './InMemoryCallRepository';
+import type { CallRepository } from 'src/repository';
+import { FirestoreCallRepository } from 'src/repository';
+import { InMemoryCallRepository } from 'src/repository';
+import { createApp } from 'src/server';
 
 const PORT = Number.parseInt(process.env.PORT ?? '4000', 10);
 const BACKEND = process.env.DATA_BACKEND === 'firestore' ? 'firestore' : 'memory';

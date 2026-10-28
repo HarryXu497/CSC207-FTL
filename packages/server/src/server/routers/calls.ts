@@ -1,11 +1,10 @@
-/**
- * Creates the router and handles route configuration
- */
-import { randomUUID } from 'node:crypto';
+import type { Call, CreateCallResponse, ListCallsResponse } from '@recall/shared';
 import { Router, type Response } from 'express';
+import { randomUUID } from 'node:crypto';
+import type { CallRepository } from 'src/repository';
+import { CallsService } from 'src/service';
 import { z } from 'zod';
-import type { Call, CreateCallResponse, HealthResponse, ListCallsResponse } from '@recall/shared';
-import type { CallRepository } from './CallRepository';
+import { buildErrorFromSafeParseError } from '../utils';
 
 // Runtime request body validation using zod
 const createCallSchema = z.object({
@@ -14,32 +13,24 @@ const createCallSchema = z.object({
   score: z.number().int().min(0).max(100),
 });
 
-export function createRouter(repo: CallRepository, backend: 'memory' | 'firestore'): Router {
+export function createCallsRouter(callRepo: CallRepository): Router {
   const router = Router();
-
-  // Health check
-  router.get('/health', (_req, res: Response<HealthResponse>) => {
-    res.json({ status: 'ok', backend });
-  });
+  const getCalls = new CallsService.GetCalls(callRepo);
+  const postCalls = new CallsService.PostCalls(callRepo);
 
   // Read from the database
   router.get('/calls', async (_req, res: Response<ListCallsResponse>) => {
-    const calls = await repo.listCalls();
+    const calls = await getCalls.handle();
     res.json({ calls });
   });
 
   // Write to the database
   router.post('/calls', async (req, res) => {
     const parsed = createCallSchema.safeParse(req.body);
+
     if (!parsed.success) {
       res.status(400).json({
-        error: {
-          message: 'That request was not valid.',
-          details: parsed.error.issues.map((i) => ({
-            field: i.path.join('.'),
-            message: i.message,
-          })),
-        },
+        error: buildErrorFromSafeParseError(parsed, 'That request was not valid.'),
       });
       return;
     }
@@ -50,7 +41,7 @@ export function createRouter(repo: CallRepository, backend: 'memory' | 'firestor
       ...parsed.data,
     };
 
-    await repo.saveCall(call);
+    await postCalls.handle(call);
 
     // 201 Created since the request made a new resource
     res.status(201).json({ call } satisfies CreateCallResponse);
