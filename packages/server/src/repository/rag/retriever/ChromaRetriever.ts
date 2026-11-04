@@ -2,20 +2,39 @@ import type { Document } from '@recall/shared';
 import type { ChromaClient, QueryResult } from 'chromadb';
 import type { Retriever } from './Retriever';
 
+/**
+ * Type definition for clients/mocks that support direct querying without
+ * requiring a separate collection lookup.
+ */
+type DirectQueryClient = {
+  query: (params: { queryTexts: string[]; nResults: number }) => Promise<QueryResult>;
+};
+
+/**
+ * ChromaDB implementation of the Retriever interface.
+ * Connects to a Chroma collection to perform vector similarity search.
+ */
 export class ChromaRetriever implements Retriever {
   private readonly client: ChromaClient;
   private readonly collectionName: string;
 
+  /**
+   * @param client ChromaDB client instance
+   * @param collectionName Name of the collection to search (defaults to 'documents')
+   */
   constructor(client: ChromaClient, collectionName = 'documents') {
     this.client = client;
     this.collectionName = collectionName;
   }
 
+  /**
+   * Searches the Chroma collection for documents matching the query.
+   * @param query Search query text
+   * @param limit Maximum number of documents to return (defaults to 5)
+   */
   async search(query: string, limit = 5): Promise<Document[]> {
-    type DirectQueryClient = {
-      query: (params: { queryTexts: string[]; nResults: number }) => Promise<QueryResult>;
-    };
-
+    // If the client provides a direct query method (e.g. in test mocks or custom wrappers),
+    // use it directly. Otherwise, fall back to standard collection retrieval.
     if (typeof (this.client as unknown as DirectQueryClient).query === 'function') {
       const results = await (this.client as unknown as DirectQueryClient).query({
         queryTexts: [query],
@@ -33,6 +52,9 @@ export class ChromaRetriever implements Retriever {
     return this.formatResults(results);
   }
 
+  /**
+   * Formats raw Chroma QueryResult batches into an array of Document objects.
+   */
   private formatResults(results: QueryResult): Document[] {
     const formatted: Document[] = [];
     const docBatches = results.documents ?? [];
