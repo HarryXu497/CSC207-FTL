@@ -19,6 +19,7 @@ export class InMemoryRetriever implements Retriever {
    * Searches local mock data for documents containing the query text.
    * @param query Term to filter documents by
    * @param limit Maximum number of documents to return (defaults to 5)
+   * @return Array of matching document objects
    */
   async search(query: string, limit = 5): Promise<Document[]> {
     return this.mockData.filter((doc) => doc.content.includes(query)).slice(0, limit);

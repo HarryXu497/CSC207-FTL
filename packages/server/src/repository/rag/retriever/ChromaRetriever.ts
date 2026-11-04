@@ -31,6 +31,7 @@ export class ChromaRetriever implements Retriever {
    * Searches the Chroma collection for documents matching the query.
    * @param query Search query text
    * @param limit Maximum number of documents to return (defaults to 5)
+   * @return Array of matched document objects
    */
   async search(query: string, limit = 5): Promise<Document[]> {
     // If the client provides a direct query method (e.g. in test mocks or custom wrappers),
@@ -54,6 +55,8 @@ export class ChromaRetriever implements Retriever {
 
   /**
    * Formats raw Chroma QueryResult batches into an array of Document objects.
+   * @param results Raw query result batch from Chroma
+   * @return Array of formatted Document objects
    */
   private formatResults(results: QueryResult): Document[] {
     const formatted: Document[] = [];
