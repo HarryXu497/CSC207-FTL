@@ -2,6 +2,8 @@
  *
  */
 import type {
+  AnalyzeAccuracyRequest,
+  AnalyzeAccuracyResponse,
   ApiErrorBody,
   CreateCallRequest,
   CreateCallResponse,
@@ -37,6 +39,12 @@ export const api = {
 
   createCall: (body: CreateCallRequest) =>
     request<CreateCallResponse>('/calls', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  analyzeAccuracy: (body: AnalyzeAccuracyRequest) =>
+    request<AnalyzeAccuracyResponse>('/accuracy/analyze', {
       method: 'POST',
       body: JSON.stringify(body),
     }),

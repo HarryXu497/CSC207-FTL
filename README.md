@@ -48,7 +48,7 @@ Open <http://localhost:5173>. Two demo calls are loaded; add one with the form.
 ```
 packages/
   shared/   the TypeScript types both sides import — the API contract
-  server/   Express API + the two storage implementations
+  server/   Express API, storage implementations, accuracy analysis
   web/      React UI (one component)
 ```
 
@@ -65,11 +65,12 @@ cp packages/server/.env.example packages/server/.env
 
 ## API
 
-| Method | Path          | Body                             | Returns               |
-| ------ | ------------- | -------------------------------- | --------------------- |
-| GET    | `/api/health` | —                                | `{ status, backend }` |
-| GET    | `/api/calls`  | —                                | `{ calls: Call[] }`   |
-| POST   | `/api/calls`  | `{ customerName, topic, score }` | `201 { call }`        |
+| Method | Path                    | Body                             | Returns                                                                      |
+| ------ | ----------------------- | -------------------------------- | ---------------------------------------------------------------------------- |
+| GET    | `/api/health`           | —                                | `{ status, backend }`                                                        |
+| GET    | `/api/calls`            | —                                | `{ calls: Call[] }`                                                          |
+| POST   | `/api/calls`            | `{ customerName, topic, score }` | `201 { call }`                                                               |
+| POST   | `/api/accuracy/analyze` | `{ messages, topic? }`           | `200 { accuracy }` (`503` if not configured, `502` on unusable model output) |
 
 ## Sentiment Analysis
 
@@ -158,6 +159,71 @@ The routers are in `routers` and are once again grouped into routers by relatedn
 
 The `app.ts` and `routes.ts` are responsible for merging all the routers into one and creating all the appropriate repository objects, etc.
 
+## Accuracy
+
+The accuracy metric answers: **did the agent say things that agree with our knowledge base?** It checks what the agent said against the RAG documents. It does not check whether those documents are true in the real world, so it is only as good as the knowledge base behind it.
+
+### Flow
+
+```
+transcript ──► 1. Extract   LLM lists the checkable claims the agent made
+                    │
+                    ▼
+               2. Retrieve  RAG returns knowledge-base chunks for each claim
+                    │       (and for each customer question, to find documents the agent should have used)
+                    ▼
+               3. Judge     LLM rules on each claim using ONLY those chunks.
+                    │       supported / contradicted / unsupported / not_verifiable, with a quote.
+                    │       Code checks the quote really appears in the chunk, otherwise the
+                    │       verdict is downgraded to unsupported.
+                    ▼
+               4. Classify  LLM sorts the retrieved documents into required / recommended
+                    │
+                    ▼
+               5. Score     plain code, no LLM: a 0-100 weighted average of the verdicts
+```
+
+- **Input:** the call's `messages` (each tagged `agent` or `customer`) and an optional `topic`.
+- **Output:** an `Accuracy` object (see [Database Structure](#accuracy-1)).
+- **RAG interaction:** read-only. It calls `search(query, limit)` on a retriever and never writes to the knowledge base. Any retriever with that method works, e.g. the Chroma one from the RAG retrieval work.
+- **Endpoint:** `POST /api/accuracy/analyze` takes a transcript and returns the result. Nothing is stored yet; saving a result against a call comes once `Call` carries its `messages`.
+- **Limits:** at most 200 messages and 30,000 characters of message text per request (over that is a `400` explaining why). The server rejects any JSON body over 100 KB with `413`, and unreadable JSON with `400`.
+- **Code:** `packages/server/src/service/accuracy/`. All prompts are in `prompts.ts` and carry a `PROMPT_VERSION`.
+
+### Scoring
+
+| Verdict          | Credit | Meaning                                                    |
+| ---------------- | ------ | ---------------------------------------------------------- |
+| `supported`      | 1      | The documents clearly confirm the claim                    |
+| `unsupported`    | 0.5    | The documents neither confirm nor contradict it            |
+| `contradicted`   | 0      | The documents say something different                      |
+| `not_verifiable` | -      | Not a checkable fact (or could not be judged); not counted |
+
+`score` is the weighted average of the credits, scaled to 0-100. A claim backed by a **required** document counts double. If the agent made no checkable claims, `score` is `null` (nothing to score), not 0.
+
+### Required and recommended documents
+
+For every call, the documents the knowledge base returns are sorted by how much the agent needed them. This is judged from what the **customer asked for**, not from what the agent happened to say.
+
+| Role           | Meaning                                                                                                                                   | Effect                                                    |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `required`     | The agent must state this document's content correctly to resolve the customer's issue (the governing policy, price, rule, or procedure). | Claims backed by it weigh double in the score             |
+| `recommended`  | Relevant and useful (background, related options, tips), but the issue can be resolved without it.                                        | Reported as coaching suggestions; never changes the score |
+| _(irrelevant)_ | Not useful for this customer's issue.                                                                                                     | Dropped from the result                                   |
+
+Each listed document also has `usedByAgent`: whether at least one of the agent's claims was supported or contradicted by it. A **required document with `usedByAgent: false`** means the agent never touched something they needed to, which is the clearest signal for coaching.
+
+#### What a company should put in the knowledge base
+
+The analysis can only find documents that were ingested, so coverage matters.
+
+| Priority    | Document types                                                                                                                                                                                 | Why                                                           |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Required    | Policies (returns, refunds, cancellations, privacy), pricing and fees, eligibility rules, procedures and SOPs, product or service specifications, compliance scripts and mandatory disclosures | Facts the agent must get right; errors cause real harm        |
+| Recommended | FAQs, troubleshooting guides, escalation paths, tone and style guides, promotions, past resolved cases                                                                                         | Improve answers and coaching, but are not the source of truth |
+
+Prefer one topic per file and descriptive file names, because the file path is what is shown as the evidence source.
+
 ## Database Structure
 
 ### Calls (Firestore / in-memory)
@@ -185,11 +251,11 @@ The `app.ts` and `routes.ts` are responsible for merging all the routers into on
 
 #### Message
 
-| Field     | Type      | Description               |
-| --------- | --------- | ------------------------- |
-| `speaker` | string    | Who sent the message      |
-| `text`    | string    | The message content       |
-| `time`    | timestamp | When the message was sent |
+| Field     | Type                      | Description               |
+| --------- | ------------------------- | ------------------------- |
+| `speaker` | `'agent'` \| `'customer'` | Who sent the message      |
+| `text`    | string                    | The message content       |
+| `time`    | timestamp (optional)      | When the message was sent |
 
 #### Sentiment
 
@@ -197,7 +263,21 @@ _TBD_
 
 #### Accuracy
 
-_TBD_
+Required fields unless marked optional. `score` can be `null`.
+
+| Field             | Type                 | Description                                                                  |
+| ----------------- | -------------------- | ---------------------------------------------------------------------------- |
+| `score`           | number \| null       | 0-100, or `null` when the agent made no checkable claims                     |
+| `counts`          | `Record<Verdict, n>` | How many claims got each verdict                                             |
+| `claims`          | `ClaimResult[]`      | One entry per checked agent claim                                            |
+| `documents`       | `AccuracyDocuments`  | `{ required: DocumentFinding[], recommended: DocumentFinding[] }`            |
+| `claimsTruncated` | boolean              | `true` if the call had more claims than the limit (20), so some were skipped |
+| `promptVersion`   | string               | Version of the prompts that produced this result                             |
+| `analyzedAt`      | string               | ISO 8601 timestamp                                                           |
+
+`ClaimResult`: `messageIndex` (number), `text` (string), `verdict` (`supported` \| `contradicted` \| `unsupported` \| `not_verifiable`), `confidence` (0-1), `explanation` (string), `evidence` (`{ source, quote }` or `null`; present only when the quote was verified in the retrieved document).
+
+`DocumentFinding`: `source` (file path), `reason` (string), `usedByAgent` (boolean).
 
 #### Branch
 
