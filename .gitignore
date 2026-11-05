@@ -11,5 +11,6 @@ MVP-EXPLAINER.md
 
 .vscode/
 .idea/
+.vs/
 .DS_Store
 *.log
