@@ -1,2 +1,2 @@
-export type * from './database';
-export type * from './rag';
+export * from './database';
+export * from './rag';

@@ -5,6 +5,13 @@
  * "neutral" based on the GoEmotions dataset used in the sentiment models: https://research.google/blog/goemotions-a-dataset-for-fine-grained-emotion-classification/), a type guard for validating labels from model output, and the
  * result shapes returned by the emotion classifier and sentiment scorer.
  *
+<<<<<<< HEAD
+=======
+ * Exports:
+ *  - isEmotionLabel(): runtime type guard for untrusted strings
+ *  - Emotion:          a single labeled emotion with its confidence score
+ *  - SentimentScore:   aggregate sentiment result for a piece of text
+>>>>>>> f7820c9 (Set up GoEmotions and VAD models behind interfaces (transformers.js))
  */
 
 //A list of the 28 supported GoEmotion categories that our pipeline will handle. Based on: https://research.google/blog/goemotions-a-dataset-for-fine-grained-emotion-classification/
