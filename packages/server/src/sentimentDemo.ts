@@ -1,9 +1,9 @@
 /**
- * Manual demo for the sentiment analyser. Not part of the app and not run in CI.
+ * Manual demo for the sentiment analyser.
  * Wires the real models into AnalyseMessages by hand and prints the results.
  *
- * Run from the repo root:
- *   MODEL_DIR=/absolute/path/to/models npm --workspace @recall/server run sentiment:demo
+ * command to run:
+ *   $env:MODEL_DIR="C:\Users\shaya\VsCodeProjects\CSC207-FTL\packages\server\models"; npm --workspace @recall/server run sentiment:demo
  */
 import path from 'node:path';
 import { GoEmotionsClassifier, VadBertEstimator } from './repository/sentiment/TransformersModels';
@@ -77,15 +77,6 @@ async function main(): Promise<void> {
   const vadEstimator = await VadBertEstimator.create(resolvedDir);
   const analyse = new AnalyseMessages(classifier, vadEstimator);
 
-  // --- Sanity checks on the raw models (issue: multi-label, and the VAD review note) ---
-  console.log('\n=== SANITY CHECKS ===');
-  const probe = 'I am so frustrated with this service.';
-  const emotions = await classifier.classify(probe);
-  const sum = emotions.reduce((total, e) => total + e.score, 0);
-  console.log(`emotion scores sum to ${sum.toFixed(3)} (about 1.0 means softmax, NOT multi-label)`);
-  console.log('vad for probe:', await vadEstimator.estimate(probe));
-
-  // --- The real run ---
   console.log('\n=== analyse.handle OUTPUT ===');
   const results = await analyse.handle({ messages: TEST_MESSAGES });
 
