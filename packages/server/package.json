@@ -6,13 +6,15 @@
   "scripts": {
     "dev": "tsx watch --env-file-if-exists=.env src/index.ts",
     "start": "tsx --env-file-if-exists=.env src/index.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "sentiment:demo": "tsx --env-file-if-exists=.env src/sentimentDemo.ts"
   },
   "dependencies": {
     "@google-cloud/firestore": "^9.3.0",
     "@langchain/community": "^1.1.29",
     "@langchain/core": "^1.2.18",
     "@langchain/openai": "^1.6.2",
+    "@huggingface/transformers": "^4.3.1",
     "@recall/shared": "*",
     "chromadb": "^3.5.0",
     "cors": "^2.8.6",
@@ -25,6 +27,8 @@
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
-    "tsx": "^4.23.15"
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.5"
   }
 }

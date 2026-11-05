@@ -1,3 +1,5 @@
+packages/server/models/
+
 node_modules/
 dist/
 *.tsbuildinfo
