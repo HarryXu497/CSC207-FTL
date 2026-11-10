@@ -48,7 +48,7 @@ Open <http://localhost:5173>. Two demo calls are loaded; add one with the form.
 ```
 packages/
   shared/   the TypeScript types both sides import — the API contract
-  server/   Express API + the two storage implementations
+  server/   Express API, storage implementations, accuracy analysis
   web/      React UI (one component)
 ```
 
@@ -65,11 +65,12 @@ cp packages/server/.env.example packages/server/.env
 
 ## API
 
-| Method | Path          | Body                             | Returns               |
-| ------ | ------------- | -------------------------------- | --------------------- |
-| GET    | `/api/health` | —                                | `{ status, backend }` |
-| GET    | `/api/calls`  | —                                | `{ calls: Call[] }`   |
-| POST   | `/api/calls`  | `{ customerName, topic, score }` | `201 { call }`        |
+| Method | Path                    | Body                             | Returns                                                                      |
+| ------ | ----------------------- | -------------------------------- | ---------------------------------------------------------------------------- |
+| GET    | `/api/health`           | —                                | `{ status, backend }`                                                        |
+| GET    | `/api/calls`            | —                                | `{ calls: Call[] }`                                                          |
+| POST   | `/api/calls`            | `{ customerName, topic, score }` | `201 { call }`                                                               |
+| POST   | `/api/accuracy/analyze` | `{ messages, topic? }`           | `200 { accuracy }` (`503` if not configured, `502` on unusable model output) |
 
 ## Sentiment Analysis
 
