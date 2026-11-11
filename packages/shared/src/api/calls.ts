@@ -5,11 +5,10 @@ export interface ListCallsResponse {
   calls: Call[];
 }
 
-/** POST /api/calls; server adds the id and handledAt fields */
+/** POST /api/calls; server adds the id and createdAt fields */
 export interface CreateCallRequest {
   customerName: string;
   topic: string;
-  score: number;
 }
 
 export interface CreateCallResponse {
