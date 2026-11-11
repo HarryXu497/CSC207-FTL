@@ -38,7 +38,6 @@ export default function App() {
       const { call } = await api.createCall({
         customerName,
         topic,
-        score: Number(score),
       });
 
       setCalls([call, ...calls]);
@@ -127,9 +126,8 @@ export default function App() {
             <div>
               <p className="font-medium">{call.customerName}</p>
               <p className="text-sm text-slate-600">{call.topic}</p>
-              <p className="text-xs text-slate-400">{new Date(call.handledAt).toLocaleString()}</p>
+              <p className="text-xs text-slate-400">{new Date(call.createdAt).toLocaleString()}</p>
             </div>
-            <span className="text-lg font-semibold tabular-nums">{call.score}</span>
           </li>
         ))}
       </ul>
