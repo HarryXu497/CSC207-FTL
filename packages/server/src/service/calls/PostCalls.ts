@@ -5,6 +5,6 @@ export class PostCalls {
   constructor(private readonly callsRepo: CallRepository) {}
 
   async handle(call: Call): Promise<void> {
-    await this.callsRepo.saveCall(call);
+    await this.callsRepo.setCall(call);
   }
 }
