@@ -30,6 +30,9 @@ export class FirestoreCallRepository implements CallRepository {
     const db = Firebase.getInstance();
     const docRef = db.collection(FirestoreCallRepository.COLLECTION).doc(callId);
     const snapshot = await docRef.get();
+    if (!snapshot.exists) {
+      throw Error(`Call document with id does not exist, got ${callId}`);
+    }
     return snapshot.data() as Call;
   }
 
