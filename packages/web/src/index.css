@@ -44,6 +44,18 @@
   .messageContent{
     @apply mt-2;
   }
+  .conversation{
+    @apply bg-card m-4 overflow-y-auto h-[calc(100vh-8rem)];
+  }
+  .conversationHeader{
+    @apply bg-card border-b-2 border-tertiary sticky top-0 z-10 p-2;
+  }
+  .conversationBody{
+    @apply m-4;
+  }
+  .conversationEnd{
+    @apply text-secondary text-sm text-center mt-2 pb-2;
+  }
 }
 
 

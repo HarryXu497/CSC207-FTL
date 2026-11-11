@@ -25,6 +25,9 @@ export default function Conversation({ messages, title }: ConversationProps){
                     />
                 ))}
             </div>
+            <div className = "conversationEnd">
+                <p>This is the end of the conversation transcript.</p>
+            </div>
         </Card>
     )
 }
