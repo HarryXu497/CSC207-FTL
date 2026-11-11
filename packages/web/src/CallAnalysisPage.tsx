@@ -1,4 +1,5 @@
 import Card from "./components/Card";
+import Message from "./components/Message";
 import NavBar from "./components/NavBar";
 
 export default function CallAnalysisPage() {
@@ -9,6 +10,8 @@ export default function CallAnalysisPage() {
         <Card className="mx-auto w-1/2">
             <p>Call Analysis Page</p>
         </Card>
+        <Message name="Agent" time={new Date()} content="This is a test message." />
+
     </main>
   );
 }
