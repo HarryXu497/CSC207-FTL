@@ -12,7 +12,7 @@ export default function Message({className = "", name, time, content}: MessagePr
         <div className={`message ${className}`}>
             
             <div className="messageHeader">
-                <ProfileIcon />
+                <ProfileIcon name = {name} />
                 <div>
                     <p className = "text-lg font-bold">{name}</p>
                     <p className = "text-sm text-secondary">{time.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</p>

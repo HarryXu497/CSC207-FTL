@@ -3,7 +3,7 @@ type ProfileIconProps = {
     className?: string
 };
 
-export default function ProfileIcon({className = "" }: ProfileIconProps){
+export default function ProfileIcon({name, className = "" }: ProfileIconProps){
     const initials = (str?: string) => {
         if (!str) return 'A';
         const parts = str.split(' ');
@@ -13,7 +13,7 @@ export default function ProfileIcon({className = "" }: ProfileIconProps){
     
     return (
         <div className={`profileIcon ${className} flex justify-center items-center`}>
-            <p>{initials()}</p>
+            <p>{initials(name)}</p>
         </div>
     )
 }
