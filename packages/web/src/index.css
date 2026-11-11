@@ -1,7 +1,40 @@
 @import 'tailwindcss';
 
+@theme {
+  /*--color-base: '#FFF8F0';*/
+  --color-base: #FFF8F0;
+  --color-card: #FFFFFF;
+  --color-header: #D6CDCB;
+  --color-primary: #2E2E2E;
+  --color-secondary: #7B7C7E;
+  --color-tertiary: #CDD2E0;
+  --color-inverse: #FFFFFF;
+  --color-accent-red: #F96C49;
+  --color-accent-blue: #53A3F1;
+  --color-score-great: #0DD3FF;
+  --color-score-good: #0DA6FF;
+  --color-score-ok: #1878C7;
+  --color-score-weak: #9139A7;
+  --color-score-poor: #800F22;
+  
+}
+
 @layer base {
   body {
-    @apply bg-slate-100 text-slate-900 antialiased;
+    @apply bg-base text-primary antialiased;
   }
 }
+
+@layer components {
+  .card {
+    @apply bg-card border-2 border-tertiary;
+  }
+  .navBar{
+    @apply bg-header text-primary;
+  }
+  .profileIcon{
+    @apply bg-accent-red text-inverse rounded-full w-10 h-10;
+  }
+}
+
+
