@@ -10,7 +10,6 @@ import { buildErrorFromSafeParseError } from '../utils';
 const createCallSchema = z.object({
   customerName: z.string().trim().min(1, 'Customer name is required.').max(120),
   topic: z.string().trim().min(1, 'Topic is required.').max(300),
-  score: z.number().int().min(0).max(100),
 });
 
 export function createCallsRouter(callRepo: CallRepository): Router {
@@ -37,7 +36,7 @@ export function createCallsRouter(callRepo: CallRepository): Router {
 
     const call: Call = {
       id: `call-${randomUUID()}`,
-      handledAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
       ...parsed.data,
     };
 

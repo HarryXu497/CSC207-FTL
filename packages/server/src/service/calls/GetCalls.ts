@@ -5,6 +5,6 @@ export class GetCalls {
   constructor(private readonly callsRepo: CallRepository) {}
 
   async handle(): Promise<Call[]> {
-    return await this.callsRepo.listCalls();
+    return await this.callsRepo.getAllCalls();
   }
 }
