@@ -40,7 +40,7 @@ describe('POST /api/calls', () => {
     const response = await fetch(`${baseUrl}/calls`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ customerName: 'Marcus Webb', topic: 'Billing query', score: 72 }),
+      body: JSON.stringify({ customerName: 'Marcus Webb', topic: 'Billing query' }),
     });
 
     expect(response.status).toBe(201);
@@ -49,14 +49,14 @@ describe('POST /api/calls', () => {
     expect(list.calls.some((c) => c.customerName === 'Marcus Webb')).toBe(true);
   });
 
-  it('rejects a bad score with a 400 naming the field', async () => {
+  it('rejects a missing customerName with a 400', async () => {
     const response = await fetch(`${baseUrl}/calls`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ customerName: 'X', topic: 'Y', score: 500 }),
+      body: JSON.stringify({ topic: 'Y' }),
     });
 
     expect(response.status).toBe(400);
-    expect(JSON.stringify(await response.json())).toContain('score');
+    expect(JSON.stringify(await response.json())).toContain('customerName');
   });
 });
