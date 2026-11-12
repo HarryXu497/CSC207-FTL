@@ -18,7 +18,7 @@ export class FirestoreCallRepository implements CallRepository {
       .collection(FirestoreCallRepository.COLLECTION)
       .orderBy('createdAt', 'desc')
       .get();
-    return snapshot.docs.map((doc) => doc.data() as Call);
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Call);
   }
 
   /**
@@ -33,7 +33,7 @@ export class FirestoreCallRepository implements CallRepository {
     if (!snapshot.exists) {
       throw Error(`Call document with id does not exist, got ${callId}`);
     }
-    return snapshot.data() as Call;
+    return { id: snapshot.id, ...snapshot.data() } as Call;
   }
 
   /**
@@ -55,8 +55,8 @@ export class FirestoreCallRepository implements CallRepository {
    */
   async setCall(call: Call): Promise<void> {
     const db = Firebase.getInstance();
-    const docRef = db.collection(FirestoreCallRepository.COLLECTION).doc(call.id);
-    await docRef.set(call);
+    const { id, ...data } = call;
+    await db.collection(FirestoreCallRepository.COLLECTION).doc(id).set(data);
   }
 
   /**
