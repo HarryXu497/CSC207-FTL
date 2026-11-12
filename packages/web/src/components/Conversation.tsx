@@ -1,14 +1,15 @@
 import Card from './Card';
 import Message from './Message';
-import type { MessageData } from '../tempCall';
+import type { Message as MessageData, SentimentScore } from '@recall/shared';
 
 type ConversationProps = {
   messages: MessageData[];
+  sentimentMap: Map<string, SentimentScore>;
   title: string;
   className?: string;
 };
 
-export default function Conversation({ messages, title }: ConversationProps) {
+export default function Conversation({ messages, sentimentMap, title }: ConversationProps) {
   return (
     <Card className="conversation">
       <header className="conversationHeader">
@@ -18,9 +19,10 @@ export default function Conversation({ messages, title }: ConversationProps) {
         {messages.map((message) => (
           <Message
             key={message.id}
-            name={message.name}
-            time={message.time}
+            name={message.role}
+            time={new Date(message.createdAt)}
             content={message.content}
+            sentiment={sentimentMap.get(message.id)}
           />
         ))}
       </div>

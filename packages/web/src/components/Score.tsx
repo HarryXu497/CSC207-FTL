@@ -1,8 +1,9 @@
 type ScoreProps = {
   score: number;
+  sentimentScale?: boolean;
 };
 
-export default function Score({ score }: ScoreProps) {
+export default function Score({ score, sentimentScale = true }: ScoreProps) {
   function scoreColor(score: number): string {
     if (score <= 20) {
       return 'text-score-poor';
@@ -19,5 +20,6 @@ export default function Score({ score }: ScoreProps) {
     return 'text-score-great';
   }
 
-  return <p className={`score ${scoreColor(score)}`}>{score}</p>;
+  const colorScore = sentimentScale ? (score + 1) * 50 : score;
+  return <p className={`score ${scoreColor(colorScore)}`}>{score.toPrecision(3)}</p>;
 }
