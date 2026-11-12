@@ -1,8 +1,8 @@
-/**
- * Interface for the data layer
- */
 import type { Call } from '@recall/shared';
 
+/**
+ * Represents a repository object that operates with calls.
+ */
 export interface CallRepository {
   /**
    * Get all calls, ordered by creation time in descending order
