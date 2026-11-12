@@ -20,10 +20,12 @@ export function createMessageRepositoryBuilder(
       new FirestoreMessageRepository(parentCollection, parentId);
   }
 
-  let instance: InMemoryMessageRepository | null = null;
-  return () => {
+  const instances = new Map<string, InMemoryMessageRepository>();
+  return (_parentCollection, parentId) => {
+    let instance = instances.get(parentId);
     if (!instance) {
-      instance = new InMemoryMessageRepository();
+      instance = new InMemoryMessageRepository([]);
+      instances.set(parentId, instance);
     }
     return instance;
   };

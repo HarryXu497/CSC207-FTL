@@ -7,6 +7,7 @@ import {
   createMessageRepositoryBuilder,
   FirestoreCallRepository,
   InMemoryCallRepository,
+  type MessageRepositoryBuilder,
 } from 'src/repository';
 import { createApp } from 'src/server';
 import {
@@ -24,10 +25,13 @@ function buildCallRepository(): CallRepository {
   return BACKEND === 'firestore' ? new FirestoreCallRepository() : new InMemoryCallRepository();
 }
 
-function buildBranchRepository(callRepo: CallRepository): BranchRepository {
+function buildBranchRepository(
+  callRepo: CallRepository,
+  messageRepoBuilder: MessageRepositoryBuilder,
+): BranchRepository {
   return BACKEND === 'firestore'
     ? new FirestoreBranchRepository()
-    : new InMemoryBranchRepository(callRepo);
+    : new InMemoryBranchRepository(callRepo, messageRepoBuilder);
 }
 
 async function buildSentimentDeps(): Promise<AnalyseMessages | null> {
@@ -45,8 +49,8 @@ async function buildSentimentDeps(): Promise<AnalyseMessages | null> {
 
 async function main(): Promise<void> {
   const callRepo = buildCallRepository();
-  const branchRepo = buildBranchRepository(callRepo);
   const messageRepoFactory = createMessageRepositoryBuilder(BACKEND);
+  const branchRepo = buildBranchRepository(callRepo, messageRepoFactory);
   const sentiment = await buildSentimentDeps();
   const app = createApp(callRepo, branchRepo, messageRepoFactory, BACKEND, sentiment);
 

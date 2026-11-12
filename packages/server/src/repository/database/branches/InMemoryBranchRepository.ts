@@ -3,6 +3,7 @@
  */
 import type { Branch } from '@recall/shared';
 import type { CallRepository } from '../calls/CallRepository';
+import type { MessageRepositoryBuilder } from '../messages/MessageRepositoryFactory';
 import type { BranchRepository } from './BranchRepository';
 
 /** Demo rows */
@@ -30,6 +31,7 @@ export class InMemoryBranchRepository implements BranchRepository {
 
   constructor(
     private readonly callRepo: CallRepository,
+    private readonly messageRepoBuilder: MessageRepositoryBuilder,
     seed: Branch[] = SEED,
   ) {
     for (const branch of seed) {
@@ -56,14 +58,28 @@ export class InMemoryBranchRepository implements BranchRepository {
       throw Error(`Branch index must be non-negative, got ${branchIndex}`);
     }
     const call = await this.callRepo.getCall(callId);
+
+    const callMessages = await this.messageRepoBuilder('calls', callId).getAllMessages();
+    if (branchIndex >= callMessages.length) {
+      throw Error(
+        `Branch index out of range: got ${branchIndex}, call has ${callMessages.length} messages`,
+      );
+    }
+
     const id = crypto.randomUUID();
     this.branches.set(id, {
       ...call,
       id,
       createdAt: new Date().toISOString(),
       parentId: callId,
-      branchIndex: branchIndex,
+      branchIndex,
     });
+
+    const messagesToCopy = callMessages.slice(0, branchIndex + 1);
+    await this.messageRepoBuilder('branches', id).addMessages(
+      messagesToCopy.map(({ id: _, ...msg }) => msg),
+    );
+
     return id;
   }
 
