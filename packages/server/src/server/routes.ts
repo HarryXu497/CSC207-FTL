@@ -7,7 +7,9 @@ import {
   createCallsRouter,
   createHealthRouter,
   createMessagesRouter,
+  createSentimentRouter,
   type MessageRepoFactory,
+  type SentimentDeps,
 } from './routers';
 import { createBranchesRouter } from './routers/branch';
 
@@ -16,6 +18,7 @@ export function createRouter(
   branchRepo: BranchRepository,
   messageRepoFactory: MessageRepoFactory,
   backend: 'memory' | 'firestore',
+  sentiment?: SentimentDeps,
 ): Router {
   const router = Router();
 
@@ -23,6 +26,7 @@ export function createRouter(
   router.use(createCallsRouter(callRepo));
   router.use(createBranchesRouter(branchRepo));
   router.use(createMessagesRouter(messageRepoFactory));
+  router.use(createSentimentRouter(callRepo, sentiment));
 
   return router;
 }
