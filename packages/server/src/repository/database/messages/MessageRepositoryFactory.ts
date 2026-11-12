@@ -8,7 +8,7 @@ export type MessageRepositoryBuilder = (
 ) => MessageRepository;
 
 /**
- * Helper fubcnction to abstract message repository instantiation
+ * Helper function to abstract message repository instantiation
  * @param backend - The app backend implementation
  * @returns A callback called to create message repositories
  */
