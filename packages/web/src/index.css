@@ -35,7 +35,7 @@
     @apply bg-accent-red text-inverse rounded-full w-10 h-10;
   }
   .message {
-    @apply bg-card p-2;
+    @apply bg-card p-2 flex;
   }
   .messageHeader {
     @apply flex justify-start items-center gap-3;
@@ -44,7 +44,7 @@
     @apply mt-2;
   }
   .conversation {
-    @apply bg-card overflow-y-auto h-[calc(100vh-8rem)];
+    @apply bg-card p-2 m-2 overflow-y-auto h-[calc(100vh-8rem)];
   }
   .conversationHeader {
     @apply bg-card border-b-2 border-tertiary sticky top-0 z-10 p-2;
@@ -63,6 +63,9 @@
   }
   .scoreCardSimple p {
     @apply font-black text-xl;
+  }
+  .score {
+    @apply font-black text-2xl text-center p-2;
   }
   .feedback {
     @apply p-2;

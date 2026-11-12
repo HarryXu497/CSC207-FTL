@@ -7,6 +7,7 @@
     "dev": "tsx watch --env-file-if-exists=.env src/index.ts",
     "start": "tsx --env-file-if-exists=.env src/index.ts",
     "typecheck": "tsc --noEmit",
+    "models:download": "hf download SamLowe/roberta-base-go_emotions-onnx config.json tokenizer.json tokenizer_config.json onnx/model_quantized.onnx --local-dir models/goemotions-roberta && hf download ShayanBhatti/vad-bert-onnx --local-dir models/vad",
     "sentiment:demo": "tsx --env-file-if-exists=.env src/repository/sentiment/sentimentDemo.ts"
   },
   "dependencies": {
