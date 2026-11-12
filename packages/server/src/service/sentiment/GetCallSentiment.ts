@@ -20,11 +20,10 @@ export class GetCallSentiment {
     });
 
     return messages
-      .filter((_, i) => Boolean(results[i]))
-      .map((message, i) => {
-        const result = results[i] as MessageResult;
-
-        return { messageId: message.id, result };
-      });
+      .map((message, i) => ({ message, result: results[i] }))
+      .filter((entry): entry is { message: typeof entry.message; result: MessageResult } =>
+        Boolean(entry.result)
+      )
+      .map(({ message, result }) => ({ messageId: message.id, result }));
   }
 }

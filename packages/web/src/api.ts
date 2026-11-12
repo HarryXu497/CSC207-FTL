@@ -6,6 +6,7 @@ import type {
   CreateCallRequest,
   CreateCallResponse,
   GetCallsResponse,
+  GetCallSentimentResponse,
 } from '@recall/shared';
 
 const BASE_URL = '/api';
@@ -34,6 +35,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 // Singleton object for making requests
 export const api = {
   listCalls: () => request<GetCallsResponse>('/calls'),
+
+  getCallSentiment: (callId: string, signal: AbortSignal) =>
+    request<GetCallSentimentResponse>(`/calls/${encodeURIComponent(callId)}/sentiment`, { signal }),
 
   createCall: (body: CreateCallRequest) =>
     request<CreateCallResponse>('/calls', {
