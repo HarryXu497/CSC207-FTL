@@ -11,7 +11,6 @@ export class GetCallSentiment {
   ) {}
 
   async handle(callId: string): Promise<MessageSentiment[]> {
-
     await this.callsRepo.getCall(callId);
 
     const messages = await this.messageRepoFactory(callId).getAllMessages();
@@ -20,10 +19,12 @@ export class GetCallSentiment {
       messages: messages.map((message) => message.content),
     });
 
-    return messages.filter((_,i) => Boolean(results[i])).map((message, i) => {
-      const result = results[i] as MessageResult;
-      
-      return { messageId: message.id, result };
-    });
+    return messages
+      .filter((_, i) => Boolean(results[i]))
+      .map((message, i) => {
+        const result = results[i] as MessageResult;
+
+        return { messageId: message.id, result };
+      });
   }
 }

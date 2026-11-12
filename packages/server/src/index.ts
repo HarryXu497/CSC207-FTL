@@ -69,7 +69,7 @@ async function buildSentimentDeps(repository: CallRepository): Promise<Sentiment
     messageRepoFactory: (callId) => demoMessages.get(callId) ?? new InMemoryMessageRepository([]),
   };
 }
-  
+
 async function main(): Promise<void> {
   const callRepo = buildCallRepository();
   const branchRepo = buildBranchRepository(callRepo);
@@ -86,5 +86,4 @@ async function main(): Promise<void> {
   });
 }
 
-
-main().catch(console.log)
+main().catch(console.log);

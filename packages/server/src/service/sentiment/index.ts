@@ -1,5 +1,5 @@
 import { GetCallSentiment } from './GetCallSentiment';
 
 export const SentimentService = {
-  GetCallSentiment
+  GetCallSentiment,
 } as const;

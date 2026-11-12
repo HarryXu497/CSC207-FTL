@@ -1,8 +1,6 @@
 import type { SentimentScore } from '../repository/sentiment';
 
-
 export type SentimentFailureReason = 'empty' | 'not_a_string' | 'too_long';
-
 
 export type SentimentResult =
   { ok: true; sentiment: SentimentScore } | { ok: false; reason: SentimentFailureReason };

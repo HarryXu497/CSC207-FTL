@@ -1,19 +1,14 @@
-import type {
-  GetCallSentimentResponse,
-  ServerResponse,
-} from '@recall/shared';
+import type { GetCallSentimentResponse, ServerResponse } from '@recall/shared';
 import { Router, type Response } from 'express';
 import { NotFoundError } from 'src/errors';
 import type { CallRepository } from 'src/repository';
 import type { AnalyseMessages } from 'src/repository/sentiment/AnalyseMessages';
 import { GetCallSentiment } from 'src/service/sentiment/GetCallSentiment';
 
-
 export interface SentimentDeps {
   messageRepoFactory: ConstructorParameters<typeof GetCallSentiment>[1];
   analyseMessages: AnalyseMessages;
 }
-
 
 export function createSentimentRouter(
   callRepo: CallRepository,
@@ -22,16 +17,13 @@ export function createSentimentRouter(
   const router = Router();
 
   if (!deps) {
-    router.use(
-      '/calls/:callId/sentiment',
-      (_req, res: Response<ServerResponse<never>>) => {
-        res.status(503).json({
-          error: {
-            message: 'ERROR: Sentiment analysis is not available.',
-          },
-        });
-      },
-    );
+    router.use('/calls/:callId/sentiment', (_req, res: Response<ServerResponse<never>>) => {
+      res.status(503).json({
+        error: {
+          message: 'ERROR: Sentiment analysis is not available.',
+        },
+      });
+    });
     return router;
   }
 
