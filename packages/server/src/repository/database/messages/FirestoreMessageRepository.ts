@@ -28,7 +28,7 @@ export class FirestoreMessageRepository implements MessageRepository {
       .doc(this.parentId)
       .collection(FirestoreMessageRepository.COLLECTION);
 
-    const snapshot = await collectionRef.get();
+    const snapshot = await collectionRef.orderBy('createdAt', 'asc').get();
     return snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }) as Message);
   }
 
