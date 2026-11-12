@@ -60,6 +60,7 @@ export class InMemoryBranchRepository implements BranchRepository {
     this.branches.set(id, {
       ...call,
       id,
+      createdAt: new Date().toISOString(),
       parentId: callId,
       branchIndex: branchIndex,
     });

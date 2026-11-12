@@ -61,6 +61,7 @@ export class FirestoreBranchRepository implements BranchRepository {
     const callData = callSnapshot.data() as Omit<Call, 'id'>;
     const docRef = await collectionRef.add({
       ...callData,
+      createdAt: new Date().toISOString(),
       parentId: callId,
       branchIndex: branchIndex,
     });
