@@ -22,7 +22,7 @@ export interface MessageRepository {
    * generating the ids.
    * @param messages - The messages to append
    */
-  addMessages(messages: Message[]): Promise<void>;
+  addMessages(messages: Omit<Message, 'id'>[]): Promise<void>;
 
   /**
    * Subscribes to message updates.
