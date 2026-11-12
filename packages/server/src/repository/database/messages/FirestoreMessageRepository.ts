@@ -12,8 +12,8 @@ export class FirestoreMessageRepository implements MessageRepository {
   static readonly COLLECTION = 'messages';
 
   constructor(
-    private readonly parentCollection: 'call' | 'branch',
-    private readonly callId: string,
+    private readonly parentCollection: 'calls' | 'branches',
+    private readonly parentId: string,
   ) {}
 
   /**
@@ -25,10 +25,10 @@ export class FirestoreMessageRepository implements MessageRepository {
 
     const collectionRef = db
       .collection(this.parentCollection)
-      .doc(this.callId)
+      .doc(this.parentId)
       .collection(FirestoreMessageRepository.COLLECTION);
 
-    const snapshot = await collectionRef.get();
+    const snapshot = await collectionRef.orderBy('createdAt', 'asc').get();
     return snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }) as Message);
   }
 
@@ -42,7 +42,7 @@ export class FirestoreMessageRepository implements MessageRepository {
 
     const collectionRef = db
       .collection(this.parentCollection)
-      .doc(this.callId)
+      .doc(this.parentId)
       .collection(FirestoreMessageRepository.COLLECTION);
 
     const docRef = await collectionRef.add(message);
@@ -58,7 +58,7 @@ export class FirestoreMessageRepository implements MessageRepository {
     const db = Firebase.getInstance();
     const collectionRef = db
       .collection(this.parentCollection)
-      .doc(this.callId)
+      .doc(this.parentId)
       .collection(FirestoreMessageRepository.COLLECTION);
 
     // firestore caps batches at 500
@@ -84,7 +84,7 @@ export class FirestoreMessageRepository implements MessageRepository {
     const db = Firebase.getInstance();
     const collectionRef = db
       .collection(this.parentCollection)
-      .doc(this.callId)
+      .doc(this.parentId)
       .collection(FirestoreMessageRepository.COLLECTION);
 
     return collectionRef.onSnapshot((snapshot) => {

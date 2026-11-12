@@ -9,6 +9,11 @@ import {
   InMemoryBranchRepository,
   type BranchRepository,
 } from './repository/database/branches';
+import {
+  FirestoreMessageRepository,
+  InMemoryMessageRepository,
+  type MessageRepository,
+} from './repository/database/messages';
 
 const PORT = Number.parseInt(process.env.PORT ?? '4000', 10);
 const BACKEND = process.env.DATA_BACKEND === 'firestore' ? 'firestore' : 'memory';
@@ -23,10 +28,23 @@ function buildBranchRepository(callRepo: CallRepository): BranchRepository {
     : new InMemoryBranchRepository(callRepo);
 }
 
+function buildMessageRepoFactory(): (
+  parentCollection: 'calls' | 'branches',
+  parentId: string,
+) => MessageRepository {
+  if (BACKEND === 'firestore') {
+    return (parentCollection, parentId) =>
+      new FirestoreMessageRepository(parentCollection, parentId);
+  }
+
+  return () => new InMemoryMessageRepository();
+}
+
 function main(): void {
   const callRepo = buildCallRepository();
   const branchRepo = buildBranchRepository(callRepo);
-  const app = createApp(callRepo, branchRepo, BACKEND);
+  const messageRepoFactory = buildMessageRepoFactory();
+  const app = createApp(callRepo, branchRepo, messageRepoFactory, BACKEND);
 
   app.listen(PORT, () => {
     console.log('');

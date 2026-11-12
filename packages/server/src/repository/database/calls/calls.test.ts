@@ -7,6 +7,7 @@ import type { AddressInfo } from 'node:net';
 import { createApp } from 'src/server/app';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { InMemoryBranchRepository } from '../branches';
+import { InMemoryMessageRepository } from '../messages';
 import { InMemoryCallRepository } from './InMemoryCallRepository';
 
 let server: Server;
@@ -14,7 +15,12 @@ let baseUrl: string;
 
 beforeAll(async () => {
   const callRepo = new InMemoryCallRepository();
-  const app = createApp(callRepo, new InMemoryBranchRepository(callRepo), 'memory');
+  const app = createApp(
+    callRepo,
+    new InMemoryBranchRepository(callRepo),
+    () => new InMemoryMessageRepository(),
+    'memory',
+  );
   // Port 0 corresponds to any free port
   server = app.listen(0);
   await new Promise<void>((resolve) => server.once('listening', resolve));
