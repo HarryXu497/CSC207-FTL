@@ -1,22 +1,17 @@
 import type { GetCallSentimentResponse, ServerResponse } from '@recall/shared';
 import { Router, type Response } from 'express';
 import { NotFoundError } from 'src/errors';
-import type { CallRepository } from 'src/repository';
-import type { AnalyseMessages } from 'src/repository';
+import type { AnalyseMessages, CallRepository, MessageRepositoryBuilder } from 'src/repository';
 import { SentimentService } from 'src/service';
-
-export interface SentimentDeps {
-  messageRepoFactory: ConstructorParameters<typeof SentimentService.GetCallSentiment>[1];
-  analyseMessages: AnalyseMessages;
-}
 
 export function createSentimentRouter(
   callRepo: CallRepository,
-  deps: SentimentDeps | undefined,
+  messageRepoFactory: MessageRepositoryBuilder,
+  analyseMessages: AnalyseMessages | null,
 ): Router {
   const router = Router();
 
-  if (!deps) {
+  if (!analyseMessages) {
     router.use('/calls/:callId/sentiment', (_req, res: Response<ServerResponse<never>>) => {
       res.status(503).json({
         error: {
@@ -29,8 +24,8 @@ export function createSentimentRouter(
 
   const getCallSentiment = new SentimentService.GetCallSentiment(
     callRepo,
-    deps.messageRepoFactory,
-    deps.analyseMessages,
+    messageRepoFactory,
+    analyseMessages,
   );
 
   router.get(

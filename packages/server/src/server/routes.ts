@@ -2,14 +2,13 @@
  * Creates the router and handles route configuration
  */
 import { Router } from 'express';
-import type { BranchRepository, CallRepository } from 'src/repository';
+import type { AnalyseMessages, BranchRepository, CallRepository } from 'src/repository';
 import {
   createCallsRouter,
   createHealthRouter,
   createMessagesRouter,
   createSentimentRouter,
   type MessageRepoFactory,
-  type SentimentDeps,
 } from './routers';
 import { createBranchesRouter } from './routers/branch';
 
@@ -18,7 +17,7 @@ export function createRouter(
   branchRepo: BranchRepository,
   messageRepoFactory: MessageRepoFactory,
   backend: 'memory' | 'firestore',
-  sentiment?: SentimentDeps,
+  analyseMessages: AnalyseMessages | null,
 ): Router {
   const router = Router();
 
@@ -26,7 +25,7 @@ export function createRouter(
   router.use(createCallsRouter(callRepo));
   router.use(createBranchesRouter(branchRepo));
   router.use(createMessagesRouter(messageRepoFactory));
-  router.use(createSentimentRouter(callRepo, sentiment));
+  router.use(createSentimentRouter(callRepo, messageRepoFactory, analyseMessages));
 
   return router;
 }
