@@ -56,6 +56,10 @@
   .conversationEnd{
     @apply text-secondary text-sm text-center mt-2 pb-2;
   }
+  .scoreCardSimple{
+    @apply text-primary text-center p-2;
+  }
+  .feedback{
+    @apply text-primary p-2;
+  }
 }
-
-
