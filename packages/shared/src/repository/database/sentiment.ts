@@ -16,34 +16,34 @@
 
 //A list of the 28 supported GoEmotion categories that our pipeline will handle. Based on: https://research.google/blog/goemotions-a-dataset-for-fine-grained-emotion-classification/
 export const EMOTION_LABELS = [
-    'admiration',
-    'amusement',
-    'anger',
-    'annoyance',
-    'approval',
-    'caring',
-    'confusion',
-    'curiosity',
-    'desire',
-    'disappointment',
-    'disapproval',
-    'disgust',
-    'embarrassment',
-    'excitement',
-    'fear',
-    'gratitude',
-    'grief',
-    'joy',
-    'love',
-    'nervousness',
-    'optimism',
-    'pride',
-    'realization',
-    'relief',
-    'remorse',
-    'sadness',
-    'surprise',
-    'neutral',
+  'admiration',
+  'amusement',
+  'anger',
+  'annoyance',
+  'approval',
+  'caring',
+  'confusion',
+  'curiosity',
+  'desire',
+  'disappointment',
+  'disapproval',
+  'disgust',
+  'embarrassment',
+  'excitement',
+  'fear',
+  'gratitude',
+  'grief',
+  'joy',
+  'love',
+  'nervousness',
+  'optimism',
+  'pride',
+  'realization',
+  'relief',
+  'remorse',
+  'sadness',
+  'surprise',
+  'neutral',
 ] as const;
 
 //EmotionLabel is a union type of all the labels above.
@@ -62,7 +62,7 @@ export function isEmotionLabel(label: string): label is EmotionLabel {
 export interface Emotion {
   /**
    * An interface representing an Emotion and its corresponding score
-   * 
+   *
    * Attributes:
    * -label: one of the 28 GoEmotion labels above
    * -score: a probability (confidence score) in range [0,1]
@@ -73,8 +73,8 @@ export interface Emotion {
 
 export interface SentimentScore {
   /**
-   * An interface representing a SentimentScore 
-   * 
+   * An interface representing a SentimentScore
+   *
    * Attributes:
    * -valenceScore: overall valence: -1 (very negative) to 1 (very positive).
    * -intensity: how strongly the message is felt: 0 (flat) to 1 (intense).
