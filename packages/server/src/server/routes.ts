@@ -3,14 +3,20 @@
  */
 import { Router } from 'express';
 import type { CallRepository } from 'src/repository';
-import { createHealthRouter } from './routers';
-import { createCallsRouter } from './routers';
+import type { BranchRepository } from 'src/repository/database/branches';
+import { createCallsRouter, createHealthRouter } from './routers';
+import { createBranchesRouter } from './routers/branch';
 
-export function createRouter(callRepo: CallRepository, backend: 'memory' | 'firestore'): Router {
+export function createRouter(
+  callRepo: CallRepository,
+  branchRepo: BranchRepository,
+  backend: 'memory' | 'firestore',
+): Router {
   const router = Router();
 
   router.use(createHealthRouter(backend));
   router.use(createCallsRouter(callRepo));
+  router.use(createBranchesRouter(branchRepo));
 
   return router;
 }
