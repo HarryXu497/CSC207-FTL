@@ -15,7 +15,7 @@ import type {
   EmotionClassifier,
   Vad,
   VadEstimator,
-} from 'src/repository/sentiment/SentimentModels';
+} from 'src/repository';
 import { describe, expect, it } from 'vitest';
 import { AnalyseMessages, type MessageResult } from './AnalyseMessages';
 import { DEFAULT_SCORING_CONFIG, type ScoringConfig } from './scoring';

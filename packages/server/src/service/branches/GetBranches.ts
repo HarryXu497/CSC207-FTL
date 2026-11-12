@@ -1,5 +1,5 @@
 import type { Branch } from '@recall/shared';
-import type { BranchRepository } from 'src/repository/database/branches';
+import type { BranchRepository } from 'src/repository';
 
 export class GetBranches {
   constructor(private readonly branchRepository: BranchRepository) {}

@@ -6,7 +6,7 @@
  * will be used to analyse all messages. I expect files wanting to access sentiment scoring to use AnalyseMessage.
  */
 import type { Emotion, SentimentScore } from '@recall/shared';
-import type { EmotionClassifier, VadEstimator } from 'src/repository/sentiment/SentimentModels';
+import type { EmotionClassifier, VadEstimator } from 'src/repository';
 import {
   DEFAULT_SCORING_CONFIG,
   ambiguityScore,
