@@ -2,21 +2,20 @@
 
 @theme {
   /*--color-base: '#FFF8F0';*/
-  --color-base: #FFF8F0;
-  --color-card: #FFFFFF;
-  --color-header: #D6CDCB;
-  --color-primary: #2E2E2E;
-  --color-secondary: #7B7C7E;
-  --color-tertiary: #CDD2E0;
-  --color-inverse: #FFFFFF;
-  --color-accent-red: #F96C49;
-  --color-accent-blue: #53A3F1;
-  --color-score-great: #0DD3FF;
-  --color-score-good: #0DA6FF;
-  --color-score-ok: #1878C7;
-  --color-score-weak: #9139A7;
-  --color-score-poor: #800F22;
-  
+  --color-base: #fff8f0;
+  --color-card: #ffffff;
+  --color-header: #d6cdcb;
+  --color-primary: #2e2e2e;
+  --color-secondary: #7b7c7e;
+  --color-tertiary: #cdd2e0;
+  --color-inverse: #ffffff;
+  --color-accent-red: #f96c49;
+  --color-accent-blue: #53a3f1;
+  --color-score-great: #0dd3ff;
+  --color-score-good: #0da6ff;
+  --color-score-ok: #1878c7;
+  --color-score-weak: #9139a7;
+  --color-score-poor: #800f22;
 }
 
 @layer base {
@@ -29,46 +28,46 @@
   .card {
     @apply bg-card border-2 border-tertiary;
   }
-  .navBar{
+  .navBar {
     @apply bg-header text-primary;
   }
-  .profileIcon{
+  .profileIcon {
     @apply bg-accent-red text-inverse rounded-full w-10 h-10;
   }
-  .message{
+  .message {
     @apply bg-card p-2;
   }
-  .messageHeader{
+  .messageHeader {
     @apply flex justify-start items-center gap-3;
   }
-  .messageContent{
+  .messageContent {
     @apply mt-2;
   }
-  .conversation{
+  .conversation {
     @apply bg-card overflow-y-auto h-[calc(100vh-8rem)];
   }
-  .conversationHeader{
+  .conversationHeader {
     @apply bg-card border-b-2 border-tertiary sticky top-0 z-10 p-2;
   }
-  .conversationBody{
+  .conversationBody {
     @apply m-4;
   }
-  .conversationEnd{
+  .conversationEnd {
     @apply text-secondary text-sm text-center mt-2 pb-2;
   }
-  .scoreCardSimple{
+  .scoreCardSimple {
     @apply text-center p-2;
   }
-  .scoreCardSimple h1{
+  .scoreCardSimple h1 {
     @apply font-semibold;
   }
-  .scoreCardSimple p{
+  .scoreCardSimple p {
     @apply font-black text-xl;
   }
-  .feedback{
+  .feedback {
     @apply p-2;
   }
-  .feedback h1{
+  .feedback h1 {
     @apply text-primary font-bold text-lg;
   }
 }
