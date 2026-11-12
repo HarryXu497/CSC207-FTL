@@ -22,7 +22,7 @@ export class GetCallSentiment {
     return messages
       .map((message, i) => ({ message, result: results[i] }))
       .filter((entry): entry is { message: typeof entry.message; result: MessageResult } =>
-        Boolean(entry.result)
+        Boolean(entry.result),
       )
       .map(({ message, result }) => ({ messageId: message.id, result }));
   }

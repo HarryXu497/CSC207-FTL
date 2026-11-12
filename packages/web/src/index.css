@@ -64,7 +64,7 @@
   .scoreCardSimple p {
     @apply font-black text-xl;
   }
-  .score{
+  .score {
     @apply font-black text-2xl text-center p-2;
   }
   .feedback {
