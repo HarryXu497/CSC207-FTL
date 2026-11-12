@@ -33,7 +33,8 @@ function buildMessageRepoFactory(): (
   parentId: string,
 ) => MessageRepository {
   if (BACKEND === 'firestore') {
-    return (parentCollection, parentId) => new FirestoreMessageRepository(parentCollection, parentId);
+    return (parentCollection, parentId) =>
+      new FirestoreMessageRepository(parentCollection, parentId);
   }
 
   return () => new InMemoryMessageRepository();
@@ -42,7 +43,7 @@ function buildMessageRepoFactory(): (
 function main(): void {
   const callRepo = buildCallRepository();
   const branchRepo = buildBranchRepository(callRepo);
-  const messageRepoFactory =  buildMessageRepoFactory()
+  const messageRepoFactory = buildMessageRepoFactory();
   const app = createApp(callRepo, branchRepo, messageRepoFactory, BACKEND);
 
   app.listen(PORT, () => {

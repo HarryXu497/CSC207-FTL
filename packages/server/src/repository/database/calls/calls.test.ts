@@ -15,7 +15,12 @@ let baseUrl: string;
 
 beforeAll(async () => {
   const callRepo = new InMemoryCallRepository();
-  const app = createApp(callRepo, new InMemoryBranchRepository(callRepo), () => new InMemoryMessageRepository(), 'memory');
+  const app = createApp(
+    callRepo,
+    new InMemoryBranchRepository(callRepo),
+    () => new InMemoryMessageRepository(),
+    'memory',
+  );
   // Port 0 corresponds to any free port
   server = app.listen(0);
   await new Promise<void>((resolve) => server.once('listening', resolve));

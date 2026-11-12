@@ -84,7 +84,7 @@ export function createMessagesRouter(repoFactory: MessageRepoFactory): Router {
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
 
-    const repo = repoFactory('calls', req.params.callId)
+    const repo = repoFactory('calls', req.params.callId);
     const streamMessages = new MessagesService.StreamMessages(repo);
     const unsubscribe = streamMessages.handle((messages: Message[]) => {
       res.write(`data: ${JSON.stringify(messages)}\n\n`);
@@ -99,7 +99,7 @@ export function createMessagesRouter(repoFactory: MessageRepoFactory): Router {
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
 
-    const repo = repoFactory('calls', req.params.callId)
+    const repo = repoFactory('calls', req.params.callId);
     const streamMessages = new MessagesService.StreamMessages(repo);
     const unsubscribe = streamMessages.handle((messages: Message[]) => {
       res.write(`data: ${JSON.stringify(messages)}\n\n`);
