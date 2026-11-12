@@ -3,13 +3,14 @@
  */
 import cors from 'cors';
 import express, { type Express } from 'express';
-import type { CallRepository } from 'src/repository';
-import type { BranchRepository } from 'src/repository/database/branches';
+import type { BranchRepository, CallRepository } from 'src/repository';
+import type { MessageRepoFactory } from './routers';
 import { createRouter } from './routes';
 
 export function createApp(
   callRepo: CallRepository,
   branchRepo: BranchRepository,
+  messageRepoFactory: MessageRepoFactory,
   backend: 'memory' | 'firestore',
 ): Express {
   const app = express();
@@ -25,7 +26,7 @@ export function createApp(
   });
 
   // Routes
-  app.use('/api', createRouter(callRepo, branchRepo, backend));
+  app.use('/api', createRouter(callRepo, branchRepo, messageRepoFactory, backend));
 
   // Errors
   app.use(
