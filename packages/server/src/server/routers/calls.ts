@@ -69,7 +69,7 @@ export function createCallsRouter(callRepo: CallRepository): Router {
     res.status(201).json({ call });
   });
 
-  router.delete('/calls/:id', async (req, res) => {
+  router.delete('/calls/:id', async (req, res: Response<ServerResponse<never>>) => {
     const id = req.params.id;
 
     try {

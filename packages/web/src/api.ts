@@ -5,7 +5,7 @@ import type {
   ApiErrorBody,
   CreateCallRequest,
   CreateCallResponse,
-  ListCallsResponse,
+  GetCallsResponse,
 } from '@recall/shared';
 
 const BASE_URL = '/api';
@@ -33,7 +33,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 // Singleton object for making requests
 export const api = {
-  listCalls: () => request<ListCallsResponse>('/calls'),
+  listCalls: () => request<GetCallsResponse>('/calls'),
 
   createCall: (body: CreateCallRequest) =>
     request<CreateCallResponse>('/calls', {

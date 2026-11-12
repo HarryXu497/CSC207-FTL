@@ -11,6 +11,11 @@ export interface GetCallResponse {
 }
 
 /** POST /api/calls */
+export interface CreateCallRequest {
+  customerName: string;
+  topic: string;
+}
+
 export interface CreateCallResponse {
   call: Call;
 }
