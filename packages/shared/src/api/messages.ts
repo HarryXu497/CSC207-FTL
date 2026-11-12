@@ -15,7 +15,6 @@ export interface GetMessagesResponse {
 export interface CreateMessageRequest {
   role: 'agent' | 'customer';
   content: string;
-  createdAt: string;
 }
 
 export interface CreateMessageResponse {

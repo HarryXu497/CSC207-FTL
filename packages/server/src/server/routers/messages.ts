@@ -13,7 +13,6 @@ import { buildErrorFromSafeParseError } from '../utils';
 const postMessageSchema = z.object({
   role: z.enum(['agent', 'customer']),
   content: z.string().trim().min(1, 'Content is required.'),
-  createdAt: z.iso.datetime(),
 });
 
 export type MessageRepoFactory = (
@@ -54,10 +53,11 @@ export function createMessagesRouter(repoFactory: MessageRepoFactory): Router {
           .json({ error: buildErrorFromSafeParseError(parsed, 'That request was not valid.') });
         return;
       }
+      const message = { ...parsed.data, createdAt: new Date().toISOString() };
       const repo = repoFactory('calls', req.params.callId);
       const postMessages = new MessagesService.PostMessages(repo);
-      const id = await postMessages.handle(parsed.data);
-      res.status(201).json({ message: { id, ...parsed.data } });
+      const id = await postMessages.handle(message);
+      res.status(201).json({ message: { id, ...message } });
     },
   );
 
@@ -71,10 +71,11 @@ export function createMessagesRouter(repoFactory: MessageRepoFactory): Router {
           .json({ error: buildErrorFromSafeParseError(parsed, 'That request was not valid.') });
         return;
       }
+      const message = { ...parsed.data, createdAt: new Date().toISOString() };
       const repo = repoFactory('branches', req.params.branchId);
       const postMessages = new MessagesService.PostMessages(repo);
-      const id = await postMessages.handle(parsed.data);
-      res.status(201).json({ message: { id, ...parsed.data } });
+      const id = await postMessages.handle(message);
+      res.status(201).json({ message: { id, ...message } });
     },
   );
 
