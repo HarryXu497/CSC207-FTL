@@ -6,13 +6,15 @@ import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { createApp } from 'src/server/app';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { InMemoryBranchRepository } from '../branches';
 import { InMemoryCallRepository } from './InMemoryCallRepository';
 
 let server: Server;
 let baseUrl: string;
 
 beforeAll(async () => {
-  const app = createApp(new InMemoryCallRepository(), 'memory');
+  const callRepo = new InMemoryCallRepository();
+  const app = createApp(callRepo, new InMemoryBranchRepository(callRepo), 'memory');
   // Port 0 corresponds to any free port
   server = app.listen(0);
   await new Promise<void>((resolve) => server.once('listening', resolve));
