@@ -45,7 +45,7 @@
     @apply mt-2;
   }
   .conversation{
-    @apply bg-card m-4 overflow-y-auto h-[calc(100vh-8rem)];
+    @apply bg-card overflow-y-auto h-[calc(100vh-8rem)];
   }
   .conversationHeader{
     @apply bg-card border-b-2 border-tertiary sticky top-0 z-10 p-2;
@@ -57,9 +57,18 @@
     @apply text-secondary text-sm text-center mt-2 pb-2;
   }
   .scoreCardSimple{
-    @apply text-primary text-center p-2;
+    @apply text-center p-2;
+  }
+  .scoreCardSimple h1{
+    @apply font-semibold;
+  }
+  .scoreCardSimple p{
+    @apply font-black text-xl;
   }
   .feedback{
-    @apply text-primary p-2;
+    @apply p-2;
+  }
+  .feedback h1{
+    @apply text-primary font-bold text-lg;
   }
 }
