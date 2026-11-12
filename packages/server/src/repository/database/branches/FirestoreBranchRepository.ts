@@ -1,5 +1,6 @@
-import type { Branch, Call } from '@recall/shared';
+import type { Branch, Call, Message } from '@recall/shared';
 import { FirestoreCallRepository } from '../calls';
+import { FirestoreMessageRepository } from '../messages';
 import { Firebase } from '../utils';
 import type { BranchRepository } from './BranchRepository';
 
@@ -58,13 +59,51 @@ export class FirestoreBranchRepository implements BranchRepository {
       throw Error(`Call document with id does not exist, got ${callId}`);
     }
 
+    const messagesSnapshot = await db
+      .collection(FirestoreCallRepository.COLLECTION)
+      .doc(callId)
+      .collection(FirestoreMessageRepository.COLLECTION)
+      .orderBy('createdAt', 'asc')
+      .get();
+
+    if (branchIndex >= messagesSnapshot.size) {
+      throw Error(
+        `Branch index out of range: got ${branchIndex}, call has ${messagesSnapshot.size} messages`,
+      );
+    }
+
+    const messagesToCopy = messagesSnapshot.docs
+      .slice(0, branchIndex + 1)
+      .map((doc) => doc.data() as Omit<Message, 'id'>);
+
     const callData = callSnapshot.data() as Omit<Call, 'id'>;
-    const docRef = await collectionRef.add({
+    const docRef = collectionRef.doc();
+    const branchMessagesRef = docRef.collection(FirestoreMessageRepository.COLLECTION);
+
+    // firebase batches are capped to 500; branch doc + up to 499 messages
+    const firstBatch = db.batch();
+    firstBatch.set(docRef, {
       ...callData,
       createdAt: new Date().toISOString(),
       parentId: callId,
-      branchIndex: branchIndex,
+      branchIndex,
     });
+    for (const message of messagesToCopy.slice(0, 499)) {
+      firstBatch.set(branchMessagesRef.doc(), message);
+    }
+
+    const commits: Promise<FirebaseFirestore.WriteResult[]>[] = [firstBatch.commit()];
+
+    // Remaining messages in batches of 500
+    for (let i = 499; i < messagesToCopy.length; i += 500) {
+      const batch = db.batch();
+      for (const message of messagesToCopy.slice(i, i + 500)) {
+        batch.set(branchMessagesRef.doc(), message);
+      }
+      commits.push(batch.commit());
+    }
+
+    await Promise.all(commits);
     return docRef.id;
   }
 
