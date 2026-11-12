@@ -23,4 +23,11 @@ export interface MessageRepository {
    * @param messages - The messages to append
    */
   addMessages(messages: Message[]): Promise<void>;
+
+  /**
+   * Subscribes to message updates.
+   * @param callback - Called with all messages whenever a message is appended
+   * @returns an unsubscribe function
+   */
+  subscribe(callback: (messages: Message[]) => void): () => void;
 }

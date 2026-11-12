@@ -2,19 +2,24 @@
  * Firebase Firestore implementation of the data layer
  */
 import type { Message } from '@recall/shared';
-import { FirestoreCallRepository } from '../calls';
 import { Firebase } from '../utils';
 import type { MessageRepository } from './MessageRepository';
 
+/**
+ * Firebase implementation of message repository
+ */
 export class FirestoreMessageRepository implements MessageRepository {
   static readonly COLLECTION = 'messages';
-  static readonly callRepo = new FirestoreCallRepository();
 
   constructor(
     private readonly parentCollection: 'call' | 'branch',
     private readonly callId: string,
   ) {}
 
+  /**
+   * Get all messages, ordered by creation time ascending.
+   * @returns a list of all messages
+   */
   async getAllMessages(): Promise<Message[]> {
     const db = Firebase.getInstance();
 
@@ -27,7 +32,12 @@ export class FirestoreMessageRepository implements MessageRepository {
     return snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }) as Message);
   }
 
-  async addMessage(message: Omit<Message, "id">): Promise<string> {
+  /**
+   * Appends a single message, automatically generating the id.
+   * @param message - The message to append
+   * @returns the id of the created messages
+   */
+  async addMessage(message: Omit<Message, 'id'>): Promise<string> {
     const db = Firebase.getInstance();
 
     const collectionRef = db
@@ -35,10 +45,15 @@ export class FirestoreMessageRepository implements MessageRepository {
       .doc(this.callId)
       .collection(FirestoreMessageRepository.COLLECTION);
 
-    const docRef = await collectionRef.add(message)
-    return docRef.id
-
+    const docRef = await collectionRef.add(message);
+    return docRef.id;
   }
+
+  /**
+   * Appends multiple messages in one batch, automatically
+   * generating the ids.
+   * @param messages - The messages to append
+   */
   async addMessages(messages: Omit<Message, 'id'>[]): Promise<void> {
     const db = Firebase.getInstance();
     const collectionRef = db
@@ -58,5 +73,22 @@ export class FirestoreMessageRepository implements MessageRepository {
       commits.push(batch.commit());
     }
     await Promise.all(commits);
+  }
+
+  /**
+   * Subscribes to message updates.
+   * @param callback - Called with all messages whenever a message is appended
+   * @returns an unsubscribe function
+   */
+  subscribe(callback: (messages: Message[]) => void): () => void {
+    const db = Firebase.getInstance();
+    const collectionRef = db
+      .collection(this.parentCollection)
+      .doc(this.callId)
+      .collection(FirestoreMessageRepository.COLLECTION);
+
+    return collectionRef.onSnapshot((snapshot) => {
+      callback(snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }) as Message));
+    });
   }
 }
