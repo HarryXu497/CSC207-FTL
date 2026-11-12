@@ -46,7 +46,7 @@ function emotionsWith(scores: Partial<Record<EmotionLabel, number>>): Emotion[] 
  */
 const scoreOf = (list: Emotion[], label: EmotionLabel) => list.find((e) => e.label === label)?.score;
 
-//THE BELOW TESTS ARE WELL DOCUMENTED AND DO NOT NEED ADDITIONAL COMMENTS
+//FOR THE BELOW: refer to the test titles for documentation for each test
 
 describe('emotionValence', () => {
   it('should average NRC valences by probability and skips ambiguous emotions', () => {

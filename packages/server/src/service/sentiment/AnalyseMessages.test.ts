@@ -1,4 +1,9 @@
-//IMPORTANT: npx vitest run AnalyseMessages.test.ts
+/**
+ * Test File for the class in AnalyseMessages.ts
+ * 
+ * IMPORTANT: npx vitest run AnalyseMessages.test.ts
+ */
+//TODO: add comments over tests
 
 import { EMOTION_LABELS, type Emotion, type EmotionLabel, type SentimentScore } from '@recall/shared';
 import type { EmotionClassifier, Vad, VadEstimator } from 'src/repository/sentiment/SentimentModels';
@@ -98,8 +103,10 @@ function sentimentOf(result: MessageResult | undefined): SentimentScore {
   return result.sentiment;
 }
 
+//FOR THE BELOW: refer to the test titles for documentation for each test
+
 describe('AnalyseMessages: validation', () => {
-  it('reports bad items per message, keeps order, and never sends them to a model', async () => {
+  it('should report bad items per message, keep order, and never sends them to a model', async () => {
     const { analyse, classifier } = build(
       (text) => (text.includes('happy') ? emotionsWith({ joy: 1 }) : emotionsWith({ anger: 1 })),
       (text) => ({ valence: text.includes('happy') ? 0.96 : -0.666, arousal: 0.8, dominance: 0.5 }),
@@ -113,7 +120,7 @@ describe('AnalyseMessages: validation', () => {
     expect(results[1]).toEqual({ ok: false, reason: 'empty' });
     expect(results[2]).toEqual({ ok: false, reason: 'not_a_string' });
     expect(sentimentOf(results[3]).score).toBeCloseTo(-0.666);
-    expect(results[4]).toEqual({ ok: false, reason: 'too_long' }); // limit is 5000 characters
+    expect(results[4]).toEqual({ ok: false, reason: 'too_long' }); // limit is 5000 characters for the messages
     expect(classifier.calls).toEqual(['happy words here', 'angry words here']);
   });
 });
@@ -126,9 +133,9 @@ describe('AnalyseMessages: short messages', () => {
     );
     const s = sentimentOf((await analyse.handle({ messages: ['Thanks so much, that fixed it!'] }))[0]);
 
-    expect(s.score).toBeCloseTo(0.78); // 0.5 * 0.96 + 0.5 * 0.6
-    expect(s.disagreement).toBeCloseTo(0.18); // |0.96 - 0.6| / 2
-    expect(s.intensity).toBeCloseTo(0.79); // 0.5 * 0.78 + 0.5 * 0.8
+    expect(s.score).toBeCloseTo(0.78);
+    expect(s.disagreement).toBeCloseTo(0.18);
+    expect(s.intensity).toBeCloseTo(0.79);
     expect(s.highConfidence).toBe(true);
     expect(s.emotions).toHaveLength(28);
     expect(s.emotions[0]?.label).toBe('joy');
