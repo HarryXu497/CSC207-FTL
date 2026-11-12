@@ -19,10 +19,10 @@ export interface BranchRepository {
 
   /**
    * Creates a branch from a given call and branch index
-   * @param callId The id of the call to branch from
-   * @param branchIndex The messages index from which to branch off from
+   * @param callId - The id of the call to branch from
+   * @param branchIndex - The messages index from which to branch off from
    */
-  createBranchFromCall(callId: string, branchIndex: string): Promise<string>;
+  createBranchFromCall(callId: string, branchIndex: number): Promise<string>;
 
   /**
    * Inserts a branch object, overwriting if a branch with the same ID already exists.

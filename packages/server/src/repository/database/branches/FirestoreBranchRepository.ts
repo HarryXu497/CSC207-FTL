@@ -1,7 +1,7 @@
 import type { Branch, Call } from '@recall/shared';
+import { FirestoreCallRepository } from '../calls';
 import { Firebase } from '../utils';
 import type { BranchRepository } from './BranchRepository';
-import { FirestoreCallRepository } from '../calls';
 
 /**
  * Firebase implementation of call repository
@@ -46,7 +46,10 @@ export class FirestoreBranchRepository implements BranchRepository {
    * @param callId The id of the call to branch from
    * @param branchIndex The messages index from which to branch off from
    */
-  async createBranchFromCall(callId: string, branchIndex: string): Promise<string> {
+  async createBranchFromCall(callId: string, branchIndex: number): Promise<string> {
+    if (branchIndex < 0) {
+      throw Error(`Branch index must be non-negative, got ${branchIndex}`);
+    }
     const db = Firebase.getInstance();
     const collectionRef = db.collection(FirestoreBranchRepository.COLLECTION);
 
@@ -55,11 +58,11 @@ export class FirestoreBranchRepository implements BranchRepository {
       throw Error(`Call document with id does not exist, got ${callId}`);
     }
 
-    const { id: _id, ...callData } = callSnapshot.data() as Call;
+    const callData = callSnapshot.data() as Omit<Call, 'id'>;
     const docRef = await collectionRef.add({
       ...callData,
       parentId: callId,
-      branchIndex: Number(branchIndex),
+      branchIndex: branchIndex,
     });
     return docRef.id;
   }

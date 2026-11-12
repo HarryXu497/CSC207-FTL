@@ -51,14 +51,17 @@ export class InMemoryBranchRepository implements BranchRepository {
     return branch;
   }
 
-  async createBranchFromCall(callId: string, branchIndex: string): Promise<string> {
+  async createBranchFromCall(callId: string, branchIndex: number): Promise<string> {
+    if (branchIndex < 0) {
+      throw Error(`Branch index must be non-negative, got ${branchIndex}`);
+    }
     const call = await this.callRepo.getCall(callId);
     const id = crypto.randomUUID();
     this.branches.set(id, {
       ...call,
       id,
       parentId: callId,
-      branchIndex: Number(branchIndex),
+      branchIndex: branchIndex,
     });
     return id;
   }

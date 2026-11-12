@@ -40,7 +40,7 @@ describe('getBranch', () => {
 
 describe('createBranchFromCall', () => {
   it('creates a branch from a call and returns its id', async () => {
-    const id = await branchRepo.createBranchFromCall('call-1002', '4');
+    const id = await branchRepo.createBranchFromCall('call-1002', 4);
     const branch = await branchRepo.getBranch(id);
 
     expect(branch.parentId).toBe('call-1002');
@@ -49,7 +49,7 @@ describe('createBranchFromCall', () => {
   });
 
   it('throws when the call does not exist', async () => {
-    await expect(branchRepo.createBranchFromCall('call-9999', '1')).rejects.toThrow('call-9999');
+    await expect(branchRepo.createBranchFromCall('call-9999', 1)).rejects.toThrow('call-9999');
   });
 });
 

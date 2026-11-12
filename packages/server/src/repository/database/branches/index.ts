@@ -1,3 +1,3 @@
-export * from './FirebaseBranchRepository';
+export * from './FirestoreBranchRepository';
 export * from './BranchRepository';
 export * from './InMemoryBranchRepository';
