@@ -2,6 +2,7 @@
  * In memory implementation of the data layer
  */
 import type { Call } from '@recall/shared';
+import { NotFoundError } from 'src/errors';
 import type { CallRepository } from './CallRepository';
 
 /** Demo rows */
@@ -45,7 +46,7 @@ export class InMemoryCallRepository implements CallRepository {
   async getCall(callId: string): Promise<Call> {
     const call = this.calls.get(callId);
     if (!call) {
-      throw Error(`Call document with id does not exist, got ${callId}`);
+      throw new NotFoundError('Call', callId);
     }
 
     return call;

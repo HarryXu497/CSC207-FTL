@@ -1,5 +1,12 @@
-import type { Call, CreateCallResponse, ListCallsResponse } from '@recall/shared';
+import type {
+  Call,
+  CreateCallResponse,
+  GetCallResponse,
+  GetCallsResponse,
+  ServerResponse,
+} from '@recall/shared';
 import { Router, type Response } from 'express';
+import { NotFoundError } from 'src/errors';
 import { randomUUID } from 'node:crypto';
 import type { CallRepository } from 'src/repository';
 import { CallsService } from 'src/service';
@@ -15,16 +22,32 @@ const createCallSchema = z.object({
 export function createCallsRouter(callRepo: CallRepository): Router {
   const router = Router();
   const getCalls = new CallsService.GetCalls(callRepo);
+  const getCall = new CallsService.GetCall(callRepo);
   const postCalls = new CallsService.PostCalls(callRepo);
+  const deleteCall = new CallsService.DeleteCall(callRepo);
 
   // Read from the database
-  router.get('/calls', async (_req, res: Response<ListCallsResponse>) => {
+  router.get('/calls', async (_req, res: Response<ServerResponse<GetCallsResponse>>) => {
     const calls = await getCalls.handle();
     res.json({ calls });
   });
 
-  // Write to the database
-  router.post('/calls', async (req, res) => {
+  router.get('/calls/:id', async (req, res: Response<ServerResponse<GetCallResponse>>) => {
+    const id = req.params.id;
+
+    try {
+      const call = await getCall.handle(id);
+      res.json({ call });
+    } catch (e) {
+      if (e instanceof NotFoundError) {
+        res.status(404).json({ error: { message: e.message } });
+      } else {
+        throw e;
+      }
+    }
+  });
+
+  router.post('/calls', async (req, res: Response<ServerResponse<CreateCallResponse>>) => {
     const parsed = createCallSchema.safeParse(req.body);
 
     if (!parsed.success) {
@@ -43,7 +66,22 @@ export function createCallsRouter(callRepo: CallRepository): Router {
     await postCalls.handle(call);
 
     // 201 Created since the request made a new resource
-    res.status(201).json({ call } satisfies CreateCallResponse);
+    res.status(201).json({ call });
+  });
+
+  router.delete('/calls/:id', async (req, res: Response<ServerResponse<never>>) => {
+    const id = req.params.id;
+
+    try {
+      await deleteCall.handle(id);
+      res.status(204).send();
+    } catch (e) {
+      if (e instanceof NotFoundError) {
+        res.status(404).json({ error: { message: e.message } });
+      } else {
+        throw e;
+      }
+    }
   });
 
   return router;

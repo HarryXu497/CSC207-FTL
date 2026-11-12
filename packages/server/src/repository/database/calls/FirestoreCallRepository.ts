@@ -1,4 +1,5 @@
 import type { Call } from '@recall/shared';
+import { NotFoundError } from 'src/errors';
 import { Firebase } from '../utils';
 import type { CallRepository } from './CallRepository';
 
@@ -31,7 +32,7 @@ export class FirestoreCallRepository implements CallRepository {
     const docRef = db.collection(FirestoreCallRepository.COLLECTION).doc(callId);
     const snapshot = await docRef.get();
     if (!snapshot.exists) {
-      throw Error(`Call document with id does not exist, got ${callId}`);
+      throw new NotFoundError('Call', callId);
     }
     return { id: snapshot.id, ...snapshot.data() } as Call;
   }

@@ -1,7 +1,7 @@
 /**
  * Integration tests
  */
-import type { ListCallsResponse } from '@recall/shared';
+import type { Call, GetCallsResponse } from '@recall/shared';
 import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { createApp } from 'src/server/app';
@@ -27,7 +27,7 @@ afterAll(async () => {
 describe('GET /api/calls', () => {
   it('returns the seeded calls, newest first', async () => {
     const response = await fetch(`${baseUrl}/calls`);
-    const body = (await response.json()) as ListCallsResponse;
+    const body = (await response.json()) as GetCallsResponse;
 
     expect(response.status).toBe(200);
     expect(body.calls).toHaveLength(2);
@@ -45,8 +45,9 @@ describe('POST /api/calls', () => {
 
     expect(response.status).toBe(201);
 
-    const list = (await (await fetch(`${baseUrl}/calls`)).json()) as ListCallsResponse;
-    expect(list.calls.some((c) => c.customerName === 'Marcus Webb')).toBe(true);
+    const listRes = await fetch(`${baseUrl}/calls`);
+    const list = (await listRes.json()) as GetCallsResponse;
+    expect(list.calls.some((c: Call) => c.customerName === 'Marcus Webb')).toBe(true);
   });
 
   it('rejects a missing customerName with a 400', async () => {
