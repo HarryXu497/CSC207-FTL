@@ -1,4 +1,9 @@
-import type { Call, CreateCallResponse, ListCallsResponse } from '@recall/shared';
+import type {
+  Call,
+  CreateCallResponse,
+  GetCallResponse,
+  GetCallsResponse,
+} from '@recall/shared';
 import { Router, type Response } from 'express';
 import { randomUUID } from 'node:crypto';
 import type { CallRepository } from 'src/repository';
@@ -15,15 +20,24 @@ const createCallSchema = z.object({
 export function createCallsRouter(callRepo: CallRepository): Router {
   const router = Router();
   const getCalls = new CallsService.GetCalls(callRepo);
+  const getCall = new CallsService.GetCall(callRepo);
   const postCalls = new CallsService.PostCalls(callRepo);
+  const deleteCall = new CallsService.DeleteCall(callRepo);
 
   // Read from the database
-  router.get('/calls', async (_req, res: Response<ListCallsResponse>) => {
+  router.get('/calls', async (_req, res: Response<GetCallsResponse>) => {
     const calls = await getCalls.handle();
     res.json({ calls });
   });
 
-  // Write to the database
+  router.get('/calls/:id', async (req, res: Response<GetCallResponse>) => {
+    const id = req.params.id;
+
+    const call = await getCall.handle(id);
+
+    res.json({ call });
+  });
+
   router.post('/calls', async (req, res) => {
     const parsed = createCallSchema.safeParse(req.body);
 
@@ -44,6 +58,14 @@ export function createCallsRouter(callRepo: CallRepository): Router {
 
     // 201 Created since the request made a new resource
     res.status(201).json({ call } satisfies CreateCallResponse);
+  });
+
+  router.delete('/calls/:id', async (req, res) => {
+    const id = req.params.id;
+
+    await deleteCall.handle(id);
+
+    res.status(204).send();
   });
 
   return router;
