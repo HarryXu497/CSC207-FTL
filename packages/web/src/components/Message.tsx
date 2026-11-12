@@ -1,4 +1,4 @@
-import type { SentimentScore } from '@recall/shared';
+import type { SentimentScore } from '@recall/server/entities';
 import ProfileIcon from './ProfileIcon';
 import Score from './Score';
 
@@ -13,18 +13,16 @@ type MessageProps = {
 export default function Message({ className = '', name, time, content, sentiment }: MessageProps) {
   return (
     <div className={`message ${className} flex`}>
-      <div className="score">{sentiment && <Score score={sentiment.score} />}</div>
+      <div className="score">
+        {sentiment && <Score score={sentiment.score} sentimentScale />}
+      </div>
       <div>
         <div className="messageHeader">
           <ProfileIcon name={name} />
           <div>
             <p className="text-lg font-bold">{name}</p>
             <p className="text-sm text-secondary">
-              {time.toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-              })}
+              {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
             </p>
           </div>
         </div>

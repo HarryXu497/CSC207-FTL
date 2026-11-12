@@ -1,5 +1,6 @@
 type ScoreProps = {
   score: number;
+  sentimentScale?: boolean;
 };
 
 export default function Score({score}: ScoreProps) {
