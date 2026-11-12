@@ -5,5 +5,5 @@
     "baseUrl": ".",
     "paths": { "@recall/shared": ["../shared/src/index.ts"] }
   },
-  "include": ["src", "../shared/src/repository/database/sentiment.ts"]
+  "include": ["src", "../shared/src/repository/sentiment/index.ts"]
 }
