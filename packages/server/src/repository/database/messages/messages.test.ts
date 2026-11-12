@@ -37,7 +37,9 @@ describe('addMessage', () => {
 describe('subscribe', () => {
   it('calls the callback with all messages when one is added', async () => {
     let snapshot: Message[] = [];
-    const unsubscribe = repo.subscribe((msgs) => { snapshot = msgs; });
+    const unsubscribe = repo.subscribe((msgs) => {
+      snapshot = msgs;
+    });
 
     await repo.addMessage({ role: 'agent', content: 'Hi', createdAt: '2026-09-28T17:00:00.000Z' });
 
@@ -48,7 +50,9 @@ describe('subscribe', () => {
 
   it('stops receiving updates after unsubscribing', async () => {
     let callCount = 0;
-    const unsubscribe = repo.subscribe(() => { callCount++; });
+    const unsubscribe = repo.subscribe(() => {
+      callCount++;
+    });
     unsubscribe();
 
     await repo.addMessage({ role: 'agent', content: 'Hi', createdAt: '2026-09-28T17:00:00.000Z' });

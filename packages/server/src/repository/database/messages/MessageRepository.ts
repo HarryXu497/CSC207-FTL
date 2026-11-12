@@ -15,7 +15,7 @@ export interface MessageRepository {
    * @param message - The message to append
    * @returns the id of the created messages
    */
-  addMessage(message: Omit<Message, "id">): Promise<string>;
+  addMessage(message: Omit<Message, 'id'>): Promise<string>;
 
   /**
    * Appends multiple messages in one batch, automatically

@@ -67,7 +67,9 @@ export class FirestoreBranchRepository implements BranchRepository {
       .get();
 
     if (branchIndex >= messagesSnapshot.size) {
-      throw Error(`Branch index out of range: got ${branchIndex}, call has ${messagesSnapshot.size} messages`);
+      throw Error(
+        `Branch index out of range: got ${branchIndex}, call has ${messagesSnapshot.size} messages`,
+      );
     }
 
     const messagesToCopy = messagesSnapshot.docs
