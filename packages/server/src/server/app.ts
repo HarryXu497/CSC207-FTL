@@ -6,12 +6,14 @@ import express, { type Express } from 'express';
 import type { BranchRepository, CallRepository } from 'src/repository';
 import type { MessageRepoFactory } from './routers';
 import { createRouter } from './routes';
+import type { SentimentDeps } from './routers';
 
 export function createApp(
   callRepo: CallRepository,
   branchRepo: BranchRepository,
   messageRepoFactory: MessageRepoFactory,
   backend: 'memory' | 'firestore',
+  sentiment?: SentimentDeps,
 ): Express {
   const app = express();
 
@@ -26,7 +28,7 @@ export function createApp(
   });
 
   // Routes
-  app.use('/api', createRouter(callRepo, branchRepo, messageRepoFactory, backend));
+  app.use('/api', createRouter(callRepo, branchRepo, messageRepoFactory, backend, sentiment));
 
   // Errors
   app.use(
