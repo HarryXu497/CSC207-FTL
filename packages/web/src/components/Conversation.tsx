@@ -1,6 +1,6 @@
 import Card from './Card';
 import Message from './Message';
-import type { Message as MessageData, SentimentScore } from '@recall/shared';
+import type { Message as MessageData, SentimentScore } from '@recall/server/entities';
 
 type ConversationProps = {
   messages: MessageData[];
