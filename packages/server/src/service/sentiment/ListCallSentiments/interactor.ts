@@ -1,4 +1,4 @@
-import type { MessageSentiment } from '@recall/shared';
+import { NotFoundError } from 'src/errors';
 import type { CallRepository } from 'src/repository';
 import {
   FirestoreCallRepository,
@@ -6,16 +6,27 @@ import {
   type MessageRepositoryBuilder,
   type MessageResult,
 } from 'src/repository';
+import type { ListCallsSentimentInputBoundary, ListCallsSentimentInputData } from './input';
+import type { ListCallsSentimentOutputBoundary } from './output';
 
-export class GetCallSentiment {
+export class ListCallSentimentInteractor implements ListCallsSentimentInputBoundary {
   constructor(
     private readonly callsRepo: CallRepository,
     private readonly messageRepoFactory: MessageRepositoryBuilder,
     private readonly analyseMessages: AnalyseMessages,
   ) {}
 
-  async handle(callId: string): Promise<MessageSentiment[]> {
-    await this.callsRepo.getCall(callId);
+  async handle(
+    { callId }: ListCallsSentimentInputData,
+    presenter: ListCallsSentimentOutputBoundary,
+  ): Promise<void> {
+    try {
+      await this.callsRepo.getCall(callId);
+    } catch (e) {
+      if (e instanceof NotFoundError) {
+        presenter.presentNotFound(`Call with id ${callId} not found.`);
+      }
+    }
 
     const messages = await this.messageRepoFactory(
       FirestoreCallRepository.COLLECTION,
@@ -26,12 +37,13 @@ export class GetCallSentiment {
       messages: messages.map((message) => message.content),
     });
 
-    return messages
+    const messageSentiments = messages
       .filter((_, i) => Boolean(results[i]))
       .map((message, i) => {
         const result = results[i] as MessageResult;
-
         return { messageId: message.id, result };
       });
+
+    presenter.present({ messageSentiments });
   }
 }
