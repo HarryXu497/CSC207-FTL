@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import type { Call } from '@recall/shared';
 import { api } from './api';
+import type { Call } from '@recall/server/entities';
 
 export default function App() {
   const [calls, setCalls] = useState<Call[]>([]);
