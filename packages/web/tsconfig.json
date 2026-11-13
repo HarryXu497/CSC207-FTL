@@ -7,9 +7,9 @@
     "baseUrl": ".",
     "paths": {
       "@recall/shared": ["../shared/src/index.ts"],
-      "@recall/server/*": ["../server/src/*"]
+      "@recall/server/*": ["../server/src/*"],
+      "src/*": ["../server/src/*"]
     }
   },
-  "references": [{ "path": "../server" }],
   "include": ["src", "vite.config.ts"]
 }
