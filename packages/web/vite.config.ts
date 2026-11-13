@@ -10,6 +10,7 @@ export default defineConfig({
     // Alias the shared package under the path '@recall/shared'
     alias: {
       '@recall/shared': fileURLToPath(new URL('../shared/src/index.ts', import.meta.url)),
+      '@recall/server': fileURLToPath(new URL('../server/src', import.meta.url)),
     },
   },
 
