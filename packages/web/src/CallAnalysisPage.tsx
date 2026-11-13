@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Conversation from './components/Conversation';
 import NavBar from './components/NavBar';
-import type { Message, MessageSentiment, SentimentScore } from '@recall/shared';
+import type { Message, MessageSentiment, SentimentScore } from '@recall/server/entities';
 import { api } from './api';
 
 const callId = 'kFUP9GB6kqRGAH6PejgE';
@@ -35,7 +35,12 @@ export default function CallAnalysisPage() {
     const controller = new AbortController();
     async function load() {
       try {
-        const { sentiments } = await api.getCallSentiment(callId, controller.signal);
+        const response = await api.getCallSentiment(callId, controller.signal);
+        if ("error" in response) {
+          throw new Error(response.error.message);
+        }
+        const sentiments = response.messageSentiments;
+
         if (controller.signal.aborted) return;
         setSentiments(sentiments);
         setSentimentError(null);
