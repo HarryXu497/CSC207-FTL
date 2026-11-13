@@ -1,5 +1,6 @@
+import type { Document } from 'src/entities';
 import type { ChatModel } from '../llm';
-import type { Document, Retriever } from '../retriever';
+import type { Retriever } from '../retriever';
 import type { GenerationResult, Generator } from './Generator';
 
 /**

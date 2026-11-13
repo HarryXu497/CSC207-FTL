@@ -4,9 +4,9 @@
  * Run with: npx vitest run TransformerModels.test.ts
  */
 
-import { EMOTION_LABELS } from '@recall/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GoEmotionsClassifier, VadBertEstimator } from './TransformersModels';
+import { EMOTION_LABELS } from 'src/entities';
 
 /**
  * Creates the fake pieces of the Hugging Face library that the tests will use.

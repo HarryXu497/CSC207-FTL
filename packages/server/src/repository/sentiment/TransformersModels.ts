@@ -2,8 +2,7 @@
  * Hugging Face (transformers.js) implementations of the sentiment model interfaces.
  * Only this file may import @huggingface/transformers.
  */
-
-import { EMOTION_LABELS, isEmotionLabel, type Emotion } from '@recall/shared';
+import { EMOTION_LABELS, isEmotionLabel, type Emotion } from 'src/entities';
 import type { EmotionClassifier, Vad, VadEstimator } from './SentimentModels';
 
 // Minimal type descriptions of the three library objects this file uses to ensure type safety

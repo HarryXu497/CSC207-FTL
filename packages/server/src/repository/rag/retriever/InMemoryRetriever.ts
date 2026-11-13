@@ -1,4 +1,4 @@
-import type { Document } from '@recall/shared';
+import type { Document } from 'src/entities';
 import type { Retriever } from './Retriever';
 
 /**

@@ -1,7 +1,6 @@
 /**
  * Integration tests
  */
-import type { Call, GetCallsResponse } from '@recall/shared';
 import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { createApp } from 'src/server/app';
@@ -9,6 +8,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { InMemoryBranchRepository } from '../branches';
 import { InMemoryMessageRepository } from '../messages';
 import { InMemoryCallRepository } from './InMemoryCallRepository';
+import type { GetCallsResponse } from 'src/service/calls/GetCalls';
+import type { Call } from 'src/entities';
 
 let server: Server;
 let baseUrl: string;
@@ -20,7 +21,7 @@ beforeAll(async () => {
     new InMemoryBranchRepository(callRepo, () => new InMemoryMessageRepository()),
     () => new InMemoryMessageRepository(),
     'memory',
-    null
+    null,
   );
   // Port 0 corresponds to any free port
   server = app.listen(0);

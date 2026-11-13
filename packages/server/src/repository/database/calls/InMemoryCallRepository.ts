@@ -1,9 +1,9 @@
 /**
  * In memory implementation of the data layer
  */
-import type { Call } from '@recall/shared';
 import { NotFoundError } from 'src/errors';
 import type { CallRepository } from './CallRepository';
+import type { Call } from 'src/entities';
 
 /** Demo rows */
 const SEED: Call[] = [

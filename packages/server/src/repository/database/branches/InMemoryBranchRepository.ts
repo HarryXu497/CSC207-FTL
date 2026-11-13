@@ -1,7 +1,7 @@
 /**
  * In memory implementation of the data layer
  */
-import type { Branch } from '@recall/shared';
+import type { Branch } from 'src/entities';
 import type { CallRepository } from '../calls/CallRepository';
 import type { MessageRepositoryBuilder } from '../messages/MessageRepositoryFactory';
 import type { BranchRepository } from './BranchRepository';

@@ -5,7 +5,8 @@
  * tuned by hand (weights, thresholds) lives in ScoringConfig so it can be
  * changed in one place.
  */
-import type { Emotion, EmotionLabel } from '@recall/shared';
+
+import type { Emotion, EmotionLabel } from 'src/entities';
 
 /**
  * A mapping of each GoEmotions label to a valence value on a scale from -1 (very negative) to

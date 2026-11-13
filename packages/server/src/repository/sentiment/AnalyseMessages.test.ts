@@ -3,18 +3,12 @@
  *
  * IMPORTANT: npx vitest run AnalyseMessages.test.ts
  */
-//TODO: add comments over tests
 
-import {
-  EMOTION_LABELS,
-  type Emotion,
-  type EmotionLabel,
-  type SentimentScore,
-} from '@recall/shared';
 import type { EmotionClassifier, Vad, VadEstimator } from 'src/repository';
 import { describe, expect, it } from 'vitest';
 import { AnalyseMessages, type MessageResult } from './AnalyseMessages';
 import { DEFAULT_SCORING_CONFIG, type ScoringConfig } from './scoring';
+import { EMOTION_LABELS, type Emotion, type EmotionLabel, type SentimentScore } from 'src/entities';
 
 const CONFIG: ScoringConfig = DEFAULT_SCORING_CONFIG;
 
