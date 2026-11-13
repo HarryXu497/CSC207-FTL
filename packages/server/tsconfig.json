@@ -2,8 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "types": ["node"],
-    "baseUrl": ".",
-    "paths": { "@recall/shared": ["../shared/src/index.ts"] }
+    "baseUrl": "."
   },
-  "include": ["src", "../shared/src"]
+  "include": ["src"]
 }
