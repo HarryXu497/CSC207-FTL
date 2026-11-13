@@ -6,7 +6,6 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@recall/shared": ["../shared/src/index.ts"],
       "@recall/server/*": ["../server/src/*"],
       "src/*": ["../server/src/*"]
     }
