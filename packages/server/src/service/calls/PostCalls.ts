@@ -1,5 +1,5 @@
 import type { Call } from '@recall/shared';
-import type { CallRepository } from 'src/repository/database/calls/CallRepository';
+import type { CallRepository } from 'src/repository';
 
 export class PostCalls {
   constructor(private readonly callsRepo: CallRepository) {}
