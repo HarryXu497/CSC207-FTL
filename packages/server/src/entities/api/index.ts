@@ -3,4 +3,4 @@ export interface ApiErrorBody {
   error: { message: string; details?: unknown };
 }
 
-export type ServerResponse<T> = ApiErrorBody | T;
+export type WithError<T> = ApiErrorBody | T;

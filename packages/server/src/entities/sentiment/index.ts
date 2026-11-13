@@ -1,5 +1,5 @@
 /**
- * This file defines emotion and sentiment types shared across the sentiment analysis pipeline (both on server and web)
+ * This file defines emotion and sentiment entities shared across the sentiment analysis pipeline
  *
  * Defines the emotion label taxonomy (the 27 GoEmotions categories plus
  * "neutral" based on the GoEmotions dataset used in the sentiment models: https://research.google/blog/goemotions-a-dataset-for-fine-grained-emotion-classification/), a type guard for validating labels from model output, and the
@@ -64,22 +64,30 @@ export interface Emotion {
   score: number;
 }
 
+/**
+ * An interface representing a SentimentScore
+ */
 export interface SentimentScore {
-  /**
-   * An interface representing a SentimentScore
-   *
-   * Attributes:
-   * -valenceScore: overall valence: -1 (very negative) to 1 (very positive).
-   * -intensity: how strongly the message is felt: 0 (flat) to 1 (intense).
-   * -emotions: all emotions detected when making sentiment score, sorted by probability, highest first
-   * -highConfidence: false for very short messages or when the two models disagree.
-   * -ambiguity: how strongly an ambiguous emotion (surprise, confusion, ...) played a factor: 0 to 1.
-   * -disagreement: How far the emotion model and the VAD model disagree: 0 (agree) to 1 (opposite).
-   */
+  /** Overall valence: -1 (very negative) to 1 (very positive) */
   score: number;
+  /** Strength of the message: 0 (flat) to 1 (intense) */
   intensity: number;
+  /** All emotions detected when making sentiment score, sorted by probability, highest first */
   emotions: Emotion[];
+  /** False for very short messages or when the two models disagree, true otherwise */
   highConfidence: boolean;
+  /** How strongly an ambiguous emotion (surprise, confusion, ...) played a factor: 0 to 1. */
   ambiguity: number;
+  /** How far the emotion model and the VAD model disagree: 0 (agree) to 1 (opposite). */
   disagreement: number;
+}
+
+export type SentimentFailureReason = 'empty' | 'not_a_string' | 'too_long';
+
+export type SentimentResult =
+  { ok: true; sentiment: SentimentScore } | { ok: false; reason: SentimentFailureReason };
+
+export interface MessageSentiment {
+  messageId: string;
+  result: SentimentResult;
 }
