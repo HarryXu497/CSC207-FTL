@@ -20,7 +20,7 @@ beforeAll(async () => {
     new InMemoryBranchRepository(callRepo, () => new InMemoryMessageRepository()),
     () => new InMemoryMessageRepository(),
     'memory',
-    null
+    null,
   );
   // Port 0 corresponds to any free port
   server = app.listen(0);
