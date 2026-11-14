@@ -1,4 +1,4 @@
-import type { Branch } from '@recall/shared';
+import type { Branch } from 'src/entities';
 import type { BranchRepository } from 'src/repository';
 
 export class GetBranches {

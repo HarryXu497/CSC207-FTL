@@ -1,7 +1,7 @@
-import type { Call } from '@recall/shared';
 import { NotFoundError } from 'src/errors';
 import { Firebase } from '../utils';
 import type { CallRepository } from './CallRepository';
+import type { Call } from 'src/entities';
 
 /**
  * Firebase implementation of call repository

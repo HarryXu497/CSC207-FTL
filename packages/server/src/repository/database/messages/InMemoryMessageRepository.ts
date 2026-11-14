@@ -1,7 +1,7 @@
 /**
  * In memory implementation of the data layer
  */
-import type { Message } from '@recall/shared';
+import type { Message } from 'src/entities';
 import type { MessageRepository } from './MessageRepository';
 
 /** Demo rows */

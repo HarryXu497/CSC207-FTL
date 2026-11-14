@@ -1,14 +1,11 @@
-import type {
-  CreateMessageResponse,
-  GetMessagesResponse,
-  Message,
-  ServerResponse,
-} from '@recall/shared';
 import { Router, type Request, type Response } from 'express';
 import type { MessageRepository } from 'src/repository';
 import { MessagesService } from 'src/service';
 import { z } from 'zod';
 import { buildErrorFromSafeParseError } from '../utils';
+import type { Message, WithError } from 'src/entities';
+import type { GetMessagesResponse } from 'src/service/messages/GetMessages';
+import type { CreateMessageResponse } from 'src/service/messages/PostMessages';
 
 const postMessageSchema = z.object({
   role: z.enum(['agent', 'customer']),
@@ -23,7 +20,7 @@ export type MessageRepoFactory = (
 /** Returns all messages for a call or branch. */
 async function getMessages(
   repo: MessageRepository,
-  res: Response<ServerResponse<GetMessagesResponse>>,
+  res: Response<WithError<GetMessagesResponse>>,
 ): Promise<void> {
   const getMessages = new MessagesService.GetMessages(repo);
   const messages = await getMessages.handle();
@@ -34,7 +31,7 @@ async function getMessages(
 async function postMessage(
   repo: MessageRepository,
   req: Request,
-  res: Response<ServerResponse<CreateMessageResponse>>,
+  res: Response<WithError<CreateMessageResponse>>,
 ): Promise<void> {
   const parsed = postMessageSchema.safeParse(req.body);
   if (!parsed.success) {

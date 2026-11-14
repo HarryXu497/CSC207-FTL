@@ -5,7 +5,10 @@
     "types": ["vite/client"],
     "jsx": "react-jsx",
     "baseUrl": ".",
-    "paths": { "@recall/shared": ["../shared/src/index.ts"] }
+    "paths": {
+      "@recall/server/*": ["../server/src/*"],
+      "src/*": ["../server/src/*"]
+    }
   },
   "include": ["src", "vite.config.ts"]
 }

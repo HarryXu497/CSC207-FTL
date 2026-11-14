@@ -1,4 +1,4 @@
-import type { Branch } from '@recall/shared';
+import type { Branch } from 'src/entities';
 
 /**
  * Represents a repository object that operates with branches.

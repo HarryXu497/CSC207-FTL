@@ -1,12 +1,6 @@
-/**
- *
- */
-import type {
-  ApiErrorBody,
-  CreateCallRequest,
-  CreateCallResponse,
-  GetCallsResponse,
-} from '@recall/shared';
+import type { ApiErrorBody } from '@recall/server/entities';
+import type { GetCallsResponse } from '@recall/server/service/calls/GetCalls';
+import type { CreateCallRequest, CreateCallResponse } from '@recall/server/service/calls/PostCalls';
 
 const BASE_URL = '/api';
 

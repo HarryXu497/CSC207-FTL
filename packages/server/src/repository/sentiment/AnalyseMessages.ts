@@ -5,7 +5,6 @@
  * It does not know which models are behind the interfaces. Contains the AnalyseMessage function which
  * will be used to analyse all messages. I expect files wanting to access sentiment scoring to use AnalyseMessage.
  */
-import type { Emotion, SentimentScore } from '@recall/shared';
 import type { EmotionClassifier, VadEstimator } from 'src/repository';
 import {
   DEFAULT_SCORING_CONFIG,
@@ -23,6 +22,7 @@ import {
   splitChatMessage,
   type ScoringConfig,
 } from './scoring';
+import type { Emotion, SentimentScore } from 'src/entities';
 
 /** Longest message accepted, in characters. Protects the models from huge inputs. */
 const MAX_MESSAGE_CHARS = 5000;
