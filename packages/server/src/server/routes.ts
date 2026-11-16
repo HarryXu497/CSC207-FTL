@@ -5,6 +5,7 @@ import { Router } from 'express';
 import type { BranchRepository, CallRepository } from 'src/repository';
 import {
   createCallsRouter,
+  createDocumentsRouter,
   createHealthRouter,
   createMessagesRouter,
   createSentimentRouter,
@@ -24,6 +25,7 @@ export function createRouter(
 
   router.use(createHealthRouter(backend));
   router.use(createCallsRouter(callRepo));
+  router.use(createDocumentsRouter());
   router.use(createBranchesRouter(branchRepo));
   router.use(createMessagesRouter(messageRepoFactory));
   router.use(createSentimentRouter(callRepo, sentiment));
