@@ -13,7 +13,7 @@ type MessageProps = {
 export default function Message({ className = '', name, time, content, sentiment }: MessageProps) {
   return (
     <div className={`message ${className} flex`}>
-      <div className="score">{sentiment && <Score score={sentiment.score} sentimentScale />}</div>
+      <div className="score">{sentiment && <Score score={sentiment.score} />}</div>
       <div>
         <div className="messageHeader">
           <ProfileIcon name={name} />
