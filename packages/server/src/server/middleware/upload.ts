@@ -45,3 +45,9 @@ export function documentFileFilter(
 
   callback(null, true);
 }
+
+export const documentUpload = multer({
+  storage: documentStorage,
+  fileFilter: documentFileFilter,
+  limits: { fileSize: MAX_DOCUMENT_UPLOAD_BYTES, files: 1 },
+});
