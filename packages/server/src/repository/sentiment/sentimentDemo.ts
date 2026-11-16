@@ -8,7 +8,11 @@
  */
 
 import path from 'node:path';
-import { GoEmotionsClassifier, VadBertEstimator } from './TransformersModels';
+import {
+  GoEmotionsClassifier,
+  TwitterRobertaIronyDetector,
+  VadBertEstimator,
+} from './TransformersModels';
 import { AnalyseMessages } from './AnalyseMessages';
 
 const TOP_EMOTIONS_TO_SHOW = 5; // display concern, so it lives here and not in the service
@@ -36,6 +40,16 @@ const TEST_MESSAGES: unknown[] = [
   'Wait, what is going on here?',
   "Hmm, I'm not sure I understand how this works.",
   'Wow, I did not expect that.',
+
+  // Clearly ironic examples: the positive wording contradicts the negative situation
+  'Oh fantastic, another outage. Exactly what I needed today.',
+  "Wonderful, I've only been waiting on hold for two hours.",
+  'Great job fixing it. The problem is somehow even worse now.',
+
+  // Uncertain examples: these could be sincere or ironic without more context or tone
+  'Well, that went exactly as expected.',
+  'Thanks for that.',
+  'What a surprise.',
 
   // Neutral examples
   'My order number is 48213.',
@@ -67,17 +81,28 @@ async function main(): Promise<void> {
   const modelDir = process.env.MODEL_DIR;
 
   if (!modelDir) {
-    throw new Error('Set MODEL_DIR to the folder that contains goemotions/ and vad/.');
+    throw new Error(
+      'Set MODEL_DIR to the folder that contains goemotions-roberta/, vad/, and irony/.',
+    );
   }
 
   const resolvedDir = path.resolve(modelDir);
 
   const classifier = await GoEmotionsClassifier.create(resolvedDir);
   const vadEstimator = await VadBertEstimator.create(resolvedDir);
+  const ironyDetector = await TwitterRobertaIronyDetector.create(resolvedDir);
   const analyse = new AnalyseMessages(classifier, vadEstimator);
 
   console.log('\n=== DEMO OUTPUT ===');
   const results = await analyse.handle({ messages: TEST_MESSAGES });
+  const ironyScores = await Promise.all(
+    TEST_MESSAGES.map((message, i) => {
+      const result = results[i];
+      return result?.ok && typeof message === 'string'
+        ? ironyDetector.detect(message.trim())
+        : Promise.resolve(null);
+    }),
+  );
 
   TEST_MESSAGES.forEach((message, i) => {
     const result = results[i];
@@ -92,6 +117,8 @@ async function main(): Promise<void> {
 
       console.log({
         score: Number(s.score.toFixed(3)),
+
+        ironyScore: Number((ironyScores[i] ?? 0).toFixed(3)),
 
         intensity: Number(s.intensity.toFixed(3)),
 
