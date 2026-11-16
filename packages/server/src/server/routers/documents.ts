@@ -1,6 +1,6 @@
 import type { ServerResponse, UploadDocumentResponse } from '@recall/shared';
 import { Router, type Response } from 'express';
-import { documentUpload } from '../middleware';
+import { documentUpload, handleUploadErrors } from '../middleware';
 
 export function createDocumentsRouter(): Router {
   const router = Router();
@@ -25,6 +25,8 @@ export function createDocumentsRouter(): Router {
       });
     },
   );
+
+  router.use(handleUploadErrors);
 
   return router;
 }
