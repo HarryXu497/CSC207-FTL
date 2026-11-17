@@ -65,11 +65,31 @@ cp packages/server/.env.example packages/server/.env
 
 ## API
 
-| Method | Path          | Body                             | Returns               |
-| ------ | ------------- | -------------------------------- | --------------------- |
-| GET    | `/api/health` | —                                | `{ status, backend }` |
-| GET    | `/api/calls`  | —                                | `{ calls: Call[] }`   |
-| POST   | `/api/calls`  | `{ customerName, topic, score }` | `201 { call }`        |
+| Method | Path             | Body                             | Returns               |
+| ------ | ---------------- | -------------------------------- | --------------------- |
+| GET    | `/api/health`    | —                                | `{ status, backend }` |
+| GET    | `/api/calls`     | —                                | `{ calls: Call[] }`   |
+| POST   | `/api/calls`     | `{ customerName, topic, score }` | `201 { call }`        |
+| POST   | `/api/documents` | Multipart form data: `file`      | `201 { document }`    |
+
+## Document uploads
+
+`POST /api/documents` accepts one file as `multipart/form-data`, using the field
+name `file`.
+
+Allowed filename extensions are `.txt`, `.md`, and `.pdf` (case-insensitive).
+The maximum file size is **10 MiB (10,485,760 bytes)**.
+
+### Upload errors
+
+| Status | Meaning                                                                        |
+| ------ | ------------------------------------------------------------------------------ |
+| 400    | Missing file, extra files, unexpected file field, or malformed multipart data. |
+| 413    | File exceeds the 10 MiB size limit.                                            |
+| 415    | Unsupported filename extension.                                                |
+| 500    | Unexpected server or storage failure.                                          |
+
+Errors use the shape `{ "error": { "message": "..." } }`.
 
 ## Sentiment Analysis
 
