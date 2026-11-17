@@ -20,17 +20,14 @@ export class MessagesController {
       return;
     }
 
-    const interactor = new ListMessagesInteractor(
-      this.callsRepo,
-      this.messageRepoFactory,
-    );
+    const interactor = new ListMessagesInteractor(this.callsRepo, this.messageRepoFactory);
 
     await interactor.handle({ callId }, presenter);
   }
 
   router(): Router {
     const router = Router();
-    
+
     router.get('/calls/:callId/messages', async (req, res) =>
       this.listMessages(req, new ListMessagesPresenter(res)),
     );
@@ -38,4 +35,3 @@ export class MessagesController {
     return router;
   }
 }
-  

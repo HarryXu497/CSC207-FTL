@@ -1,4 +1,4 @@
-import type {Message} from 'src/entities';
+import type { Message } from 'src/entities';
 
 export interface ListMessagesOutputBoundary {
   present(output: ListMessagesOutputData): void;
