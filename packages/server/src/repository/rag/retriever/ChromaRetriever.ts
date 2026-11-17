@@ -1,6 +1,6 @@
-import type { Document } from '@recall/shared';
 import type { ChromaClient, QueryResult } from 'chromadb';
 import type { Retriever } from './Retriever';
+import type { Document } from 'src/entities';
 
 /**
  * Type definition for clients/mocks that support direct querying without

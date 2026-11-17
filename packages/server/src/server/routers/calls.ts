@@ -1,15 +1,12 @@
-import type {
-  Call,
-  CreateCallResponse,
-  GetCallResponse,
-  GetCallsResponse,
-  ServerResponse,
-} from '@recall/shared';
 import { Router, type Response } from 'express';
-import { NotFoundError } from 'src/errors';
 import { randomUUID } from 'node:crypto';
+import type { Call, WithError } from 'src/entities';
+import { NotFoundError } from 'src/errors';
 import type { CallRepository } from 'src/repository';
 import { CallsService } from 'src/service';
+import type { GetCallResponse } from 'src/service/calls/GetCall';
+import type { GetCallsResponse } from 'src/service/calls/GetCalls';
+import type { CreateCallResponse } from 'src/service/calls/PostCalls';
 import { z } from 'zod';
 import { buildErrorFromSafeParseError } from '../utils';
 
@@ -27,12 +24,12 @@ export function createCallsRouter(callRepo: CallRepository): Router {
   const deleteCall = new CallsService.DeleteCall(callRepo);
 
   // Read from the database
-  router.get('/calls', async (_req, res: Response<ServerResponse<GetCallsResponse>>) => {
+  router.get('/calls', async (_req, res: Response<WithError<GetCallsResponse>>) => {
     const calls = await getCalls.handle();
     res.json({ calls });
   });
 
-  router.get('/calls/:id', async (req, res: Response<ServerResponse<GetCallResponse>>) => {
+  router.get('/calls/:id', async (req, res: Response<WithError<GetCallResponse>>) => {
     const id = req.params.id;
 
     try {
@@ -47,7 +44,7 @@ export function createCallsRouter(callRepo: CallRepository): Router {
     }
   });
 
-  router.post('/calls', async (req, res: Response<ServerResponse<CreateCallResponse>>) => {
+  router.post('/calls', async (req, res: Response<WithError<CreateCallResponse>>) => {
     const parsed = createCallSchema.safeParse(req.body);
 
     if (!parsed.success) {
@@ -69,7 +66,7 @@ export function createCallsRouter(callRepo: CallRepository): Router {
     res.status(201).json({ call });
   });
 
-  router.delete('/calls/:id', async (req, res: Response<ServerResponse<never>>) => {
+  router.delete('/calls/:id', async (req, res: Response<WithError<never>>) => {
     const id = req.params.id;
 
     try {

@@ -1,4 +1,4 @@
-import type { Call } from '@recall/shared';
+import type { Call } from 'src/entities';
 
 /**
  * Represents a repository object that operates with calls.

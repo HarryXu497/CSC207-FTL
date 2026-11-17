@@ -1,4 +1,4 @@
-import type { CallRepository } from 'src/repository/database/calls/CallRepository';
+import type { CallRepository } from 'src/repository';
 
 export class DeleteCall {
   constructor(private readonly callsRepo: CallRepository) {}

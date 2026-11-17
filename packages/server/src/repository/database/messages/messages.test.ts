@@ -3,7 +3,7 @@
  */
 import { beforeEach, describe, expect, it } from 'vitest';
 import { InMemoryMessageRepository } from './InMemoryMessageRepository';
-import type { Message } from '@recall/shared';
+import type { Message } from 'src/entities';
 
 let repo: InMemoryMessageRepository;
 

@@ -2,7 +2,8 @@
  * Contracts for the two models the sentiment service depends on.
  * The service imports these interfaces only, never the Transformers classes to ensure Clean Architecture.
  */
-import type { Emotion } from '@recall/shared';
+
+import type { Emotion } from 'src/entities';
 
 /**
  * An interface that depicts the result of the VAD model

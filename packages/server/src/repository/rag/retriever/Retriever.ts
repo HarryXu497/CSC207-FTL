@@ -1,6 +1,4 @@
-import type { Document } from '@recall/shared';
-
-export type { Document };
+import type { Document } from 'src/entities';
 
 /**
  * Interface for knowledge base document retrieval.

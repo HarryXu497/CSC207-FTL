@@ -4,7 +4,6 @@
  * IMPORTANT: use "npx vitest run scoring.test.ts" to run tests
  */
 
-import { EMOTION_LABELS, type Emotion, type EmotionLabel } from '@recall/shared';
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_SCORING_CONFIG,
@@ -20,6 +19,7 @@ import {
   splitChatMessage,
   type ScoringConfig,
 } from './scoring';
+import { EMOTION_LABELS, type Emotion, type EmotionLabel } from 'src/entities';
 
 const CONFIG: ScoringConfig = DEFAULT_SCORING_CONFIG;
 

@@ -1,7 +1,7 @@
 /**
  * Firebase Firestore implementation of the data layer
  */
-import type { Message } from '@recall/shared';
+import type { Message } from 'src/entities';
 import { Firebase } from '../utils';
 import type { MessageRepository } from './MessageRepository';
 

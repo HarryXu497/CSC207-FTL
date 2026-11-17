@@ -1,11 +1,11 @@
-import type { UploadDocumentResponse } from '@recall/shared';
+import type { UploadDocumentResponse } from 'src/entities';
 import { readFile, readdir, unlink } from 'node:fs/promises';
 import { createServer, type Server } from 'node:http';
 import { join } from 'node:path';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { InMemoryBranchRepository } from '../../repository/database/branches/InMemoryBranchRepository';
 import { InMemoryCallRepository } from '../../repository/database/calls/InMemoryCallRepository';
-import { InMemoryMessageRepository } from '../../repository/database/messages/InMemoryMessageRepository';
+import { createMessageRepositoryBuilder } from '../../repository/database/messages/MessageRepositoryFactory';
 import { createApp } from '../app';
 import { DOCUMENT_UPLOAD_DIRECTORY, MAX_DOCUMENT_UPLOAD_BYTES } from '../middleware';
 
@@ -15,8 +15,9 @@ const savedFiles = new Set<string>();
 
 beforeAll(async () => {
   const calls = new InMemoryCallRepository([]);
-  const branches = new InMemoryBranchRepository(calls, []);
-  const app = createApp(calls, branches, () => new InMemoryMessageRepository([]), 'memory');
+  const messageRepoFactory = createMessageRepositoryBuilder('memory');
+  const branches = new InMemoryBranchRepository(calls, messageRepoFactory, []);
+  const app = createApp(calls, branches, messageRepoFactory, 'memory', null);
   server = createServer(app);
 
   await new Promise<void>((resolve, reject) => {

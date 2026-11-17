@@ -1,4 +1,4 @@
-import type { BranchRepository } from 'src/repository/database/branches';
+import type { BranchRepository } from 'src/repository';
 
 export class DeleteBranch {
   constructor(private readonly branchRepo: BranchRepository) {}

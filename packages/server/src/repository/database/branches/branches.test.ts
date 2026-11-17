@@ -3,14 +3,16 @@
  */
 import { beforeEach, describe, expect, it } from 'vitest';
 import { InMemoryCallRepository } from '../calls/InMemoryCallRepository';
+import { InMemoryMessageRepository } from '../messages/InMemoryMessageRepository';
 import { InMemoryBranchRepository } from './InMemoryBranchRepository';
 
 let callRepo: InMemoryCallRepository;
 let branchRepo: InMemoryBranchRepository;
 
 beforeEach(() => {
+  const messageRepo = new InMemoryMessageRepository();
   callRepo = new InMemoryCallRepository();
-  branchRepo = new InMemoryBranchRepository(callRepo);
+  branchRepo = new InMemoryBranchRepository(callRepo, () => messageRepo);
 });
 
 describe('getAllBranchesOfCall', () => {
@@ -40,11 +42,11 @@ describe('getBranch', () => {
 
 describe('createBranchFromCall', () => {
   it('creates a branch from a call and returns its id', async () => {
-    const id = await branchRepo.createBranchFromCall('call-1002', 4);
+    const id = await branchRepo.createBranchFromCall('call-1002', 1);
     const branch = await branchRepo.getBranch(id);
 
     expect(branch.parentId).toBe('call-1002');
-    expect(branch.branchIndex).toBe(4);
+    expect(branch.branchIndex).toBe(1);
     expect(branch.customerName).toBe('Dana Olofsson');
   });
 

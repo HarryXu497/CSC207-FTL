@@ -1,4 +1,4 @@
-import type { Branch, Call, Message } from '@recall/shared';
+import type { Branch, Call, Message } from 'src/entities';
 import { FirestoreCallRepository } from '../calls';
 import { FirestoreMessageRepository } from '../messages';
 import { Firebase } from '../utils';

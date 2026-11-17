@@ -3,17 +3,16 @@
  */
 import cors from 'cors';
 import express, { type Express } from 'express';
-import type { BranchRepository, CallRepository } from 'src/repository';
+import type { AnalyseMessages, BranchRepository, CallRepository } from 'src/repository';
 import type { MessageRepoFactory } from './routers';
 import { createRouter } from './routes';
-import type { SentimentDeps } from './routers';
 
 export function createApp(
   callRepo: CallRepository,
   branchRepo: BranchRepository,
   messageRepoFactory: MessageRepoFactory,
   backend: 'memory' | 'firestore',
-  sentiment?: SentimentDeps,
+  analyseMessages: AnalyseMessages | null,
 ): Express {
   const app = express();
 
@@ -28,7 +27,7 @@ export function createApp(
   });
 
   // Routes
-  app.use('/api', createRouter(callRepo, branchRepo, messageRepoFactory, backend, sentiment));
+  app.use('/api', createRouter(callRepo, branchRepo, messageRepoFactory, backend, analyseMessages));
 
   // Errors
   app.use(

@@ -1,4 +1,4 @@
-import type { Message } from '@recall/shared';
+import type { Message } from 'src/entities';
 
 /**
  * Represents a repository object that operates with messages.

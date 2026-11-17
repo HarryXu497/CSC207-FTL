@@ -1,15 +1,12 @@
-import type {
-  CreateBranchResponse,
-  GetBranchResponse,
-  GetBranchesResponse,
-  ServerResponse,
-} from '@recall/shared';
 import { Router, type Response } from 'express';
 import { NotFoundError } from 'src/errors';
 import type { BranchRepository } from 'src/repository';
 import { BranchesService } from 'src/service';
 import { z } from 'zod';
 import { buildErrorFromSafeParseError } from '../utils';
+import type { WithError } from 'src/entities';
+import type { GetBranchesResponse, GetBranchResponse } from 'src/service/branches/GetBranch';
+import type { CreateBranchResponse } from 'src/service/branches/PostBranches';
 
 const createBranchSchema = z.object({
   branchIndex: z.number().int().min(0, 'Branch index must be non-negative'),
@@ -25,7 +22,7 @@ export function createBranchesRouter(branchRepo: BranchRepository): Router {
   // Get all branches for a call
   router.get(
     '/calls/:callId/branches',
-    async (req, res: Response<ServerResponse<GetBranchesResponse>>) => {
+    async (req, res: Response<WithError<GetBranchesResponse>>) => {
       const branches = await getBranches.handle(req.params.callId);
       res.json({ branches });
     },
@@ -34,7 +31,7 @@ export function createBranchesRouter(branchRepo: BranchRepository): Router {
   // Get a single branch
   router.get(
     '/calls/:callId/branches/:branchId',
-    async (req, res: Response<ServerResponse<GetBranchResponse>>) => {
+    async (req, res: Response<WithError<GetBranchResponse>>) => {
       try {
         const branch = await getBranch.handle(req.params.branchId);
         res.json({ branch });
@@ -51,7 +48,7 @@ export function createBranchesRouter(branchRepo: BranchRepository): Router {
   // Create a branch from a call and return it
   router.post(
     '/calls/:callId/branches',
-    async (req, res: Response<ServerResponse<CreateBranchResponse>>) => {
+    async (req, res: Response<WithError<CreateBranchResponse>>) => {
       const parsed = createBranchSchema.safeParse(req.body);
 
       if (!parsed.success) {
@@ -78,7 +75,7 @@ export function createBranchesRouter(branchRepo: BranchRepository): Router {
   // Delete a branch
   router.delete(
     '/calls/:callId/branches/:branchId',
-    async (req, res: Response<ServerResponse<never>>) => {
+    async (req, res: Response<WithError<never>>) => {
       const branchId = req.params.branchId;
       try {
         await deleteBranch.handle(branchId);

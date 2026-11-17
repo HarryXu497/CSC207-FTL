@@ -1,6 +1,6 @@
-import type { ApiErrorBody } from '@recall/shared';
 import type { NextFunction, Request, Response } from 'express';
 import { MulterError } from 'multer';
+import type { ApiErrorBody } from 'src/entities';
 import { UnsupportedDocumentTypeError } from './upload';
 
 // Busboy reports malformed multipart data as ordinary Error objects.

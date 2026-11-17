@@ -1,5 +1,5 @@
-import type { ServerResponse, UploadDocumentResponse } from '@recall/shared';
 import { Router, type Response } from 'express';
+import type { UploadDocumentResponse, WithError } from 'src/entities';
 import { documentUpload, handleUploadErrors } from '../middleware';
 
 export function createDocumentsRouter(): Router {
@@ -8,7 +8,7 @@ export function createDocumentsRouter(): Router {
   router.post(
     '/documents',
     documentUpload.single('file'),
-    (req, res: Response<ServerResponse<UploadDocumentResponse>>) => {
+    (req, res: Response<WithError<UploadDocumentResponse>>) => {
       const file = req.file;
 
       if (!file) {
