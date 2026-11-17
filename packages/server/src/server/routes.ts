@@ -3,10 +3,9 @@
  */
 import { Router } from 'express';
 import type { AnalyseMessages, BranchRepository, CallRepository } from 'src/repository';
-import { SentimentController } from 'src/service';
+import { DocumentsController, SentimentController, UploadDocumentInteractor } from 'src/service';
 import {
   createCallsRouter,
-  createDocumentsRouter,
   createHealthRouter,
   createMessagesRouter,
   type MessageRepoFactory,
@@ -21,6 +20,7 @@ export function createRouter(
   analyseMessages: AnalyseMessages | null,
 ): Router {
   const router = Router();
+  const documentsController = new DocumentsController(new UploadDocumentInteractor());
   const sentimentController = new SentimentController(
     callRepo,
     messageRepoFactory,
@@ -29,7 +29,7 @@ export function createRouter(
 
   router.use(createHealthRouter(backend));
   router.use(createCallsRouter(callRepo));
-  router.use(createDocumentsRouter());
+  router.use(documentsController.router());
   router.use(createBranchesRouter(branchRepo));
   router.use(createMessagesRouter(messageRepoFactory));
   router.use(sentimentController.router());

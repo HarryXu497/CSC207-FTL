@@ -80,6 +80,12 @@ name `file`.
 Allowed filename extensions are `.txt`, `.md`, and `.pdf` (case-insensitive).
 The maximum file size is **10 MiB (10,485,760 bytes)**.
 
+Multer receives and saves the file. `DocumentsController` maps the upload to
+plain input data for `UploadDocumentInteractor`, which uses an output boundary
+to pass the result to `UploadDocumentPresenter`. The presenter sends the HTTP
+response. The use case's input, output, interactor, and presenter are in
+`packages/server/src/service/documents/UploadDocument/`.
+
 ### Upload errors
 
 | Status | Meaning                                                                        |

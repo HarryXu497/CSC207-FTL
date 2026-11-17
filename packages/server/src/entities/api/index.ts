@@ -4,5 +4,3 @@ export interface ApiErrorBody {
 }
 
 export type WithError<T> = ApiErrorBody | T;
-
-export type * from './documents';
