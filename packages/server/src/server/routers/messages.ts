@@ -4,7 +4,7 @@ import { MessagesService } from 'src/service';
 import { z } from 'zod';
 import { buildErrorFromSafeParseError } from '../utils';
 import type { Message, WithError } from 'src/entities';
-import type { GetMessagesResponse } from 'src/service/messages/GetMessages';
+import type { GetMessagesResponse } from 'src/service/messages/ListMessages/GetMessages';
 import type { CreateMessageResponse } from 'src/service/messages/PostMessages';
 
 const postMessageSchema = z.object({

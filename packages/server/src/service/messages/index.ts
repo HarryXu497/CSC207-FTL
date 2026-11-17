@@ -1,11 +1,13 @@
-import { GetMessages } from './GetMessages';
-import { PostMessages } from './PostMessages';
-import { PostMessagesBatch } from './PostMessagesBatch';
-import { StreamMessages } from './StreamMessages';
+export * from './controller';
 
-export const MessagesService = {
-  GetMessages,
-  PostMessages,
-  PostMessagesBatch,
-  StreamMessages,
-} as const;
+// import { GetMessages } from './ListMessages/GetMessages';
+// import { PostMessages } from './PostMessages';
+// import { PostMessagesBatch } from './PostMessagesBatch';
+// import { StreamMessages } from './StreamMessages';
+
+// export const MessagesService = {
+//   GetMessages,
+//   PostMessages,
+//   PostMessagesBatch,
+//   StreamMessages,
+// } as const;
