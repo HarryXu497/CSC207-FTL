@@ -4,11 +4,7 @@
 import { Router } from 'express';
 import type { AnalyseMessages, BranchRepository, CallRepository } from 'src/repository';
 import { SentimentController } from 'src/service';
-import {
-  createCallsRouter,
-  createHealthRouter,
-  createMessagesRouter,
-} from './routers';
+import { createCallsRouter, createHealthRouter, createMessagesRouter } from './routers';
 import type { MessageRepositoryBuilder } from '../repository/database/messages/MessageRepositoryFactory';
 import { createBranchesRouter } from './routers/branch';
 
