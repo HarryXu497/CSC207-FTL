@@ -197,7 +197,23 @@ _TBD_
 
 #### Accuracy
 
-_TBD_
+Required fields unless marked optional. `score` can be `null`.
+
+| Field             | Type                 | Description                                                                  |
+| ----------------- | -------------------- | ---------------------------------------------------------------------------- |
+| `score`           | number \| null       | 0-100, or `null` when the agent made no checkable claims                     |
+| `counts`          | `Record<Verdict, n>` | How many claims got each verdict                                             |
+| `claims`          | `ClaimResult[]`      | One entry per checked agent claim                                            |
+| `documents`       | `AccuracyDocuments`  | `{ required: DocumentFinding[], recommended: DocumentFinding[] }`            |
+| `claimsTruncated` | boolean              | `true` if the call had more claims than the limit (20), so some were skipped |
+| `promptVersion`   | string               | Version of the prompts that produced this result                             |
+| `analyzedAt`      | string               | ISO 8601 timestamp                                                           |
+
+`ClaimResult`: `messageIndex` (number), `text` (string), `verdict` (`supported` \| `contradicted` \| `unsupported` \| `not_verifiable`), `confidence` (0-1), `explanation` (string), `evidence` (`{ source, quote }` or `null`; present only when the quote was verified in the retrieved document).
+
+`DocumentFinding`: `source` (file path), `reason` (string), `usedByAgent` (boolean).
+
+The types live in `packages/server/src/entities/accuracy`.
 
 #### Branch
 
