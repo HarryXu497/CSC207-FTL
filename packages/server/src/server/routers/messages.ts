@@ -5,10 +5,8 @@ import type { MessageRepositoryBuilder } from 'src/repository';
 import { z } from 'zod';
 import { buildErrorFromSafeParseError } from '../utils';
 import type { Message, WithError } from 'src/entities';
-import { ListMessagesPresenter } from 'src/service';
 import { MessagesController } from 'src/service';
 import type { CreateMessageResponse } from 'src/service/messages/PostMessages';
-import { ro } from 'zod/locales';
 
 const postMessageSchema = z.object({
   role: z.enum(['agent', 'customer']),
