@@ -4,13 +4,13 @@
 import cors from 'cors';
 import express, { type Express } from 'express';
 import type { AnalyseMessages, BranchRepository, CallRepository } from 'src/repository';
-import type { MessageRepoFactory } from './routers';
+import type { MessageRepositoryBuilder } from '../repository/database/messages/MessageRepositoryFactory';
 import { createRouter } from './routes';
 
 export function createApp(
   callRepo: CallRepository,
   branchRepo: BranchRepository,
-  messageRepoFactory: MessageRepoFactory,
+  messageRepoFactory: MessageRepositoryBuilder,
   backend: 'memory' | 'firestore',
   analyseMessages: AnalyseMessages | null,
 ): Express {

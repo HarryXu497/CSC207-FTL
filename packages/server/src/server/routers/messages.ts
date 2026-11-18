@@ -5,7 +5,7 @@ import type { MessageRepositoryBuilder } from 'src/repository/database/messages/
 import { z } from 'zod';
 import { buildErrorFromSafeParseError } from '../utils';
 import type { Message, WithError } from 'src/entities';
-import { ListMessagesPresenter} from 'src/service/messages/ListMessages';
+import { ListMessagesPresenter } from 'src/service/messages/ListMessages';
 import { MessagesController } from 'src/service/messages';
 import type { CreateMessageResponse } from 'src/service/messages/PostMessages';
 
@@ -47,7 +47,10 @@ function streamMessages(repo: MessageRepository, req: Request, res: Response): v
   req.on('close', () => unsubscribe());
 }
 
-export function createMessagesRouter(callsRepo: CallRepository, messageRepoFactory: MessageRepositoryBuilder): Router {
+export function createMessagesRouter(
+  callsRepo: CallRepository,
+  messageRepoFactory: MessageRepositoryBuilder,
+): Router {
   const router = Router();
   const messagesController = new MessagesController(callsRepo, messageRepoFactory);
 
