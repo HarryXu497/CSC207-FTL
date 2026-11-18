@@ -158,6 +158,23 @@ The routers are in `routers` and are once again grouped into routers by relatedn
 
 The `app.ts` and `routes.ts` are responsible for merging all the routers into one and creating all the appropriate repository objects, etc.
 
+## Accuracy
+
+The accuracy metric answers: **did the agent say things that agree with our knowledge base?** It checks what the agent said against the RAG documents. It does not check whether those documents are true in the real world, so it is only as good as the knowledge base behind it.
+
+### Scoring
+
+The score is computed by plain code in `packages/server/src/service/accuracy/scoring.ts`. The LLM never computes it, so it is explainable and cannot drift.
+
+| Verdict          | Credit | Meaning                                                    |
+| ---------------- | ------ | ---------------------------------------------------------- |
+| `supported`      | 1      | The documents clearly confirm the claim                    |
+| `unsupported`    | 0.5    | The documents neither confirm nor contradict it            |
+| `contradicted`   | 0      | The documents say something different                      |
+| `not_verifiable` | -      | Not a checkable fact (or could not be judged); not counted |
+
+`score` is the weighted average of the credits, scaled to 0-100. A claim backed by a **required** document counts double. If the agent made no checkable claims, `score` is `null` (nothing to score), not 0.
+
 ## Database Structure
 
 ### Calls (Firestore / in-memory)
