@@ -8,6 +8,7 @@ import type { Message, WithError } from 'src/entities';
 import { ListMessagesPresenter } from 'src/service';
 import { MessagesController } from 'src/service';
 import type { CreateMessageResponse } from 'src/service/messages/PostMessages';
+import { ro } from 'zod/locales';
 
 const postMessageSchema = z.object({
   role: z.enum(['agent', 'customer']),
@@ -51,16 +52,8 @@ export function createMessagesRouter(
   callsRepo: CallRepository,
   messageRepoFactory: MessageRepositoryBuilder,
 ): Router {
-  const router = Router();
   const messagesController = new MessagesController(callsRepo, messageRepoFactory);
-
-  router.get('/calls/:callId/messages', (req, res) =>
-    messagesController.listCallMessages(req, new ListMessagesPresenter(res)),
-  );
-
-  router.get('/calls/:callId/branches/:branchId/messages', (req, res) =>
-    messagesController.listBranchMessages(req, new ListMessagesPresenter(res)),
-  );
+  const router = messagesController.router();
 
   router.post('/calls/:callId/messages', (req, res) => {
     const repo = messageRepoFactory('calls', req.params.callId);

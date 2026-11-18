@@ -24,12 +24,4 @@ export class ListMessagesPresenter implements ListMessagesOutputBoundary {
       },
     });
   }
-
-  presentServiceUnavailable(): void {
-    this.res.status(503).json({
-      error: {
-        message: 'Message retrieval is not available.',
-      },
-    });
-  }
 }
