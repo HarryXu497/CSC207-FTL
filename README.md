@@ -65,11 +65,12 @@ cp packages/server/.env.example packages/server/.env
 
 ## API
 
-| Method | Path          | Body                             | Returns               |
-| ------ | ------------- | -------------------------------- | --------------------- |
-| GET    | `/api/health` | —                                | `{ status, backend }` |
-| GET    | `/api/calls`  | —                                | `{ calls: Call[] }`   |
-| POST   | `/api/calls`  | `{ customerName, topic, score }` | `201 { call }`        |
+| Method | Path                    | Body                             | Returns                                                                               |
+| ------ | ----------------------- | -------------------------------- | ------------------------------------------------------------------------------------- |
+| GET    | `/api/health`           | —                                | `{ status, backend }`                                                                 |
+| GET    | `/api/calls`            | —                                | `{ calls: Call[] }`                                                                   |
+| POST   | `/api/calls`            | `{ customerName, topic, score }` | `201 { call }`                                                                        |
+| POST   | `/api/accuracy/analyze` | `{ messages, topic? }`           | `200 { accuracy }` (`400` invalid, `502` unusable model output, `503` not configured) |
 
 ## Sentiment Analysis
 
@@ -162,6 +163,33 @@ The `app.ts` and `routes.ts` are responsible for merging all the routers into on
 
 The accuracy metric answers: **did the agent say things that agree with our knowledge base?** It checks what the agent said against the RAG documents. It does not check whether those documents are true in the real world, so it is only as good as the knowledge base behind it.
 
+### Flow
+
+```
+transcript ──► 1. Extract   LLM lists the checkable claims the agent made
+                    │
+                    ▼
+               2. Retrieve  RAG returns knowledge-base chunks for each claim
+                    │       (and for each customer question, to find documents the agent should have used)
+                    ▼
+               3. Judge     LLM rules on each claim using ONLY those chunks.
+                    │       supported / contradicted / unsupported / not_verifiable, with a quote.
+                    │       Code checks the quote really appears in the chunk, otherwise the
+                    │       verdict is downgraded to unsupported.
+                    ▼
+               4. Classify  LLM sorts the retrieved documents into required / recommended
+                    │
+                    ▼
+               5. Score     plain code, no LLM: a 0-100 weighted average of the verdicts
+```
+
+- **Input:** `messages` (each with a `role` of `agent` or `customer`, and `content`) and an optional `topic`.
+- **Output:** an `Accuracy` object (see [Database Structure](#accuracy-1)).
+- **RAG interaction:** read-only. The use case depends on the `EvidenceRetriever` port, which only has `search(query, limit)`. The Chroma and in-memory retrievers satisfy it as they are.
+- **Endpoint:** `POST /api/accuracy/analyze` takes a transcript and returns the result. Nothing is stored yet. It answers `503` until an LLM and retriever are configured.
+- **Limits:** at most 200 messages and 30,000 characters of message text per request (over that is a `400` explaining why).
+- **Code:** `packages/server/src/service/accuracy/`, laid out like the other use cases: `AnalyzeAccuracy/` holds the input, output, interactor and presenter, and `controller.ts` parses the request and mounts the route. The `LlmClient` and `EvidenceRetriever` ports are declared there, and `repository/llm` implements `LlmClient`. All prompts are in `prompts.ts` and carry a `PROMPT_VERSION`.
+
 ### Scoring
 
 The score is computed by plain code in `packages/server/src/service/accuracy/scoring.ts`. The LLM never computes it, so it is explainable and cannot drift.
@@ -174,6 +202,29 @@ The score is computed by plain code in `packages/server/src/service/accuracy/sco
 | `not_verifiable` | -      | Not a checkable fact (or could not be judged); not counted |
 
 `score` is the weighted average of the credits, scaled to 0-100. A claim backed by a **required** document counts double. If the agent made no checkable claims, `score` is `null` (nothing to score), not 0.
+
+### Required and recommended documents
+
+For every call, the documents the knowledge base returns are sorted by how much the agent needed them. This is judged from what the **customer asked for**, not from what the agent happened to say.
+
+| Role           | Meaning                                                                                                                                   | Effect                                                    |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `required`     | The agent must state this document's content correctly to resolve the customer's issue (the governing policy, price, rule, or procedure). | Claims backed by it weigh double in the score             |
+| `recommended`  | Relevant and useful (background, related options, tips), but the issue can be resolved without it.                                        | Reported as coaching suggestions; never changes the score |
+| _(irrelevant)_ | Not useful for this customer's issue.                                                                                                     | Dropped from the result                                   |
+
+Each listed document also has `usedByAgent`: whether at least one of the agent's claims was supported or contradicted by it. A **required document with `usedByAgent: false`** means the agent never touched something they needed to, which is the clearest signal for coaching.
+
+#### What a company should put in the knowledge base
+
+The analysis can only find documents that were ingested, so coverage matters.
+
+| Priority    | Document types                                                                                                                                                                                 | Why                                                           |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Required    | Policies (returns, refunds, cancellations, privacy), pricing and fees, eligibility rules, procedures and SOPs, product or service specifications, compliance scripts and mandatory disclosures | Facts the agent must get right; errors cause real harm        |
+| Recommended | FAQs, troubleshooting guides, escalation paths, tone and style guides, promotions, past resolved cases                                                                                         | Improve answers and coaching, but are not the source of truth |
+
+Prefer one topic per file and descriptive file names, because the file path is what is shown as the evidence source.
 
 ## Database Structure
 
