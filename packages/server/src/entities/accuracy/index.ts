@@ -68,3 +68,9 @@ export interface Accuracy {
   /** ISO 8601 timestamp. */
   analyzedAt: string;
 }
+
+/** One turn of a call, as the accuracy analysis reads it. A `Message` satisfies this. */
+export interface TranscriptMessage {
+  role: 'agent' | 'customer';
+  content: string;
+}
