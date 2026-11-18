@@ -32,3 +32,39 @@ export interface ClaimResult {
   /** Present only when the quote was found verbatim in a retrieved chunk. */
   evidence: ClaimEvidence | null;
 }
+
+/**
+ * - required:    the agent must state this document's content correctly to resolve the customer's
+ *                issue; claims backed by it weigh more in the score.
+ * - recommended: relevant and useful, but the issue can be resolved without it. Never affects score.
+ */
+export type DocumentRole = 'required' | 'recommended';
+
+/** A knowledge-base document that matters for this call. */
+export interface DocumentFinding {
+  source: string;
+  /** Why this document matters for the call. */
+  reason: string;
+  /** Whether at least one agent claim was supported or contradicted by this document. */
+  usedByAgent: boolean;
+}
+
+export interface AccuracyDocuments {
+  required: DocumentFinding[];
+  recommended: DocumentFinding[];
+}
+
+/** Accuracy result for one call. */
+export interface Accuracy {
+  /** 0 to 100, or null when the agent made no checkable claims (so there is nothing to score). */
+  score: number | null;
+  counts: Record<AccuracyVerdict, number>;
+  claims: ClaimResult[];
+  documents: AccuracyDocuments;
+  /** True when the call had more agent claims than the analysis limit, so some were skipped. */
+  claimsTruncated: boolean;
+  /** Version of the prompts used, so results can be compared across prompt changes. */
+  promptVersion: string;
+  /** ISO 8601 timestamp. */
+  analyzedAt: string;
+}
