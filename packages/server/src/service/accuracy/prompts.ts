@@ -88,3 +88,44 @@ export function judgeClaimPrompt(
     ].join('\n'),
   };
 }
+export interface DocumentCandidate {
+  source: string;
+  /** Excerpt from the document, for context. */
+  excerpt: string;
+}
+
+export function classifyDocumentsPrompt(
+  customerMessages: string[],
+  candidates: DocumentCandidate[],
+  topic?: string,
+): LlmRequest {
+  return {
+    system: [
+      'You decide which knowledge-base documents a customer service agent needed for a call.',
+      '',
+      'For each document, choose a role:',
+      "- required: the agent must state this document's content correctly to resolve the customer's issue (the governing policy, price, eligibility rule, or procedure). Giving wrong information from it would harm the customer or the company.",
+      '- recommended: relevant and useful (background, tips, related options), but the issue can be resolved without it.',
+      "- irrelevant: not useful for this customer's issue.",
+      '',
+      'Rules:',
+      '- Judge by what the CUSTOMER asked for, not by what the agent happened to say.',
+      '- Be strict with "required": most calls need only one or two required documents.',
+      '- Return every document you were given, using its source exactly as listed.',
+      '- reason is one short sentence.',
+      `- ${UNTRUSTED_DATA_RULE}`,
+      '',
+      'Reply with only this JSON: {"documents":[{"source":"<source>","role":"required|recommended|irrelevant","reason":"<why>"}]}',
+    ].join('\n'),
+    user: [
+      topic ? `Call topic: ${stripFenceTags(topic)}\n` : '',
+      'Customer messages:',
+      ...customerMessages.map((m) => `<question>${stripFenceTags(m)}</question>`),
+      '',
+      'Documents:',
+      ...candidates.map(
+        (c) => `<document source="${c.source}">\n${stripFenceTags(c.excerpt)}\n</document>`,
+      ),
+    ].join('\n'),
+  };
+}
