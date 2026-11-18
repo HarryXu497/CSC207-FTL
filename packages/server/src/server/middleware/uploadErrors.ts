@@ -3,7 +3,7 @@ import { MulterError } from 'multer';
 import type { ApiErrorBody } from 'src/entities';
 import { UnsupportedDocumentTypeError } from './upload';
 
-// Busboy reports malformed multipart data as ordinary Error objects.
+// The list of malformed multipart errors.
 const MALFORMED_MULTIPART_ERRORS = new Set([
   'Multipart: Boundary not found',
   'Malformed content type',
