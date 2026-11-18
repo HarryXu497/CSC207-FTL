@@ -3,7 +3,11 @@
  */
 import { Router } from 'express';
 import type { AnalyseMessages, BranchRepository, CallRepository } from 'src/repository';
-import { SentimentController } from 'src/service';
+import {
+  AccuracyController,
+  SentimentController,
+  type AnalyzeAccuracyInputBoundary,
+} from 'src/service';
 import {
   createCallsRouter,
   createHealthRouter,
@@ -18,6 +22,7 @@ export function createRouter(
   messageRepoFactory: MessageRepoFactory,
   backend: 'memory' | 'firestore',
   analyseMessages: AnalyseMessages | null,
+  analyzeAccuracy: AnalyzeAccuracyInputBoundary | null = null,
 ): Router {
   const router = Router();
   const sentimentController = new SentimentController(
@@ -31,6 +36,7 @@ export function createRouter(
   router.use(createBranchesRouter(branchRepo));
   router.use(createMessagesRouter(messageRepoFactory));
   router.use(sentimentController.router());
+  router.use(new AccuracyController(analyzeAccuracy).router());
 
   return router;
 }
