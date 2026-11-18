@@ -1,31 +1,18 @@
 import { Router, type Request, type Response } from 'express';
-import type { MessageRepository } from 'src/repository';
+import type { CallRepository, MessageRepository } from 'src/repository';
 import { MessagesService } from 'src/service';
+import type { MessageRepositoryBuilder } from 'src/repository/database/messages/MessageRepositoryFactory';
 import { z } from 'zod';
 import { buildErrorFromSafeParseError } from '../utils';
 import type { Message, WithError } from 'src/entities';
-import type { GetMessagesResponse } from 'src/service/messages/ListMessages/GetMessages';
+import { ListMessagesPresenter} from 'src/service/messages/ListMessages';
+import { MessagesController } from 'src/service/messages';
 import type { CreateMessageResponse } from 'src/service/messages/PostMessages';
 
 const postMessageSchema = z.object({
   role: z.enum(['agent', 'customer']),
   content: z.string().trim().min(1, 'Content is required.'),
 });
-
-export type MessageRepoFactory = (
-  parentCollection: 'calls' | 'branches',
-  parentId: string,
-) => MessageRepository;
-
-/** Returns all messages for a call or branch. */
-async function getMessages(
-  repo: MessageRepository,
-  res: Response<WithError<GetMessagesResponse>>,
-): Promise<void> {
-  const getMessages = new MessagesService.GetMessages(repo);
-  const messages = await getMessages.handle();
-  res.json({ messages });
-}
 
 /** Appends a new message, generating createdAt server-side. */
 async function postMessage(
@@ -60,36 +47,35 @@ function streamMessages(repo: MessageRepository, req: Request, res: Response): v
   req.on('close', () => unsubscribe());
 }
 
-export function createMessagesRouter(repoFactory: MessageRepoFactory): Router {
+export function createMessagesRouter(callsRepo: CallRepository, messageRepoFactory: MessageRepositoryBuilder): Router {
   const router = Router();
+  const messagesController = new MessagesController(callsRepo, messageRepoFactory);
 
   router.get('/calls/:callId/messages', (req, res) => {
-    const repo = repoFactory('calls', req.params.callId);
-    return getMessages(repo, res);
+    return messagesController.listMessages(req, new ListMessagesPresenter(res));
   });
 
   router.get('/calls/:callId/branches/:branchId/messages', (req, res) => {
-    const repo = repoFactory('branches', req.params.branchId);
-    return getMessages(repo, res);
+    return messagesController.listMessages(req, new ListMessagesPresenter(res));
   });
 
   router.post('/calls/:callId/messages', (req, res) => {
-    const repo = repoFactory('calls', req.params.callId);
+    const repo = messageRepoFactory('calls', req.params.callId);
     return postMessage(repo, req, res);
   });
 
   router.post('/calls/:callId/branches/:branchId/messages', (req, res) => {
-    const repo = repoFactory('branches', req.params.branchId);
+    const repo = messageRepoFactory('branches', req.params.branchId);
     return postMessage(repo, req, res);
   });
 
   router.get('/calls/:callId/messages/stream', (req, res) => {
-    const repo = repoFactory('calls', req.params.callId);
+    const repo = messageRepoFactory('calls', req.params.callId);
     return streamMessages(repo, req, res);
   });
 
   router.get('/calls/:callId/branches/:branchId/messages/stream', (req, res) => {
-    const repo = repoFactory('branches', req.params.branchId);
+    const repo = messageRepoFactory('branches', req.params.branchId);
     return streamMessages(repo, req, res);
   });
 
