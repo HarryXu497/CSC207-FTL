@@ -12,7 +12,7 @@ export class MessagesController {
     private readonly messageRepoFactory: MessageRepositoryBuilder,
   ) {}
 
-  async listMessages(req: Request, presenter: ListMessagesOutputBoundary) {
+  async listCallMessages(req: Request, presenter: ListMessagesOutputBoundary) {
     const callId = req.params.callId;
 
     if (!callId || typeof callId !== 'string') {
@@ -20,7 +20,22 @@ export class MessagesController {
       return;
     }
 
-    const interactor = new ListMessagesInteractor(this.callsRepo, this.messageRepoFactory);
+    const messageRepo = this.messageRepoFactory('calls', callId);
+    const interactor = new ListMessagesInteractor(this.callsRepo, messageRepo);
+
+    await interactor.handle({ callId }, presenter);
+  }
+
+  async listBranchMessages(req: Request, presenter: ListMessagesOutputBoundary) {
+    const callId = req.params.callId;
+
+    if (!callId || typeof callId !== 'string') {
+      presenter.presentBadRequest('callId is required');
+      return;
+    }
+
+    const messageRepo = this.messageRepoFactory('branches', callId);
+    const interactor = new ListMessagesInteractor(this.callsRepo, messageRepo);
 
     await interactor.handle({ callId }, presenter);
   }
@@ -29,7 +44,11 @@ export class MessagesController {
     const router = Router();
 
     router.get('/calls/:callId/messages', async (req, res) =>
-      this.listMessages(req, new ListMessagesPresenter(res)),
+      this.listCallMessages(req, new ListMessagesPresenter(res)),
+    );
+
+    router.get('/calls/:callId/branches/:branchId/messages', async (req, res) =>
+      this.listBranchMessages(req, new ListMessagesPresenter(res)),
     );
 
     return router;

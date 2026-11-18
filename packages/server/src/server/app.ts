@@ -4,7 +4,7 @@
 import cors from 'cors';
 import express, { type Express } from 'express';
 import type { AnalyseMessages, BranchRepository, CallRepository } from 'src/repository';
-import type { MessageRepositoryBuilder } from '../repository/database/messages/MessageRepositoryFactory';
+import type { MessageRepositoryBuilder } from 'src/repository';
 import { createRouter } from './routes';
 
 export function createApp(

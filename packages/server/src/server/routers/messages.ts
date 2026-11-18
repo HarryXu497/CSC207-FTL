@@ -1,12 +1,12 @@
 import { Router, type Request, type Response } from 'express';
 import type { CallRepository, MessageRepository } from 'src/repository';
 import { MessagesService } from 'src/service';
-import type { MessageRepositoryBuilder } from 'src/repository/database/messages/MessageRepositoryFactory';
+import type { MessageRepositoryBuilder } from 'src/repository';
 import { z } from 'zod';
 import { buildErrorFromSafeParseError } from '../utils';
 import type { Message, WithError } from 'src/entities';
-import { ListMessagesPresenter } from 'src/service/messages/ListMessages';
-import { MessagesController } from 'src/service/messages';
+import { ListMessagesPresenter } from 'src/service';
+import { MessagesController } from 'src/service';
 import type { CreateMessageResponse } from 'src/service/messages/PostMessages';
 
 const postMessageSchema = z.object({
@@ -54,13 +54,13 @@ export function createMessagesRouter(
   const router = Router();
   const messagesController = new MessagesController(callsRepo, messageRepoFactory);
 
-  router.get('/calls/:callId/messages', (req, res) => {
-    return messagesController.listMessages(req, new ListMessagesPresenter(res));
-  });
+  router.get('/calls/:callId/messages', (req, res) =>
+    messagesController.listCallMessages(req, new ListMessagesPresenter(res)),
+  );
 
-  router.get('/calls/:callId/branches/:branchId/messages', (req, res) => {
-    return messagesController.listMessages(req, new ListMessagesPresenter(res));
-  });
+  router.get('/calls/:callId/branches/:branchId/messages', (req, res) =>
+    messagesController.listBranchMessages(req, new ListMessagesPresenter(res)),
+  );
 
   router.post('/calls/:callId/messages', (req, res) => {
     const repo = messageRepoFactory('calls', req.params.callId);

@@ -1,13 +1,12 @@
 import { NotFoundError } from 'src/errors';
-import type { CallRepository } from 'src/repository';
-import { FirestoreCallRepository, type MessageRepositoryBuilder } from 'src/repository';
+import type { CallRepository, MessageRepository } from 'src/repository';
 import type { ListMessagesInputBoundary, ListMessagesInputData } from './input';
 import type { ListMessagesOutputBoundary } from './output';
 
 export class ListMessagesInteractor implements ListMessagesInputBoundary {
   constructor(
     private readonly callsRepo: CallRepository,
-    private readonly messageRepoFactory: MessageRepositoryBuilder,
+    private readonly messageRepo: MessageRepository,
   ) {}
 
   async handle(
@@ -19,13 +18,11 @@ export class ListMessagesInteractor implements ListMessagesInputBoundary {
     } catch (e) {
       if (e instanceof NotFoundError) {
         presenter.presentNotFound(`Call with id ${callId} not found.`);
+        return;
       }
     }
 
-    const messages = await this.messageRepoFactory(
-      FirestoreCallRepository.COLLECTION,
-      callId,
-    ).getAllMessages();
+    const messages = await this.messageRepo.getAllMessages();
 
     presenter.present({ messages });
   }

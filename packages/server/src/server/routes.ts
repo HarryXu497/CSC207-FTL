@@ -5,7 +5,7 @@ import { Router } from 'express';
 import type { AnalyseMessages, BranchRepository, CallRepository } from 'src/repository';
 import { SentimentController } from 'src/service';
 import { createCallsRouter, createHealthRouter, createMessagesRouter } from './routers';
-import type { MessageRepositoryBuilder } from '../repository/database/messages/MessageRepositoryFactory';
+import type { MessageRepositoryBuilder } from 'src/repository';
 import { createBranchesRouter } from './routers/branch';
 
 export function createRouter(
