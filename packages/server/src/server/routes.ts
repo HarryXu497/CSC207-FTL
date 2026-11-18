@@ -4,18 +4,14 @@
 import { Router } from 'express';
 import type { AnalyseMessages, BranchRepository, CallRepository } from 'src/repository';
 import { SentimentController } from 'src/service';
-import {
-  createCallsRouter,
-  createHealthRouter,
-  createMessagesRouter,
-  type MessageRepoFactory,
-} from './routers';
+import { createCallsRouter, createHealthRouter, createMessagesRouter } from './routers';
+import type { MessageRepositoryBuilder } from 'src/repository';
 import { createBranchesRouter } from './routers/branch';
 
 export function createRouter(
   callRepo: CallRepository,
   branchRepo: BranchRepository,
-  messageRepoFactory: MessageRepoFactory,
+  messageRepoFactory: MessageRepositoryBuilder,
   backend: 'memory' | 'firestore',
   analyseMessages: AnalyseMessages | null,
 ): Router {
@@ -29,7 +25,7 @@ export function createRouter(
   router.use(createHealthRouter(backend));
   router.use(createCallsRouter(callRepo));
   router.use(createBranchesRouter(branchRepo));
-  router.use(createMessagesRouter(messageRepoFactory));
+  router.use(createMessagesRouter(callRepo, messageRepoFactory));
   router.use(sentimentController.router());
 
   return router;
