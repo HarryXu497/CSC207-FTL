@@ -54,3 +54,37 @@ export function extractClaimsPrompt(messages: TranscriptMessage[], topic?: strin
     ].join('\n'),
   };
 }
+export function judgeClaimPrompt(
+  claim: string,
+  customerContext: string | null,
+  chunks: string[],
+): LlmRequest {
+  return {
+    system: [
+      'You fact-check one statement from a customer service agent against excerpts from the company knowledge base.',
+      '',
+      'Verdicts:',
+      '- supported: the excerpts clearly confirm the statement.',
+      '- contradicted: the excerpts clearly say something different (different number, time frame, condition, or an opposite rule).',
+      '- unsupported: the excerpts neither confirm nor contradict it.',
+      '- not_verifiable: the statement is not a checkable fact.',
+      '',
+      'Rules:',
+      '- Use ONLY the excerpts. Do not use outside knowledge, and do not assume the statement is right because it sounds plausible.',
+      '- For supported or contradicted, set evidenceChunk to the number of the excerpt and quote the deciding passage EXACTLY as written there. Do not paraphrase.',
+      '- If you cannot quote a passage, the verdict is unsupported.',
+      '- Details matter: "5 business days" does not support "5 days"; "within 30 days" does not support "within 60 days".',
+      '- confidence is 0 to 1: how sure you are of the verdict.',
+      `- ${UNTRUSTED_DATA_RULE}`,
+      '',
+      'Reply with only this JSON:',
+      '{"verdict":"supported|contradicted|unsupported|not_verifiable","confidence":<0-1>,"evidenceChunk":<number or null>,"quote":"<exact passage or null>","explanation":"<one or two sentences>"}',
+    ].join('\n'),
+    user: [
+      customerContext ? `<question>${stripFenceTags(customerContext)}</question>\n` : '',
+      `Agent statement: ${stripFenceTags(claim)}`,
+      '',
+      ...chunks.map((c, i) => `<chunk number="${i + 1}">\n${stripFenceTags(c)}\n</chunk>`),
+    ].join('\n'),
+  };
+}
