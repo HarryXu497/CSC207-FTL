@@ -7,3 +7,4 @@ export * from './EvidenceRetriever';
 export * from './evidence';
 export * from './concurrency';
 export * from './AnalyzeAccuracy';
+export * from './controller';
