@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { quoteAppearsIn } from './evidence';
+import { quoteAppearsIn, sourceOf } from './evidence';
 
 describe('quoteAppearsIn', () => {
   const chunk =
@@ -16,5 +16,16 @@ describe('quoteAppearsIn', () => {
   it('rejects invented or altered quotes', () => {
     expect(quoteAppearsIn('returned within 60 days of delivery', chunk)).toBe(false);
     expect(quoteAppearsIn('', chunk)).toBe(false);
+  });
+});
+
+describe('sourceOf', () => {
+  it('prefers metadata.source', () => {
+    expect(sourceOf({ content: 'x', metadata: { source: 'a.md' }, id: 'b.md::2' })).toBe('a.md');
+  });
+
+  it('falls back to the chunk id prefix, then unknown', () => {
+    expect(sourceOf({ content: 'x', id: 'docs/b.md::2' })).toBe('docs/b.md');
+    expect(sourceOf({ content: 'x' })).toBe('unknown');
   });
 });
