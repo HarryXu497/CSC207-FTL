@@ -2,14 +2,19 @@
  * Server entry point
  */
 import { resolve } from 'node:path';
+import { ChatOpenAI } from '@langchain/openai';
+import { ChromaClient } from 'chromadb';
 import type { CallRepository } from 'src/repository';
 import {
+  ChatModelLlmClient,
+  ChromaRetriever,
   createMessageRepositoryBuilder,
   FirestoreCallRepository,
   InMemoryCallRepository,
   type MessageRepositoryBuilder,
 } from 'src/repository';
 import { createApp } from 'src/server';
+import type { AccuracyDependencies } from 'src/service';
 import {
   FirestoreBranchRepository,
   InMemoryBranchRepository,
@@ -47,18 +52,47 @@ async function buildSentimentDeps(): Promise<AnalyseMessages | null> {
   return new AnalyseMessages(classifier, vadEstimator);
 }
 
+function buildAccuracyDeps(): AccuracyDependencies | null {
+  const apiKey = process.env.OPENAI_API_KEY;
+
+  if (!apiKey) {
+    return null;
+  }
+
+  const model = new ChatOpenAI({
+    model: process.env.ACCURACY_MODEL ?? 'gpt-4o-mini',
+    temperature: 0,
+    apiKey,
+  });
+
+  const chroma = new ChromaClient({
+    host: process.env.CHROMA_HOST ?? 'localhost',
+    port: Number(process.env.CHROMA_PORT ?? '8000'),
+  });
+
+  return {
+    llm: new ChatModelLlmClient(model),
+    retriever: new ChromaRetriever(chroma, process.env.CHROMA_COLLECTION ?? 'documents'),
+  };
+}
+
 async function main(): Promise<void> {
   const callRepo = buildCallRepository();
   const messageRepoFactory = createMessageRepositoryBuilder(BACKEND);
   const branchRepo = buildBranchRepository(callRepo, messageRepoFactory);
-  const sentiment = await buildSentimentDeps();
-  const app = createApp(callRepo, branchRepo, messageRepoFactory, BACKEND, sentiment);
+  const analyseMessages = await buildSentimentDeps();
+  const accuracy = buildAccuracyDeps();
+  const app = createApp(callRepo, branchRepo, messageRepoFactory, BACKEND, {
+    analyseMessages,
+    accuracy,
+  });
 
   app.listen(PORT, () => {
     console.log('');
     console.log('  ReCall API running');
     console.log(`  -> http://localhost:${PORT}/api/health`);
     console.log(`  storage: ${BACKEND}${BACKEND === 'memory' ? ' (resets on restart)' : ''}`);
+    console.log(`  accuracy: ${accuracy ? 'enabled' : 'disabled (no OPENAI_API_KEY)'}`);
     console.log('');
   });
 }
