@@ -1,26 +1,20 @@
 import { Router, type Response } from 'express';
-import { randomUUID } from 'node:crypto';
-import type { Call, WithError } from 'src/entities';
+import type { WithError } from 'src/entities';
 import { NotFoundError } from 'src/errors';
-import type { CallRepository } from 'src/repository';
+import type { CallRepository, MessageRepositoryBuilder } from 'src/repository';
 import { CallsService } from 'src/service';
+import { CallController } from 'src/service/calls/controller';
 import type { GetCallResponse } from 'src/service/calls/GetCall';
 import type { GetCallsResponse } from 'src/service/calls/GetCalls';
-import type { CreateCallResponse } from 'src/service/calls/PostCalls';
-import { z } from 'zod';
-import { buildErrorFromSafeParseError } from '../utils';
 
-// Runtime request body validation using zod
-const createCallSchema = z.object({
-  customerName: z.string().trim().min(1, 'Customer name is required.').max(120),
-  topic: z.string().trim().min(1, 'Topic is required.').max(300),
-});
-
-export function createCallsRouter(callRepo: CallRepository): Router {
-  const router = Router();
+export function createCallsRouter(
+  callRepo: CallRepository,
+  messageRepoFactory: MessageRepositoryBuilder,
+): Router {
+  const controller = new CallController(callRepo, messageRepoFactory);
+  const router = controller.router();
   const getCalls = new CallsService.GetCalls(callRepo);
   const getCall = new CallsService.GetCall(callRepo);
-  const postCalls = new CallsService.PostCalls(callRepo);
   const deleteCall = new CallsService.DeleteCall(callRepo);
 
   // Read from the database
@@ -42,28 +36,6 @@ export function createCallsRouter(callRepo: CallRepository): Router {
         throw e;
       }
     }
-  });
-
-  router.post('/calls', async (req, res: Response<WithError<CreateCallResponse>>) => {
-    const parsed = createCallSchema.safeParse(req.body);
-
-    if (!parsed.success) {
-      res.status(400).json({
-        error: buildErrorFromSafeParseError(parsed, 'That request was not valid.'),
-      });
-      return;
-    }
-
-    const call: Call = {
-      id: `call-${randomUUID()}`,
-      createdAt: new Date().toISOString(),
-      ...parsed.data,
-    };
-
-    await postCalls.handle(call);
-
-    // 201 Created since the request made a new resource
-    res.status(201).json({ call });
   });
 
   router.delete('/calls/:id', async (req, res: Response<WithError<never>>) => {
