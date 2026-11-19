@@ -9,7 +9,7 @@ import type {
   MessageRepositoryBuilder,
 } from 'src/repository';
 import { SentimentController } from 'src/service';
-import { BranchController } from 'src/service/branches/controller';
+import { BranchController } from 'src/service';
 import { createCallsRouter, createHealthRouter, createMessagesRouter } from './routers';
 
 export function createRouter(
