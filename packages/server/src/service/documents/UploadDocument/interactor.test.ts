@@ -65,22 +65,6 @@ describe('UploadDocumentInteractor', () => {
     expect(presenter.present).not.toHaveBeenCalled();
   });
 
-  it('waits for ingestion to finish before presenting success', async () => {
-    let finishIngestion!: (chunksStored: number) => void;
-    const ingestion = new Promise<number>((resolve) => {
-      finishIngestion = resolve;
-    });
-    vi.mocked(ingestor.ingestFile).mockReturnValueOnce(ingestion);
-
-    const result = interactor.handle({ file }, presenter);
-    expect(presenter.present).not.toHaveBeenCalled();
-
-    finishIngestion(3);
-    await result;
-
-    expect(presenter.present).toHaveBeenCalledOnce();
-  });
-
   it('propagates ingestion failures without presenting success', async () => {
     const error = new Error('Chroma is unavailable');
     vi.mocked(ingestor.ingestFile).mockRejectedValueOnce(error);

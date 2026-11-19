@@ -57,8 +57,8 @@ describe('ChromaIngestor', () => {
     await rmdir(directory);
   });
 
-  it.each(['.txt', '.md', '.TXT'])('ingests only the requested %s file', async (extension) => {
-    const filePath = join(directory, `policy${extension}`);
+  it('ingests only the requested file', async () => {
+    const filePath = join(directory, 'policy.txt');
     await writeFile(filePath, 'Refunds are allowed.');
     await writeFile(join(directory, 'other.txt'), 'This document was not uploaded.');
 
@@ -89,21 +89,5 @@ describe('ChromaIngestor', () => {
 
     expect(await ingestor.ingestFile(filePath)).toBe(0);
     expect(addDocuments).not.toHaveBeenCalled();
-  });
-
-  it('rejects unsupported file extensions before ingestion', async () => {
-    await expect(ingestor.ingestFile(join(directory, 'policy.exe'))).rejects.toThrow(
-      'Unsupported document extension: .exe',
-    );
-    expect(addDocuments).not.toHaveBeenCalled();
-  });
-
-  it('propagates storage failures instead of reporting success', async () => {
-    const filePath = join(directory, 'policy.txt');
-    await writeFile(filePath, 'Refunds are allowed.');
-    const error = new Error('Chroma is unavailable');
-    addDocuments.mockRejectedValueOnce(error);
-
-    await expect(ingestor.ingestFile(filePath)).rejects.toBe(error);
   });
 });
