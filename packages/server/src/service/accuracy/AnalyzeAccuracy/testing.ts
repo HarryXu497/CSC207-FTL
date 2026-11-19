@@ -79,6 +79,15 @@ export class RecordingPresenter implements AnalyzeAccuracyOutputBoundary {
     this.modelFailed = true;
   }
 
+  // Only the controller reports these, so the interactor calling them is a bug.
+  presentBadRequest(): void {
+    throw new Error('Unexpected presentBadRequest from the interactor.');
+  }
+
+  presentServiceUnavailable(): void {
+    throw new Error('Unexpected presentServiceUnavailable from the interactor.');
+  }
+
   get accuracy(): Accuracy {
     if (!this.output) throw new Error('Expected the interactor to present a result.');
     return this.output.accuracy;
