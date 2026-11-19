@@ -4,5 +4,6 @@ export interface UploadDocumentResponse {
     filename: string;
     originalName: string;
     size: number;
+    chunksStored: number;
   };
 }

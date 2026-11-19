@@ -3,7 +3,7 @@
  */
 import cors from 'cors';
 import express, { type Express } from 'express';
-import type { AnalyseMessages, BranchRepository, CallRepository } from 'src/repository';
+import type { AnalyseMessages, BranchRepository, CallRepository, Ingestor } from 'src/repository';
 import type { MessageRepoFactory } from './routers';
 import { createRouter } from './routes';
 
@@ -13,6 +13,7 @@ export function createApp(
   messageRepoFactory: MessageRepoFactory,
   backend: 'memory' | 'firestore',
   analyseMessages: AnalyseMessages | null,
+  ingestor: Ingestor | null = null,
 ): Express {
   const app = express();
 
@@ -27,7 +28,10 @@ export function createApp(
   });
 
   // Routes
-  app.use('/api', createRouter(callRepo, branchRepo, messageRepoFactory, backend, analyseMessages));
+  app.use(
+    '/api',
+    createRouter(callRepo, branchRepo, messageRepoFactory, backend, analyseMessages, ingestor),
+  );
 
   // Errors
   app.use(

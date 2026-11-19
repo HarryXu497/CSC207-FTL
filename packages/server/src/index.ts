@@ -10,6 +10,7 @@ import {
   type MessageRepositoryBuilder,
 } from 'src/repository';
 import { createApp } from 'src/server';
+import { buildRagIngestor } from './config/rag';
 import {
   FirestoreBranchRepository,
   InMemoryBranchRepository,
@@ -52,7 +53,8 @@ async function main(): Promise<void> {
   const messageRepoFactory = createMessageRepositoryBuilder(BACKEND);
   const branchRepo = buildBranchRepository(callRepo, messageRepoFactory);
   const sentiment = await buildSentimentDeps();
-  const app = createApp(callRepo, branchRepo, messageRepoFactory, BACKEND, sentiment);
+  const ingestor = buildRagIngestor();
+  const app = createApp(callRepo, branchRepo, messageRepoFactory, BACKEND, sentiment, ingestor);
 
   app.listen(PORT, () => {
     console.log('');

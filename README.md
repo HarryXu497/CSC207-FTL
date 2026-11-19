@@ -80,13 +80,18 @@ name `file`.
 Allowed filename extensions are `.txt`, `.md`, and `.pdf` (case-insensitive).
 The maximum file size is **10 MiB (10,485,760 bytes)**.
 
+Set `RAG_ENABLED=true` and `OPENAI_API_KEY` in `packages/server/.env` and start
+Chroma (`CHROMA_URL` defaults to `http://localhost:8000`). Successful uploads are
+ingested before `201` is returned; `document.chunksStored` reports the chunk count.
+
 ### Upload errors
 
 | Status | Meaning                                                                        |
 | ------ | ------------------------------------------------------------------------------ |
-| 400    | Missing file, extra files, unexpected file field, or malformed multipart data. |
+| 400    | Missing or invalid upload, or a document with no ingestible text.               |
 | 413    | File exceeds the 10 MiB size limit.                                            |
 | 415    | Unsupported filename extension.                                                |
+| 503    | Document ingestion is disabled.                                                |
 | 500    | Unexpected server or storage failure.                                          |
 
 Errors use the shape `{ "error": { "message": "..." } }`.
