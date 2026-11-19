@@ -1,5 +1,7 @@
 import { Router, type Request } from 'express';
 import type { BranchRepository, CallRepository } from 'src/repository';
+import z from 'zod';
+import { CreateBranchInteractor, type CreateBranchOutputBoundary } from './CreateBranch';
 import {
   DeleteBranchInteractor,
   DeleteBranchPresenter,
@@ -12,11 +14,35 @@ import {
   type ListCallBranchesOutputBoundary,
 } from './ListCallBranches';
 
+const createBranchSchema = z.object({
+  branchIndex: z.number().int().min(0, 'Branch index must be non-negative'),
+});
+
 export class BranchController {
   constructor(
     private readonly callRepo: CallRepository,
     private readonly branchRepo: BranchRepository,
   ) {}
+
+  async createBranch(req: Request, presenter: CreateBranchOutputBoundary) {
+    const parsed = createBranchSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      presenter.presentBadRequest('That request was not valid.');
+      return;
+    }
+
+    const callId = req.params.callId;
+
+    if (!callId || typeof callId !== 'string') {
+      presenter.presentBadRequest('callId is required');
+      return;
+    }
+
+    const interactor = new CreateBranchInteractor(this.callRepo, this.branchRepo);
+
+    await interactor.handle({ callId: callId, branchIndex: parsed.data.branchIndex }, presenter);
+  }
 
   async getBranch(req: Request, presenter: GetBranchOutputBoundary) {
     const branchId = req.params.branchId;
