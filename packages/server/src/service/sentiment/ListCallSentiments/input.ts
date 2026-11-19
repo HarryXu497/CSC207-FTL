@@ -1,12 +1,12 @@
-import type { ListCallsSentimentOutputBoundary } from './output';
+import type { ListCallSentimentsOutputBoundary } from './output';
 
-export interface ListCallsSentimentInputBoundary {
+export interface ListCallSentimentsInputBoundary {
   handle(
-    input: ListCallsSentimentInputData,
-    presenter: ListCallsSentimentOutputBoundary,
+    input: ListCallSentimentsInputData,
+    presenter: ListCallSentimentsOutputBoundary,
   ): Promise<void>;
 }
 
-export interface ListCallsSentimentInputData {
+export interface ListCallSentimentsInputData {
   callId: string;
 }

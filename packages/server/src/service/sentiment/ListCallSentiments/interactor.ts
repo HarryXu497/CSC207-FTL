@@ -6,10 +6,10 @@ import {
   type MessageRepositoryBuilder,
   type MessageResult,
 } from 'src/repository';
-import type { ListCallsSentimentInputBoundary, ListCallsSentimentInputData } from './input';
-import type { ListCallsSentimentOutputBoundary } from './output';
+import type { ListCallSentimentsInputBoundary, ListCallSentimentsInputData } from './input';
+import type { ListCallSentimentsOutputBoundary } from './output';
 
-export class ListCallSentimentInteractor implements ListCallsSentimentInputBoundary {
+export class ListCallSentimentsInteractor implements ListCallSentimentsInputBoundary {
   constructor(
     private readonly callsRepo: CallRepository,
     private readonly messageRepoFactory: MessageRepositoryBuilder,
@@ -17,8 +17,8 @@ export class ListCallSentimentInteractor implements ListCallsSentimentInputBound
   ) {}
 
   async handle(
-    { callId }: ListCallsSentimentInputData,
-    presenter: ListCallsSentimentOutputBoundary,
+    { callId }: ListCallSentimentsInputData,
+    presenter: ListCallSentimentsOutputBoundary,
   ): Promise<void> {
     try {
       await this.callsRepo.getCall(callId);

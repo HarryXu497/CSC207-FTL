@@ -1,11 +1,11 @@
 import type { Response } from 'express';
-import type { ListCallsSentimentOutputBoundary, ListCallsSentimentOutputData } from './output';
 import type { WithError } from 'src/entities';
+import type { ListCallSentimentsOutputBoundary, ListCallSentimentsOutputData } from './output';
 
-export class ListCallSentimentsPresenter implements ListCallsSentimentOutputBoundary {
-  constructor(private readonly res: Response<WithError<ListCallsSentimentOutputData>>) {}
+export class ListCallSentimentsPresenter implements ListCallSentimentsOutputBoundary {
+  constructor(private readonly res: Response<WithError<ListCallSentimentsOutputData>>) {}
 
-  present(output: ListCallsSentimentOutputData): void {
+  present(output: ListCallSentimentsOutputData): void {
     this.res.json(output);
   }
 
