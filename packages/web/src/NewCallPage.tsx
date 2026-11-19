@@ -1,12 +1,34 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
+import { api } from './api';
 import NavBar from './components/NavBar';
 
 export default function NewCallPage() {
+  const navigate = useNavigate();
   const [customerName, setCustomerName] = useState('');
   const [topic, setTopic] = useState('');
   const [messagesString, setMessagesString] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   const onClick = async () => {
+    setError(null);
+    try {
+      const response = await api.createCall({
+        callData: {
+          customerName,
+          topic,
+        },
+        messageData: JSON.parse(messagesString),
+      });
+
+      if ('error' in response) {
+        throw new Error(response.error.message);
+      }
+
+      await navigate(`/calls/${response.callId}`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Something went wrong.');
+    }
   };
 
   return (
@@ -48,6 +70,7 @@ export default function NewCallPage() {
               className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-mono focus:outline-none focus:border-slate-500"
             />
           </label>
+          {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
           <button
             type="button"
             onClick={onClick}
