@@ -25,7 +25,10 @@ export class ListCallSentimentsInteractor implements ListCallSentimentsInputBoun
     } catch (e) {
       if (e instanceof NotFoundError) {
         presenter.presentNotFound(`Call with id ${callId} not found.`);
+        return;
       }
+
+      throw e;
     }
 
     const messages = await this.messageRepoFactory(
