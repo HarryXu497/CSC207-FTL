@@ -59,3 +59,5 @@ export interface Accuracy {
   /** ISO 8601 timestamp. */
   analyzedAt: string;
 }
+
+export * from './scoring';
