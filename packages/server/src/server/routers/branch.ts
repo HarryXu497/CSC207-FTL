@@ -1,7 +1,7 @@
 import { Router, type Response } from 'express';
 import type { WithError } from 'src/entities';
 import { NotFoundError } from 'src/errors';
-import type { BranchRepository } from 'src/repository';
+import type { BranchRepository, CallRepository } from 'src/repository';
 import { BranchesService } from 'src/service';
 import type { CreateBranchResponse } from 'src/service/branches/PostBranches';
 import { BranchController } from 'src/service/branches/controller';
@@ -12,20 +12,13 @@ const createBranchSchema = z.object({
   branchIndex: z.number().int().min(0, 'Branch index must be non-negative'),
 });
 
-export function createBranchesRouter(branchRepo: BranchRepository): Router {
-  const controller = new BranchController(branchRepo);
+export function createBranchesRouter(
+  callRepo: CallRepository,
+  branchRepo: BranchRepository,
+): Router {
+  const controller = new BranchController(callRepo, branchRepo);
   const router = controller.router();
-  const getBranches = new BranchesService.GetBranches(branchRepo);
   const postBranches = new BranchesService.PostBranches(branchRepo);
-
-  // Get all branches for a call
-  router.get(
-    '/calls/:callId/branches',
-    async (req, res: Response<WithError<GetBranchesResponse>>) => {
-      const branches = await getBranches.handle(req.params.callId);
-      res.json({ branches });
-    },
-  );
 
   // Create a branch from a call and return it
   router.post(
