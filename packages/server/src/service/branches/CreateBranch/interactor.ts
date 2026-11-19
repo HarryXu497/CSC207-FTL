@@ -4,7 +4,10 @@ import type { CreateBranchInputBoundary, CreateBranchInputData } from './input';
 import type { CreateBranchOutputBoundary } from './output';
 
 export class CreateBranchInteractor implements CreateBranchInputBoundary {
-  constructor(private readonly callRepo: CallRepository, private readonly branchRepo: BranchRepository) {}
+  constructor(
+    private readonly callRepo: CallRepository,
+    private readonly branchRepo: BranchRepository,
+  ) {}
 
   async handle(
     { callId, branchIndex }: CreateBranchInputData,

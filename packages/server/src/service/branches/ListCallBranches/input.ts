@@ -1,7 +1,10 @@
 import type { ListCallBranchesOutputBoundary } from './output';
 
 export interface ListCallBranchesInputBoundary {
-  handle(input: ListCallBranchesInputData, presenter: ListCallBranchesOutputBoundary): Promise<void>;
+  handle(
+    input: ListCallBranchesInputData,
+    presenter: ListCallBranchesOutputBoundary,
+  ): Promise<void>;
 }
 
 export interface ListCallBranchesInputData {

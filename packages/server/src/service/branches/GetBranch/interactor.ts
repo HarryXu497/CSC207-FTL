@@ -18,7 +18,7 @@ export class GetBranchInteractor implements GetBranchInputBoundary {
         presenter.presentNotFound(`Branch with id ${branchId} not found.`);
         return;
       }
-      
+
       throw e;
     }
   }
