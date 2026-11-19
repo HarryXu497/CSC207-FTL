@@ -1,4 +1,6 @@
 import type { ApiErrorBody } from '@recall/server/entities';
+import type { AnalyzeAccuracyInputData } from '@recall/server/service/accuracy/AnalyzeAccuracy/input';
+import type { AnalyzeAccuracyOutputData } from '@recall/server/service/accuracy/AnalyzeAccuracy/output';
 import type { GetCallsResponse } from '@recall/server/service/calls/GetCalls';
 import type { CreateCallRequest, CreateCallResponse } from '@recall/server/service/calls/PostCalls';
 
@@ -31,6 +33,12 @@ export const api = {
 
   createCall: (body: CreateCallRequest) =>
     request<CreateCallResponse>('/calls', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  analyzeAccuracy: (body: AnalyzeAccuracyInputData) =>
+    request<AnalyzeAccuracyOutputData>('/accuracy/analyze', {
       method: 'POST',
       body: JSON.stringify(body),
     }),

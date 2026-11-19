@@ -65,11 +65,12 @@ cp packages/server/.env.example packages/server/.env
 
 ## API
 
-| Method | Path          | Body                             | Returns               |
-| ------ | ------------- | -------------------------------- | --------------------- |
-| GET    | `/api/health` | —                                | `{ status, backend }` |
-| GET    | `/api/calls`  | —                                | `{ calls: Call[] }`   |
-| POST   | `/api/calls`  | `{ customerName, topic, score }` | `201 { call }`        |
+| Method | Path                    | Body                             | Returns                                                                      |
+| ------ | ----------------------- | -------------------------------- | ---------------------------------------------------------------------------- |
+| GET    | `/api/health`           | —                                | `{ status, backend }`                                                        |
+| GET    | `/api/calls`            | —                                | `{ calls: Call[] }`                                                          |
+| POST   | `/api/calls`            | `{ customerName, topic, score }` | `201 { call }`                                                               |
+| POST   | `/api/accuracy/analyze` | `{ messages, topic? }`           | `200 { accuracy }` (`503` if not configured, `502` on unusable model output) |
 
 ## Sentiment Analysis
 
@@ -185,16 +186,20 @@ transcript ──► 1. Extract   LLM lists the checkable claims the agent made
 - **Input:** the call's `messages` (each a `{ role, content }` with role `agent` or `customer`) and an optional `topic`.
 - **Output:** an `Accuracy` object (see [Database Structure](#accuracy-1)).
 - **RAG interaction:** read-only. It calls `search(query, limit)` on a `Retriever` and never writes to the knowledge base, so `ChromaRetriever` or `InMemoryRetriever` both work.
+- **Endpoint:** `POST /api/accuracy/analyze` takes a transcript and returns the result; nothing is stored yet. Set `OPENAI_API_KEY` (and the `CHROMA_*` settings) in `packages/server/.env` to enable it; without a key it answers `503`.
+- **Limits:** at most 200 messages and 30,000 characters of message text per request (`400` otherwise). JSON bodies over 100 KB get `413`, and unreadable JSON gets `400`.
 
 ### Code
 
 The metric follows the same layers as the rest of the server:
 
-| Layer        | Where                               | What                                                                             |
-| ------------ | ----------------------------------- | -------------------------------------------------------------------------------- |
-| `entities`   | `entities/accuracy/`                | Result types, and `scoring.ts` (the scoring rules)                               |
-| `repository` | `repository/llm/`                   | `LlmClient` port, its LangChain adapter, and `completeJson` (validated JSON)     |
-| `service`    | `service/accuracy/AnalyzeAccuracy/` | The use case: input/output boundaries, the interactor, prompts and reply schemas |
+| Layer        | Where                                                            | What                                                                              |
+| ------------ | ---------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `entities`   | `entities/accuracy/`                                             | Result types, and `scoring.ts` (the scoring rules)                                |
+| `repository` | `repository/llm/`                                                | `LlmClient` port, its LangChain adapter, and `completeJson` (validated JSON)      |
+| `service`    | `service/accuracy/AnalyzeAccuracy/`                              | The use case: input/output boundaries, the interactor, prompts and reply schemas  |
+| `service`    | `service/accuracy/controller.ts`, `AnalyzeAccuracy/presenter.ts` | Request validation, and turning the output into HTTP responses                    |
+| `server`     | `routes.ts`, `index.ts`                                          | Mounts the controller; builds the OpenAI and Chroma adapters from the environment |
 
 All prompts are in `prompts.ts` and carry a `PROMPT_VERSION`.
 
