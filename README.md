@@ -86,13 +86,13 @@ ingested before `201` is returned; `document.chunksStored` reports the chunk cou
 
 ### Upload errors
 
-| Status | Meaning                                                                        |
-| ------ | ------------------------------------------------------------------------------ |
-| 400    | Missing or invalid upload, or a document with no ingestible text.               |
-| 413    | File exceeds the 10 MiB size limit.                                            |
-| 415    | Unsupported filename extension.                                                |
-| 503    | Document ingestion is disabled.                                                |
-| 500    | Unexpected server or storage failure.                                          |
+| Status | Meaning                                                           |
+| ------ | ----------------------------------------------------------------- |
+| 400    | Missing or invalid upload, or a document with no ingestible text. |
+| 413    | File exceeds the 10 MiB size limit.                               |
+| 415    | Unsupported filename extension.                                   |
+| 503    | Document ingestion is disabled.                                   |
+| 500    | Unexpected server or storage failure.                             |
 
 Errors use the shape `{ "error": { "message": "..." } }`.
 
