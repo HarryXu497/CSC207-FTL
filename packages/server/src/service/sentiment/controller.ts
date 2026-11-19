@@ -1,9 +1,9 @@
 import { Router, type Request } from 'express';
 import type { AnalyseMessages, CallRepository, MessageRepositoryBuilder } from 'src/repository';
 import {
-  ListCallSentimentInteractor,
+  ListCallSentimentsInteractor,
   ListCallSentimentsPresenter,
-  type ListCallsSentimentOutputBoundary,
+  type ListCallSentimentsOutputBoundary,
 } from './ListCallSentiments';
 
 export class SentimentController {
@@ -13,7 +13,7 @@ export class SentimentController {
     private readonly analyseMessages: AnalyseMessages | null,
   ) {}
 
-  async listCallSentiments(req: Request, presenter: ListCallsSentimentOutputBoundary) {
+  async listCallSentiments(req: Request, presenter: ListCallSentimentsOutputBoundary) {
     if (!this.analyseMessages) {
       presenter.presentServiceUnavailable();
       return;
@@ -26,7 +26,7 @@ export class SentimentController {
       return;
     }
 
-    const interactor = new ListCallSentimentInteractor(
+    const interactor = new ListCallSentimentsInteractor(
       this.callsRepo,
       this.messageRepoFactory,
       this.analyseMessages,

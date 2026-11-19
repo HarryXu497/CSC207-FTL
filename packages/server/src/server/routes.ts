@@ -2,11 +2,15 @@
  * Creates the router and handles route configuration
  */
 import { Router } from 'express';
-import type { AnalyseMessages, BranchRepository, CallRepository } from 'src/repository';
+import type {
+  AnalyseMessages,
+  BranchRepository,
+  CallRepository,
+  MessageRepositoryBuilder,
+} from 'src/repository';
 import { SentimentController } from 'src/service';
+import { BranchController } from 'src/service';
 import { createCallsRouter, createHealthRouter, createMessagesRouter } from './routers';
-import type { MessageRepositoryBuilder } from 'src/repository';
-import { createBranchesRouter } from './routers/branch';
 
 export function createRouter(
   callRepo: CallRepository,
@@ -16,6 +20,7 @@ export function createRouter(
   analyseMessages: AnalyseMessages | null,
 ): Router {
   const router = Router();
+  const branchController = new BranchController(callRepo, branchRepo);
   const sentimentController = new SentimentController(
     callRepo,
     messageRepoFactory,
@@ -24,8 +29,8 @@ export function createRouter(
 
   router.use(createHealthRouter(backend));
   router.use(createCallsRouter(callRepo));
-  router.use(createBranchesRouter(branchRepo));
   router.use(createMessagesRouter(callRepo, messageRepoFactory));
+  router.use(branchController.router());
   router.use(sentimentController.router());
 
   return router;
