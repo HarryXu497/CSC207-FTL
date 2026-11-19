@@ -5,7 +5,11 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { GoEmotionsClassifier, VadBertEstimator } from './TransformersModels';
+import {
+  GoEmotionsClassifier,
+  TwitterRobertaIronyDetector,
+  VadBertEstimator,
+} from './TransformersModels';
 import { EMOTION_LABELS } from 'src/entities';
 
 /**
@@ -63,6 +67,33 @@ describe('GoEmotionsClassifier', () => {
     await expect((await classifierWith(valid.slice(1))).classify('hi')).rejects.toThrow(
       /expected 28/i,
     );
+  });
+});
+
+describe('TwitterRobertaIronyDetector', () => {
+  const detectorWith = async (output: unknown) => {
+    mocks.pipeline.mockResolvedValue(vi.fn().mockResolvedValue(output));
+    return TwitterRobertaIronyDetector.create('C:/models');
+  };
+
+  it('returns the irony probability regardless of label order', async () => {
+    const detector = await detectorWith([
+      { label: 'non_irony', score: 0.15 },
+      { label: 'irony', score: 0.85 },
+    ]);
+
+    await expect(detector.detect('Great, another outage.')).resolves.toBe(0.85);
+    expect(mocks.pipeline).toHaveBeenCalledWith('text-classification', 'irony', { dtype: 'q8' });
+  });
+
+  it('rejects missing labels and scores outside the probability range', async () => {
+    await expect(
+      (await detectorWith([{ label: 'non_irony', score: 1 }])).detect('plain text'),
+    ).rejects.toThrow(/did not return an irony label/i);
+
+    await expect(
+      (await detectorWith([{ label: 'irony', score: 1.2 }])).detect('bad score'),
+    ).rejects.toThrow(/invalid score/i);
   });
 });
 

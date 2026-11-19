@@ -3,7 +3,7 @@
  * Only this file may import @huggingface/transformers.
  */
 import { EMOTION_LABELS, isEmotionLabel, type Emotion } from 'src/entities';
-import type { EmotionClassifier, Vad, VadEstimator } from './SentimentModels';
+import type { EmotionClassifier, IronyDetector, Vad, VadEstimator } from './SentimentModels';
 
 // Minimal type descriptions of the three library objects this file uses to ensure type safety
 type TextClassifier = (text: string, options: { top_k: number }) => Promise<unknown>;
@@ -13,6 +13,7 @@ type VadModel = (inputs: unknown) => Promise<{ logits: { data: ArrayLike<number>
 // Model folder names inside MODEL_DIR
 const GOEMOTIONS_MODEL = 'goemotions-roberta';
 const VAD_MODEL = 'vad';
+const IRONY_MODEL = 'irony';
 
 /**
  * Loads the Hugging Face transformers library and points it at local model files.
@@ -87,6 +88,46 @@ export class GoEmotionsClassifier implements EmotionClassifier {
       throw new Error(`ERROR: expected ${EMOTION_LABELS.length} emotions, got ${emotions.length}`);
     }
     return emotions;
+  }
+}
+
+/**
+ * Detects irony with the Cardiff NLP Twitter-RoBERTa model converted to ONNX
+ * by Xenova for Transformers.js.
+ *
+ * The model returns `irony` and `non_irony` probabilities. This adapter exposes
+ * only the irony probability through the model-independent IronyDetector
+ * contract; it does not modify sentiment scores.
+ */
+export class TwitterRobertaIronyDetector implements IronyDetector {
+  private readonly classifier: TextClassifier;
+
+  private constructor(classifier: TextClassifier) {
+    this.classifier = classifier;
+  }
+
+  /** Loads the quantized local model once so the instance can be reused. */
+  static async create(modelDir: string): Promise<TwitterRobertaIronyDetector> {
+    const { pipeline } = await loadTransformers(modelDir);
+    const classifier = await pipeline('text-classification', IRONY_MODEL, { dtype: 'q8' });
+    return new TwitterRobertaIronyDetector(classifier as unknown as TextClassifier);
+  }
+
+  async detect(text: string): Promise<number> {
+    const output = (await this.classifier(text, { top_k: 2 })) as {
+      label: string;
+      score: number;
+    }[];
+    const irony = output.find(({ label }) => label === 'irony');
+
+    if (!irony) {
+      throw new Error('ERROR: irony model did not return an irony label');
+    }
+    if (!Number.isFinite(irony.score) || irony.score < 0 || irony.score > 1) {
+      throw new Error(`ERROR: irony model returned an invalid score: ${irony.score}`);
+    }
+
+    return irony.score;
   }
 }
 

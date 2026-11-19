@@ -47,3 +47,17 @@ export interface VadEstimator {
    */
   estimate(text: string): Promise<Vad>;
 }
+
+/**
+ * Contract for a model that estimates whether a piece of text is ironic.
+ *
+ * This signal is deliberately separate from sentiment scoring for now. A
+ * caller can inspect the score without changing the message's valence.
+ */
+export interface IronyDetector {
+  /**
+   * @param text - The non-empty text to classify.
+   * @returns The model's probability of irony, from 0 (not ironic) to 1 (ironic).
+   */
+  detect(text: string): Promise<number>;
+}
