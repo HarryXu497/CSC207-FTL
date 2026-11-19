@@ -3,6 +3,7 @@
  */
 import { Router } from 'express';
 import type {
+  AccuracyAnalyzer,
   AnalyseMessages,
   BranchRepository,
   CallRepository,
@@ -11,6 +12,7 @@ import type {
   SimulationRepository,
 } from 'src/repository';
 import {
+  AccuracyController,
   BranchController,
   CallController,
   DocumentsController,
@@ -25,6 +27,7 @@ import { createHealthRouter, createMessagesRouter } from './routers';
 /** Optional services. A missing service makes its routes respond with 503. */
 export interface ServerServices {
   analyseMessages?: AnalyseMessages | null;
+  accuracyAnalyzer?: AccuracyAnalyzer | null;
   simulationRepo?: SimulationRepository | null;
   ingestor?: Ingestor | null;
 }
@@ -54,6 +57,7 @@ export function createRouter(
   const simulationController = new SimulationController(
     simulationRepo ? new SimulateMessageInteractor(callRepo, branchRepo, simulationRepo) : null,
   );
+  const accuracyController = new AccuracyController(services.accuracyAnalyzer ?? null);
 
   router.use(createHealthRouter(backend));
   router.use(callController.router());
@@ -62,6 +66,7 @@ export function createRouter(
   router.use(branchController.router());
   router.use(sentimentController.router());
   router.use(simulationController.router());
+  router.use(accuracyController.router());
 
   return router;
 }

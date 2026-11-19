@@ -6,6 +6,7 @@ import express, { type Express } from 'express';
 import type { BranchRepository, CallRepository } from 'src/repository';
 import type { MessageRepositoryBuilder } from 'src/repository';
 import { createRouter, type ServerServices } from './routes';
+import { describeClientError } from './utils';
 
 export function createApp(
   callRepo: CallRepository,
@@ -32,6 +33,12 @@ export function createApp(
   // Errors
   app.use(
     (err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+      const clientError = describeClientError(err);
+      if (clientError) {
+        res.status(clientError.status).json({ error: { message: clientError.message } });
+        return;
+      }
+
       console.error('[recall] unhandled error:', err);
       res.status(500).json({ error: { message: 'Something went wrong on the server.' } });
     },
