@@ -11,7 +11,6 @@ import type {
 import { SentimentController } from 'src/service';
 import { BranchController } from 'src/service/branches/controller';
 import { createCallsRouter, createHealthRouter, createMessagesRouter } from './routers';
-import { createBranchesRouter } from './routers/branch';
 
 export function createRouter(
   callRepo: CallRepository,
@@ -31,7 +30,6 @@ export function createRouter(
   router.use(createHealthRouter(backend));
   router.use(createCallsRouter(callRepo));
   router.use(createMessagesRouter(callRepo, messageRepoFactory));
-  router.use(createBranchesRouter(callRepo, branchRepo));
   router.use(branchController.router());
   router.use(sentimentController.router());
 
