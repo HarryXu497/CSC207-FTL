@@ -15,7 +15,6 @@ export function createCallsRouter(
   const router = controller.router();
   const getCalls = new CallsService.GetCalls(callRepo);
   const getCall = new CallsService.GetCall(callRepo);
-  const deleteCall = new CallsService.DeleteCall(callRepo);
 
   // Read from the database
   router.get('/calls', async (_req, res: Response<WithError<GetCallsResponse>>) => {
@@ -37,21 +36,5 @@ export function createCallsRouter(
       }
     }
   });
-
-  router.delete('/calls/:id', async (req, res: Response<WithError<never>>) => {
-    const id = req.params.id;
-
-    try {
-      await deleteCall.handle(id);
-      res.status(204).send();
-    } catch (e) {
-      if (e instanceof NotFoundError) {
-        res.status(404).json({ error: { message: e.message } });
-      } else {
-        throw e;
-      }
-    }
-  });
-
   return router;
 }

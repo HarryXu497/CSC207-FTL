@@ -7,6 +7,11 @@ import {
   CreateCallPresenter,
   type CreateCallOutputBoundary,
 } from './CreateCall';
+import {
+  DeleteCallInteractor,
+  DeleteCallPresenter,
+  type DeleteCallOutputBoundary,
+} from './DeleteCall';
 
 const messageSchema = z.object({
   role: z.enum(['agent', 'customer']),
@@ -47,11 +52,30 @@ export class CallController {
     await interactor.handle({ callData, messageData }, presenter);
   }
 
+  async deleteCall(req: Request, presenter: DeleteCallOutputBoundary) {
+    const callId = req.params.callId;
+
+    if (!callId || typeof callId !== 'string') {
+      presenter.presentBadRequest('callId is required');
+      return;
+    }
+
+    const interactor = new DeleteCallInteractor(this.callRepo);
+    
+    await interactor.handle({ callId }, presenter);
+  }
+
   router(): Router {
     const router = Router();
 
-    router.post('/calls', async (req, res) => this.createCall(req, new CreateCallPresenter(res)));
+    router.post('/calls', async (req, res) => 
+      this.createCall(req, new CreateCallPresenter(res))
+    );
 
+    router.delete('/calls/:id', async (req, res) => 
+      this.deleteCall(req, new DeleteCallPresenter(res))
+    );
+    
     return router;
-  }
+  };
 }
