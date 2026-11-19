@@ -8,5 +8,6 @@ export interface UploadDocumentOutputData {
     filename: string;
     originalName: string;
     size: number;
+    chunksStored: number;
   };
 }

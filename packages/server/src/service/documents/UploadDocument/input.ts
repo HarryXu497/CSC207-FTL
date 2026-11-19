@@ -6,6 +6,8 @@ export interface UploadDocumentInputBoundary {
 
 export interface UploadDocumentInputData {
   file: {
+    /** Server-side path assigned by the upload middleware. */
+    path: string;
     filename: string;
     originalName: string;
     size: number;
