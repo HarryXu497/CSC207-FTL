@@ -3,7 +3,7 @@ type ScoreProps = {
   sentimentScale?: boolean;
 };
 
-export default function Score({score}: ScoreProps) {
+export default function Score({ score }: ScoreProps) {
   function scoreColor(score: number): string {
     if (score <= 20) {
       return 'text-score-poor';

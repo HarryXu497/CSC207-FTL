@@ -10,5 +10,5 @@ export const CallsService = {
   DeleteCall,
 } as const;
 
-export * from "./controller";
-export * from "./CreateCall";
+export * from './controller';
+export * from './CreateCall';

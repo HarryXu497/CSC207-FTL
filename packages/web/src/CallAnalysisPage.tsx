@@ -36,7 +36,7 @@ export default function CallAnalysisPage() {
     async function load() {
       try {
         const response = await api.getCallSentiment(callId, controller.signal);
-        if ("error" in response) {
+        if ('error' in response) {
           throw new Error(response.error.message);
         }
         const sentiments = response.messageSentiments;

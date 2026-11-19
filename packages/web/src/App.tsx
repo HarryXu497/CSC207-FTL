@@ -16,8 +16,11 @@ export default function App() {
   useEffect(() => {
     async function load() {
       try {
-        const { calls } = await api.listCalls();
-        setCalls(calls);
+        const response = await api.listCalls();
+        if ('error' in response) {
+          throw new Error(response.error.message);
+        }
+        setCalls(response.calls);
       } catch (error) {
         setLoadError(
           error instanceof Error ? error.message : 'Could not reach the API on port 4000.',
@@ -35,10 +38,27 @@ export default function App() {
     setIsSaving(true);
     setSaveError(null);
     try {
-      const { call } = await api.createCall({
-        customerName,
-        topic,
+      const response = await api.createCall({
+        callData: {
+          customerName,
+          topic,
+        },
+        messageData: [
+        ]
       });
+
+      if ('error' in response) {
+        throw new Error(response.error.message);
+      }
+
+      const { callId } = response;
+
+      const callResponse = await api.getCall(callId);
+      if ('error' in callResponse) {
+        throw new Error(callResponse.error.message);
+      }
+
+      const { call } = callResponse;
 
       setCalls([call, ...calls]);
 
