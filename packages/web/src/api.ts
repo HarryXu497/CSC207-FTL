@@ -1,8 +1,8 @@
 import type { ApiErrorBody } from '@recall/server/entities';
 import type { GetCallsResponse } from '@recall/server/service/calls/GetCalls';
-import type { CreateCallRequest, CreateCallResponse } from '@recall/server/service/calls/PostCalls';
-import type { ListCallSentimentsOutputData } from '@recall/server/service';
+import type { ListCallSentimentsOutputData, CreateCallInputData, CreateCallOutputData } from '@recall/server/service';
 import type { WithError } from '@recall/server/entities';
+
 const BASE_URL = '/api';
 
 // Makes request and returns response body casted as type T
@@ -33,8 +33,8 @@ export const api = {
   getCallSentiment: (callId: string, signal: AbortSignal) =>
     request<WithError<ListCallSentimentsOutputData>>(`/calls/${encodeURIComponent(callId)}/sentiment`, { signal }),
 
-  createCall: (body: CreateCallRequest) =>
-    request<CreateCallResponse>('/calls', {
+  createCall: (body: CreateCallInputData) =>
+    request<WithError<CreateCallOutputData>>('/calls', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
