@@ -43,8 +43,7 @@ export default function App() {
           customerName,
           topic,
         },
-        messageData: [
-        ]
+        messageData: [],
       });
 
       if ('error' in response) {

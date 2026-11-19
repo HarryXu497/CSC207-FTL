@@ -28,7 +28,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new Error(message);
   }
 
-  return (await response.json()) as T
+  return (await response.json()) as T;
 }
 
 interface CreateCallRequestBody {
@@ -40,7 +40,8 @@ interface CreateCallRequestBody {
 export const api = {
   listCalls: () => request<WithError<GetCallsResponse>>('/calls'),
 
-  getCall: (callId: string) => request<WithError<GetCallResponse>>(`/calls/${encodeURIComponent(callId)}`),
+  getCall: (callId: string) =>
+    request<WithError<GetCallResponse>>(`/calls/${encodeURIComponent(callId)}`),
 
   getCallSentiment: (callId: string, signal: AbortSignal) =>
     request<WithError<ListCallSentimentsOutputData>>(
