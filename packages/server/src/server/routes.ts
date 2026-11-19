@@ -28,7 +28,7 @@ export function createRouter(
   );
 
   router.use(createHealthRouter(backend));
-  router.use(createCallsRouter(callRepo));
+  router.use(createCallsRouter(callRepo, messageRepoFactory));
   router.use(createMessagesRouter(callRepo, messageRepoFactory));
   router.use(branchController.router());
   router.use(sentimentController.router());

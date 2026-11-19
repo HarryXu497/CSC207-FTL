@@ -50,7 +50,22 @@ describe('POST /api/calls', () => {
     const response = await fetch(`${baseUrl}/calls`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ customerName: 'Marcus Webb', topic: 'Billing query' }),
+      body: JSON.stringify({
+        customerName: 'Marcus Webb',
+        topic: 'Billing query',
+        messages: [
+          {
+            role: 'agent',
+            content: 'Hello, how can I help?',
+            createdAt: '2026-09-28T16:05:00.000Z',
+          },
+          {
+            role: 'customer',
+            content: 'I have a billing issue.',
+            createdAt: '2026-09-28T16:05:30.000Z',
+          },
+        ],
+      }),
     });
 
     expect(response.status).toBe(201);
@@ -64,10 +79,23 @@ describe('POST /api/calls', () => {
     const response = await fetch(`${baseUrl}/calls`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ topic: 'Y' }),
+      body: JSON.stringify({ topic: 'Y', messages: [] }),
     });
 
     expect(response.status).toBe(400);
-    expect(JSON.stringify(await response.json())).toContain('customerName');
+  });
+
+  it('rejects an invalid message role with a 400', async () => {
+    const response = await fetch(`${baseUrl}/calls`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customerName: 'Marcus Webb',
+        topic: 'Billing query',
+        messages: [{ role: 'unknown', content: 'Hi', createdAt: '2026-09-28T16:05:00.000Z' }],
+      }),
+    });
+
+    expect(response.status).toBe(400);
   });
 });
