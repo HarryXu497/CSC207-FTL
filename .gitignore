@@ -1,5 +1,6 @@
 packages/server/models/
 packages/server/uploads/
+chroma-data/
 
 node_modules/
 dist/

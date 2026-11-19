@@ -16,6 +16,8 @@ import type {
   SimulateMessageOutputData,
 } from '@recall/server/service';
 import type { WithError } from '@recall/server/entities';
+import type { AnalyzeAccuracyInputData } from '@recall/server/service/accuracy/AnalyzeAccuracy/input';
+import type { AnalyzeAccuracyOutputData } from '@recall/server/service/accuracy/AnalyzeAccuracy/output';
 
 const BASE_URL = '/api';
 
@@ -145,6 +147,12 @@ export const api = {
 
   createCall: (body: CreateCallRequestBody) =>
     request<WithError<CreateCallOutputData>>('/calls', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  analyzeAccuracy: (body: AnalyzeAccuracyInputData) =>
+    request<AnalyzeAccuracyOutputData>('/accuracy/analyze', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
