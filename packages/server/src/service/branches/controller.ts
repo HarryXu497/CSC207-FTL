@@ -1,7 +1,7 @@
 import { Router, type Request } from 'express';
 import type { BranchRepository, CallRepository } from 'src/repository';
 import z from 'zod';
-import { CreateBranchInteractor, type CreateBranchOutputBoundary } from './CreateBranch';
+import { CreateBranchInteractor, CreateBranchPresenter, type CreateBranchOutputBoundary } from './CreateBranch';
 import {
   DeleteBranchInteractor,
   DeleteBranchPresenter,
@@ -92,6 +92,10 @@ export class BranchController {
 
     router.get('/calls/:callId/branches', async (req, res) =>
       this.listCallBranches(req, new ListCallBranchesPresenter(res)),
+    );
+
+    router.post('/calls/:callId/branches', async (req, res) =>
+      this.createBranch(req, new CreateBranchPresenter(res)),
     );
 
     router.delete('/calls/:callId/branches/:branchId', async (req, res) =>
