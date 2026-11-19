@@ -3,35 +3,43 @@
  */
 import { Router } from 'express';
 import type {
+  AccuracyAnalyzer,
   AnalyseMessages,
   BranchRepository,
   CallRepository,
   MessageRepositoryBuilder,
 } from 'src/repository';
-import { SentimentController } from 'src/service';
-import { BranchController } from 'src/service';
+import { AccuracyController, BranchController, SentimentController } from 'src/service';
 import { createCallsRouter, createHealthRouter, createMessagesRouter } from './routers';
+
+/** Optional services. A missing one makes its routes answer 503 instead of stopping the server. */
+export interface ServerServices {
+  analyseMessages?: AnalyseMessages | null;
+  accuracyAnalyzer?: AccuracyAnalyzer | null;
+}
 
 export function createRouter(
   callRepo: CallRepository,
   branchRepo: BranchRepository,
   messageRepoFactory: MessageRepositoryBuilder,
   backend: 'memory' | 'firestore',
-  analyseMessages: AnalyseMessages | null,
+  services: ServerServices = {},
 ): Router {
   const router = Router();
   const branchController = new BranchController(callRepo, branchRepo);
   const sentimentController = new SentimentController(
     callRepo,
     messageRepoFactory,
-    analyseMessages,
+    services.analyseMessages ?? null,
   );
+  const accuracyController = new AccuracyController(services.accuracyAnalyzer ?? null);
 
   router.use(createHealthRouter(backend));
   router.use(createCallsRouter(callRepo, messageRepoFactory));
   router.use(createMessagesRouter(callRepo, messageRepoFactory));
   router.use(branchController.router());
   router.use(sentimentController.router());
+  router.use(accuracyController.router());
 
   return router;
 }
