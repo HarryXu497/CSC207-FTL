@@ -1,8 +1,10 @@
 import { Router, type Request } from 'express';
 import type { BranchRepository } from 'src/repository';
-import { DeleteBranchInteractor } from './DeleteBranch/interactor';
-import type { DeleteBranchOutputBoundary } from './DeleteBranch/output';
-import { DeleteBranchPresenter } from './DeleteBranch/presenter';
+import {
+  DeleteBranchInteractor,
+  DeleteBranchPresenter,
+  type DeleteBranchOutputBoundary,
+} from './DeleteBranch';
 
 export class BranchController {
   constructor(private readonly branchRepo: BranchRepository) {}
