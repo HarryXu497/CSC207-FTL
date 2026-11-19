@@ -3,13 +3,13 @@
  */
 import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
+import type { Call } from 'src/entities';
 import { createApp } from 'src/server/app';
+import type { GetCallsResponse } from 'src/service/calls/GetCalls';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { InMemoryBranchRepository } from '../branches';
 import { InMemoryMessageRepository } from '../messages';
 import { InMemoryCallRepository } from './InMemoryCallRepository';
-import type { GetCallsResponse } from 'src/service/calls/GetCalls';
-import type { Call } from 'src/entities';
 
 let server: Server;
 let baseUrl: string;
@@ -51,9 +51,11 @@ describe('POST /api/calls', () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        customerName: 'Marcus Webb',
-        topic: 'Billing query',
-        messages: [
+        callData: {
+          customerName: 'Marcus Webb',
+          topic: 'Billing query',
+        },
+        messageData: [
           {
             role: 'agent',
             content: 'Hello, how can I help?',
@@ -79,7 +81,10 @@ describe('POST /api/calls', () => {
     const response = await fetch(`${baseUrl}/calls`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ topic: 'Y', messages: [] }),
+      body: JSON.stringify({
+        callData: { topic: 'Y' },
+        messageData: [],
+      }),
     });
 
     expect(response.status).toBe(400);
@@ -90,9 +95,11 @@ describe('POST /api/calls', () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        customerName: 'Marcus Webb',
-        topic: 'Billing query',
-        messages: [{ role: 'unknown', content: 'Hi', createdAt: '2026-09-28T16:05:00.000Z' }],
+        callData: {
+          customerName: 'Marcus Webb',
+          topic: 'Billing query',
+        },
+        messageData: [{ role: 'unknown', content: 'Hi', createdAt: '2026-09-28T16:05:00.000Z' }],
       }),
     });
 
