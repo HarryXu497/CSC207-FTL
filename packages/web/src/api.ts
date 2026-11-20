@@ -1,11 +1,11 @@
 import type { ApiErrorBody } from '@recall/server/entities';
-import type { GetCallsResponse } from '@recall/server/service/calls/GetCalls';
 import type {
   ListCallSentimentsOutputData,
   CreateCallInputData,
   CreateCallOutputData,
+  ListCallsOutputData,
+  GetCallOutputData,
 } from '@recall/server/service';
-import type { GetCallResponse } from '@recall/server/service/calls/GetCall';
 import type { WithError } from '@recall/server/entities';
 
 const BASE_URL = '/api';
@@ -38,10 +38,10 @@ interface CreateCallRequestBody {
 
 // Singleton object for making requests
 export const api = {
-  listCalls: () => request<WithError<GetCallsResponse>>('/calls'),
+  listCalls: () => request<WithError<ListCallsOutputData>>('/calls'),
 
   getCall: (callId: string) =>
-    request<WithError<GetCallResponse>>(`/calls/${encodeURIComponent(callId)}`),
+    request<WithError<GetCallOutputData>>(`/calls/${encodeURIComponent(callId)}`),
 
   getCallSentiment: (callId: string, signal: AbortSignal) =>
     request<WithError<ListCallSentimentsOutputData>>(
