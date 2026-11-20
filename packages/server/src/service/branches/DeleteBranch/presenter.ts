@@ -1,6 +1,6 @@
 import type { Response } from 'express';
-import type { DeleteBranchOutputBoundary } from './output';
 import type { WithError } from 'src/entities';
+import type { DeleteBranchOutputBoundary } from './output';
 
 export class DeleteBranchPresenter implements DeleteBranchOutputBoundary {
   constructor(private readonly res: Response<WithError<never>>) {}
