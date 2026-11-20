@@ -13,6 +13,7 @@ import {
   DeleteCallPresenter,
   type DeleteCallOutputBoundary,
 } from './DeleteCall';
+import { ListCallsInteractor, ListCallsPresenter, type ListCallsOutputBoundary } from './ListCalls';
 
 const messageSchema = z.object({
   role: z.enum(['agent', 'customer']),
@@ -66,6 +67,12 @@ export class CallController {
     await interactor.handle({ callId: callId }, presenter);
   }
 
+  async listCalls(presenter: ListCallsOutputBoundary) {
+    const interactor = new ListCallsInteractor(this.callRepo);
+
+    await interactor.handle(presenter);
+  }
+
   async deleteCall(req: Request, presenter: DeleteCallOutputBoundary) {
     const callId = req.params.callId;
 
@@ -89,6 +96,8 @@ export class CallController {
     );
 
     router.get('/calls/:id', async (req, res) => this.getCall(req, new GetCallPresenter(res)));
+
+    router.get('/calls', async (req, res) => this.listCalls(new ListCallsPresenter(res)));
 
     return router;
   }
