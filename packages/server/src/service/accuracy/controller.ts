@@ -1,11 +1,23 @@
 import { Router, type Request } from 'express';
-import type { AccuracyAnalyzer } from 'src/repository';
+import { NotFoundError } from 'src/errors';
+import {
+  FirestoreCallRepository,
+  type AccuracyAnalyzer,
+  type AccuracyRepository,
+  type CallRepository,
+  type MessageRepositoryBuilder,
+} from 'src/repository';
 import { z } from 'zod';
 import {
   AnalyzeAccuracyInteractor,
   AnalyzeAccuracyPresenter,
   type AnalyzeAccuracyOutputBoundary,
 } from './AnalyzeAccuracy';
+import {
+  GetAccuracyInteractor,
+  GetAccuracyPresenter,
+  type GetAccuracyOutputBoundary,
+} from './GetAccuracy';
 
 /** Bounds the LLM cost of one analysis. */
 export const MAX_TRANSCRIPT_CHARS = 30_000;
@@ -29,8 +41,14 @@ const analyzeAccuracySchema = z.object({
 });
 
 export class AccuracyController {
-  constructor(private readonly analyzer: AccuracyAnalyzer | null) {}
+  constructor(
+    private readonly analyzer: AccuracyAnalyzer | null,
+    private readonly accuracyRepo: AccuracyRepository,
+    private readonly callRepo: CallRepository,
+    private readonly messageRepoFactory: MessageRepositoryBuilder,
+  ) {}
 
+  /** Analyzes a transcript sent in the request body. Nothing is stored. */
   async analyzeAccuracy(req: Request, presenter: AnalyzeAccuracyOutputBoundary) {
     if (!this.analyzer) {
       presenter.presentServiceUnavailable();
@@ -40,16 +58,73 @@ export class AccuracyController {
     const parsed = analyzeAccuracySchema.safeParse(req.body);
 
     if (!parsed.success) {
-      presenter.presentBadRequest(
-        'That request was not valid.',
-        parsed.error.issues.map((i) => ({ field: i.path.join('.'), message: i.message })),
-      );
+      presentInvalid(presenter, parsed.error);
       return;
     }
 
-    const interactor = new AnalyzeAccuracyInteractor(this.analyzer);
+    const interactor = new AnalyzeAccuracyInteractor(this.analyzer, this.accuracyRepo);
 
     await interactor.handle(parsed.data, presenter);
+  }
+
+  /** Analyzes the stored transcript of a call and saves the result under that call. */
+  async analyzeCallAccuracy(req: Request, presenter: AnalyzeAccuracyOutputBoundary) {
+    if (!this.analyzer) {
+      presenter.presentServiceUnavailable();
+      return;
+    }
+
+    const callId = req.params.callId;
+
+    if (!callId || typeof callId !== 'string') {
+      presenter.presentBadRequest('callId is required');
+      return;
+    }
+
+    let topic: string;
+
+    try {
+      topic = (await this.callRepo.getCall(callId)).topic;
+    } catch (e) {
+      if (e instanceof NotFoundError) {
+        presenter.presentNotFound(`Call with id ${callId} not found.`);
+        return;
+      }
+
+      throw e;
+    }
+
+    const messages = await this.messageRepoFactory(
+      FirestoreCallRepository.COLLECTION,
+      callId,
+    ).getAllMessages();
+
+    // The stored transcript goes through the same limits as one sent in a request body.
+    const parsed = analyzeAccuracySchema.safeParse({
+      messages: messages.map(({ role, content }) => ({ role, content })),
+      topic,
+    });
+
+    if (!parsed.success) {
+      presentInvalid(presenter, parsed.error);
+      return;
+    }
+
+    const interactor = new AnalyzeAccuracyInteractor(this.analyzer, this.accuracyRepo);
+
+    await interactor.handle({ callId, ...parsed.data }, presenter);
+  }
+
+  /** Reads the saved result for a call. */
+  async getAccuracy(req: Request, presenter: GetAccuracyOutputBoundary) {
+    const callId = req.params.callId;
+
+    if (!callId || typeof callId !== 'string') {
+      presenter.presentNotFound('callId is required');
+      return;
+    }
+
+    await new GetAccuracyInteractor(this.accuracyRepo).handle({ callId }, presenter);
   }
 
   router(): Router {
@@ -59,6 +134,21 @@ export class AccuracyController {
       this.analyzeAccuracy(req, new AnalyzeAccuracyPresenter(res)),
     );
 
+    router.post('/calls/:callId/accuracy', async (req, res) =>
+      this.analyzeCallAccuracy(req, new AnalyzeAccuracyPresenter(res)),
+    );
+
+    router.get('/calls/:callId/accuracy', async (req, res) =>
+      this.getAccuracy(req, new GetAccuracyPresenter(res)),
+    );
+
     return router;
   }
+}
+
+function presentInvalid(presenter: AnalyzeAccuracyOutputBoundary, error: z.ZodError) {
+  presenter.presentBadRequest(
+    'That request was not valid.',
+    error.issues.map((i) => ({ field: i.path.join('.'), message: i.message })),
+  );
 }

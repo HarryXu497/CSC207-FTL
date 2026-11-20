@@ -1,7 +1,7 @@
 import { Router, type Response } from 'express';
 import type { WithError } from 'src/entities';
 import { NotFoundError } from 'src/errors';
-import type { CallRepository, MessageRepositoryBuilder } from 'src/repository';
+import type { AccuracyRepository, CallRepository, MessageRepositoryBuilder } from 'src/repository';
 import { CallsService } from 'src/service';
 import { CallController } from 'src/service/calls/controller';
 import type { GetCallResponse } from 'src/service/calls/GetCall';
@@ -10,12 +10,13 @@ import type { GetCallsResponse } from 'src/service/calls/GetCalls';
 export function createCallsRouter(
   callRepo: CallRepository,
   messageRepoFactory: MessageRepositoryBuilder,
+  accuracyRepo?: AccuracyRepository,
 ): Router {
   const controller = new CallController(callRepo, messageRepoFactory);
   const router = controller.router();
   const getCalls = new CallsService.GetCalls(callRepo);
   const getCall = new CallsService.GetCall(callRepo);
-  const deleteCall = new CallsService.DeleteCall(callRepo);
+  const deleteCall = new CallsService.DeleteCall(callRepo, accuracyRepo);
 
   // Read from the database
   router.get('/calls', async (_req, res: Response<WithError<GetCallsResponse>>) => {

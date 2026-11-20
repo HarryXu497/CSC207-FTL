@@ -1,17 +1,18 @@
-import { computeScore, countVerdicts, type AccuracyFindings } from 'src/entities';
+import { computeScore, countVerdicts, type AccuracyFindings, type Accuracy } from 'src/entities';
 import { LlmOutputError } from 'src/errors';
-import type { AccuracyAnalyzer } from 'src/repository';
+import type { AccuracyAnalyzer, AccuracyRepository } from 'src/repository';
 import type { AnalyzeAccuracyInputBoundary, AnalyzeAccuracyInputData } from './input';
 import type { AnalyzeAccuracyOutputBoundary } from './output';
 
 export class AnalyzeAccuracyInteractor implements AnalyzeAccuracyInputBoundary {
   constructor(
     private readonly analyzer: AccuracyAnalyzer,
+    private readonly repo: AccuracyRepository,
     private readonly now: () => Date = () => new Date(),
   ) {}
 
   async handle(
-    { messages, topic }: AnalyzeAccuracyInputData,
+    { callId, messages, topic }: AnalyzeAccuracyInputData,
     presenter: AnalyzeAccuracyOutputBoundary,
   ): Promise<void> {
     let findings: AccuracyFindings;
@@ -29,13 +30,17 @@ export class AnalyzeAccuracyInteractor implements AnalyzeAccuracyInputBoundary {
 
     const requiredSources = new Set(findings.documents.required.map((d) => d.source));
 
-    presenter.present({
-      accuracy: {
-        score: computeScore(findings.claims, requiredSources),
-        counts: countVerdicts(findings.claims),
-        ...findings,
-        analyzedAt: this.now().toISOString(),
-      },
-    });
+    const accuracy: Accuracy = {
+      score: computeScore(findings.claims, requiredSources),
+      counts: countVerdicts(findings.claims),
+      ...findings,
+      analyzedAt: this.now().toISOString(),
+    };
+
+    if (callId !== undefined) {
+      await this.repo.setAccuracy(callId, accuracy);
+    }
+
+    presenter.present({ accuracy });
   }
 }

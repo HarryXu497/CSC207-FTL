@@ -22,6 +22,14 @@ export class AnalyzeAccuracyPresenter implements AnalyzeAccuracyOutputBoundary {
     });
   }
 
+  presentNotFound(message: string): void {
+    this.res.status(404).json({
+      error: {
+        message,
+      },
+    });
+  }
+
   presentServiceUnavailable(): void {
     this.res.status(503).json({
       error: {

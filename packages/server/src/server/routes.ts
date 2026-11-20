@@ -2,12 +2,14 @@
  * Creates the router and handles route configuration
  */
 import { Router } from 'express';
-import type {
-  AccuracyAnalyzer,
-  AnalyseMessages,
-  BranchRepository,
-  CallRepository,
-  MessageRepositoryBuilder,
+import {
+  InMemoryAccuracyRepository,
+  type AccuracyAnalyzer,
+  type AccuracyRepository,
+  type AnalyseMessages,
+  type BranchRepository,
+  type CallRepository,
+  type MessageRepositoryBuilder,
 } from 'src/repository';
 import { AccuracyController, BranchController, SentimentController } from 'src/service';
 import { createCallsRouter, createHealthRouter, createMessagesRouter } from './routers';
@@ -16,6 +18,8 @@ import { createCallsRouter, createHealthRouter, createMessagesRouter } from './r
 export interface ServerServices {
   analyseMessages?: AnalyseMessages | null;
   accuracyAnalyzer?: AccuracyAnalyzer | null;
+  /** Where accuracy results are saved. Defaults to an in-memory store. */
+  accuracyRepo?: AccuracyRepository;
 }
 
 export function createRouter(
@@ -26,16 +30,22 @@ export function createRouter(
   services: ServerServices = {},
 ): Router {
   const router = Router();
+  const accuracyRepo = services.accuracyRepo ?? new InMemoryAccuracyRepository();
   const branchController = new BranchController(callRepo, branchRepo);
   const sentimentController = new SentimentController(
     callRepo,
     messageRepoFactory,
     services.analyseMessages ?? null,
   );
-  const accuracyController = new AccuracyController(services.accuracyAnalyzer ?? null);
+  const accuracyController = new AccuracyController(
+    services.accuracyAnalyzer ?? null,
+    accuracyRepo,
+    callRepo,
+    messageRepoFactory,
+  );
 
   router.use(createHealthRouter(backend));
-  router.use(createCallsRouter(callRepo, messageRepoFactory));
+  router.use(createCallsRouter(callRepo, messageRepoFactory, accuracyRepo));
   router.use(createMessagesRouter(callRepo, messageRepoFactory));
   router.use(branchController.router());
   router.use(sentimentController.router());

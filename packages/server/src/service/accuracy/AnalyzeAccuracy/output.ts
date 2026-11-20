@@ -8,6 +8,7 @@ export interface ValidationIssue {
 export interface AnalyzeAccuracyOutputBoundary {
   present(output: AnalyzeAccuracyOutputData): void;
   presentBadRequest(message: string, details?: ValidationIssue[]): void;
+  presentNotFound(message: string): void;
   presentServiceUnavailable(): void;
   presentModelFailure(): void;
 }

@@ -4,12 +4,14 @@
 import { resolve } from 'node:path';
 import { ChatOpenAI } from '@langchain/openai';
 import { ChromaClient } from 'chromadb';
-import type { CallRepository } from 'src/repository';
+import type { AccuracyRepository, CallRepository } from 'src/repository';
 import {
   ChatModelLlmClient,
   ChromaRetriever,
   createMessageRepositoryBuilder,
+  FirestoreAccuracyRepository,
   FirestoreCallRepository,
+  InMemoryAccuracyRepository,
   InMemoryCallRepository,
   LlmAccuracyAnalyzer,
   type AccuracyAnalyzer,
@@ -29,6 +31,12 @@ const BACKEND = process.env.DATA_BACKEND === 'firestore' ? 'firestore' : 'memory
 
 function buildCallRepository(): CallRepository {
   return BACKEND === 'firestore' ? new FirestoreCallRepository() : new InMemoryCallRepository();
+}
+
+function buildAccuracyRepository(): AccuracyRepository {
+  return BACKEND === 'firestore'
+    ? new FirestoreAccuracyRepository()
+    : new InMemoryAccuracyRepository();
 }
 
 function buildBranchRepository(
@@ -83,9 +91,11 @@ async function main(): Promise<void> {
   const branchRepo = buildBranchRepository(callRepo, messageRepoFactory);
   const analyseMessages = await buildSentimentDeps();
   const accuracyAnalyzer = buildAccuracyAnalyzer();
+  const accuracyRepo = buildAccuracyRepository();
   const app = createApp(callRepo, branchRepo, messageRepoFactory, BACKEND, {
     analyseMessages,
     accuracyAnalyzer,
+    accuracyRepo,
   });
 
   app.listen(PORT, () => {

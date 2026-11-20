@@ -71,6 +71,8 @@ cp packages/server/.env.example packages/server/.env
 | GET    | `/api/calls`            | —                                | `{ calls: Call[] }`                                                          |
 | POST   | `/api/calls`            | `{ customerName, topic, score }` | `201 { call }`                                                               |
 | POST   | `/api/accuracy/analyze` | `{ messages, topic? }`           | `200 { accuracy }` (`503` if not configured, `502` on unusable model output) |
+| POST   | `/api/calls/:callId/accuracy` | none (analyzes the stored transcript) | `200 { accuracy }`, saved under the call (`404` unknown call, `503`, `502` as above) |
+| GET    | `/api/calls/:callId/accuracy` | none                              | `200 { accuracy }`, or `404` if the call has not been analyzed |
 
 ## Sentiment Analysis
 
@@ -186,7 +188,7 @@ transcript ──► 1. Extract   LLM lists the checkable claims the agent made
 - **Input:** the call's `messages` (each a `{ role, content }` with role `agent` or `customer`) and an optional `topic`.
 - **Output:** an `Accuracy` object (see [Database Structure](#accuracy-1)).
 - **RAG interaction:** read-only. It calls `search(query, limit)` on a `Retriever` and never writes to the knowledge base, so `ChromaRetriever` or `InMemoryRetriever` both work.
-- **Endpoint:** `POST /api/accuracy/analyze` takes a transcript and returns the result; nothing is stored yet. Set `OPENAI_API_KEY` (and the `CHROMA_*` settings) in `packages/server/.env` to enable it; without a key it answers `503`.
+- **Endpoint:** `POST /api/accuracy/analyze` takes a transcript and returns the result without storing it. `POST /api/calls/:callId/accuracy` analyzes a stored call and saves the result (Firestore `accuracy/{callId}`, or memory), and `GET` on the same path reads it back; deleting a call deletes its result. Set `OPENAI_API_KEY` (and the `CHROMA_*` settings) in `packages/server/.env` to enable it; without a key it answers `503`.
 - **Limits:** at most 200 messages and 30,000 characters of message text per request (`400` otherwise). JSON bodies over 100 KB get `413`, and unreadable JSON gets `400`.
 
 ### Code
