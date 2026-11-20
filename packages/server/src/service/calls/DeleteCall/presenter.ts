@@ -1,12 +1,12 @@
 import type { Response } from 'express';
+import type { DeleteCallOutputBoundary } from './output';
 import type { WithError } from 'src/entities';
-import type { DeleteCallOutputBoundary, DeleteCallOutputData } from './output';
 
 export class DeleteCallPresenter implements DeleteCallOutputBoundary {
-  constructor(private readonly res: Response<WithError<DeleteCallOutputData>>) {}
+  constructor(private readonly res: Response<WithError<never>>) {}
 
-  presentSuccess(output: DeleteCallOutputData): void {
-    this.res.status(204).json(output);
+  present(): void {
+    this.res.status(204).send();
   }
 
   presentNotFound(message: string): void {

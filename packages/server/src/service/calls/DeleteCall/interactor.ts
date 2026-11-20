@@ -13,13 +13,18 @@ export class DeleteCallInteractor implements DeleteCallInputBoundary {
     presenter: DeleteCallOutputBoundary,
   ): Promise<void> {
     try {
-      await this.callRepo.deleteCall(callId);
+      await this.callRepo.getCall(callId);
     } catch (e) {
       if (e instanceof NotFoundError) {
         presenter.presentNotFound(`Call with id ${callId} not found.`);
+        return;
       }
+
+      throw e;
     }
 
-    presenter.presentSuccess({ callId });
+    await this.callRepo.deleteCall(callId);
+
+    presenter.present();
   }
 }
