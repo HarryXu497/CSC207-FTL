@@ -7,6 +7,7 @@ import {
   CreateCallPresenter,
   type CreateCallOutputBoundary,
 } from './CreateCall';
+import { GetCallInteractor, GetCallPresenter, type GetCallOutputBoundary } from './GetCall';
 import {
   DeleteCallInteractor,
   DeleteCallPresenter,
@@ -52,6 +53,19 @@ export class CallController {
     await interactor.handle({ callData, messageData }, presenter);
   }
 
+  async getCall(req: Request, presenter: GetCallOutputBoundary) {
+    const callId = req.params.callId;
+
+    if (!callId || typeof callId !== 'string') {
+      presenter.presentBadRequest('callId is required');
+      return;
+    }
+
+    const interactor = new GetCallInteractor(this.callRepo);
+
+    await interactor.handle({ callId: callId }, presenter);
+  }
+
   async deleteCall(req: Request, presenter: DeleteCallOutputBoundary) {
     const callId = req.params.callId;
 
@@ -61,21 +75,21 @@ export class CallController {
     }
 
     const interactor = new DeleteCallInteractor(this.callRepo);
-    
+
     await interactor.handle({ callId }, presenter);
   }
 
   router(): Router {
     const router = Router();
 
-    router.post('/calls', async (req, res) => 
-      this.createCall(req, new CreateCallPresenter(res))
+    router.post('/calls', async (req, res) => this.createCall(req, new CreateCallPresenter(res)));
+
+    router.delete('/calls/:id', async (req, res) =>
+      this.deleteCall(req, new DeleteCallPresenter(res)),
     );
 
-    router.delete('/calls/:id', async (req, res) => 
-      this.deleteCall(req, new DeleteCallPresenter(res))
-    );
-    
+    router.get('/calls/:id', async (req, res) => this.getCall(req, new GetCallPresenter(res)));
+
     return router;
-  };
+  }
 }
