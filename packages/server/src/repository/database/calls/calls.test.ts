@@ -41,8 +41,8 @@ describe('GET /api/calls', () => {
 
     expect(listRes.status).toBe(200);
     assert(!('error' in resJson));
-    expect(resJson).toHaveLength(2);
-    expect(resJson.calls.some).toBe('call-1002');
+    expect(resJson.calls.length).toBe(2);
+    expect(resJson.calls[0]?.id).toBe('call-1002');
   });
 });
 
