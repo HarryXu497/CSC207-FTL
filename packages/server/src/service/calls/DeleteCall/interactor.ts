@@ -4,9 +4,7 @@ import type { DeleteCallOutputBoundary } from './output';
 import { NotFoundError } from 'src/errors';
 
 export class DeleteCallInteractor implements DeleteCallInputBoundary {
-  constructor(
-    private readonly callRepo: CallRepository,
-  ) {}
+  constructor(private readonly callRepo: CallRepository) {}
 
   async handle(
     { callId }: DeleteCallInputData,
