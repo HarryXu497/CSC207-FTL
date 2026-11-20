@@ -93,7 +93,7 @@ export class CallController {
 
     router.get('/calls/:id', async (req, res) => this.getCall(req, new GetCallPresenter(res)));
 
-    router.get('/calls', async (req, res) => this.listCalls(new ListCallsPresenter(res)));
+    router.get('/calls', async (_req, res) => this.listCalls(new ListCallsPresenter(res)));
 
     router.delete('/calls/:id', async (req, res) =>
       this.deleteCall(req, new DeleteCallPresenter(res)),
