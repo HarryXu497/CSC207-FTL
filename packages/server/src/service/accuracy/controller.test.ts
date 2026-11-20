@@ -109,3 +109,45 @@ describe('POST /api/accuracy/analyze', () => {
     expect((await post(broken.url, valid)).status).toBe(502);
   });
 });
+
+describe('call-scoped accuracy routes', () => {
+  const api = (ctx: { url: string }) => ctx.url.replace('/accuracy/analyze', '');
+
+  it('analyzes a stored call, saves the result, and serves it back', async () => {
+    const base = api(configured);
+
+    expect((await fetch(`${base}/calls/call-1001/accuracy`)).status).toBe(404);
+
+    const analyzed = await fetch(`${base}/calls/call-1001/accuracy`, { method: 'POST' });
+    const analyzedBody = (await analyzed.json()) as AnalyzeAccuracyOutputData;
+    expect(analyzed.status).toBe(200);
+    expect(analyzedBody.accuracy.analyzedAt).toBeTruthy();
+
+    const saved = await fetch(`${base}/calls/call-1001/accuracy`);
+    expect(saved.status).toBe(200);
+    expect(((await saved.json()) as AnalyzeAccuracyOutputData).accuracy).toEqual(
+      analyzedBody.accuracy,
+    );
+  });
+
+  it('answers 404 when analyzing a call that does not exist', async () => {
+    const response = await fetch(`${api(configured)}/calls/nope/accuracy`, { method: 'POST' });
+    expect(response.status).toBe(404);
+  });
+
+  it('answers 503 when accuracy analysis is not configured', async () => {
+    const response = await fetch(`${api(unconfigured)}/calls/call-1001/accuracy`, {
+      method: 'POST',
+    });
+    expect(response.status).toBe(503);
+  });
+
+  it('deletes the saved result along with the call', async () => {
+    const base = api(configured);
+    await fetch(`${base}/calls/call-1002/accuracy`, { method: 'POST' });
+    expect((await fetch(`${base}/calls/call-1002/accuracy`)).status).toBe(200);
+
+    expect((await fetch(`${base}/calls/call-1002`, { method: 'DELETE' })).status).toBe(204);
+    expect((await fetch(`${base}/calls/call-1002/accuracy`)).status).toBe(404);
+  });
+});

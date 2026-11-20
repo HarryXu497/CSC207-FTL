@@ -1,6 +1,6 @@
 import type { AccuracyFindings } from 'src/entities';
 import { LlmOutputError } from 'src/errors';
-import type { AccuracyAnalyzer } from 'src/repository';
+import { InMemoryAccuracyRepository, type AccuracyAnalyzer } from 'src/repository';
 import { describe, expect, it } from 'vitest';
 import { AnalyzeAccuracyInteractor } from './interactor';
 import type { AnalyzeAccuracyOutputBoundary, AnalyzeAccuracyOutputData } from './output';
@@ -50,15 +50,23 @@ class RecordingPresenter implements AnalyzeAccuracyOutputBoundary {
     throw new Error('Unexpected presentBadRequest');
   }
 
+  presentNotFound(): void {
+    throw new Error('Unexpected presentNotFound');
+  }
+
   presentServiceUnavailable(): void {
     throw new Error('Unexpected presentServiceUnavailable');
   }
 }
 
-async function run(analyzer: AccuracyAnalyzer) {
+async function run(
+  analyzer: AccuracyAnalyzer,
+  callId?: string,
+  repo = new InMemoryAccuracyRepository(),
+) {
   const presenter = new RecordingPresenter();
-  await new AnalyzeAccuracyInteractor(analyzer, () => NOW).handle(
-    { messages: [{ role: 'agent', content: 'x' }] },
+  await new AnalyzeAccuracyInteractor(analyzer, repo, () => NOW).handle(
+    { callId, messages: [{ role: 'agent', content: 'x' }] },
     presenter,
   );
   return presenter;
@@ -83,5 +91,34 @@ describe('AnalyzeAccuracyInteractor', () => {
 
     expect(presenter.modelFailed).toBe(true);
     expect(presenter.output).toBeNull();
+  });
+
+  it('saves the result under the call id and presents the same result', async () => {
+    const repo = new InMemoryAccuracyRepository();
+    const { output } = await run({ analyze: async () => findings }, 'call-1', repo);
+
+    expect(await repo.getAccuracyForCall('call-1')).toEqual(output?.accuracy);
+  });
+
+  it('does not save anything when there is no call id', async () => {
+    const repo = new InMemoryAccuracyRepository();
+    await run({ analyze: async () => findings }, undefined, repo);
+
+    expect(await repo.getAccuracyForCall('call-1')).toBeNull();
+  });
+
+  it('does not save when the model fails', async () => {
+    const repo = new InMemoryAccuracyRepository();
+    await run(
+      {
+        analyze: async () => {
+          throw new LlmOutputError('bad reply');
+        },
+      },
+      'call-1',
+      repo,
+    );
+
+    expect(await repo.getAccuracyForCall('call-1')).toBeNull();
   });
 });

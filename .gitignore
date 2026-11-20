@@ -2,6 +2,13 @@ packages/server/models/
 packages/server/uploads/
 chroma-data/
 
+# local-only leftovers from the Windows sync branch
+docs/
+packages/server/src/scripts/
+packages/server/src/repository/llm/ChatModelLlmClient.test.ts
+packages/server/src/repository/rag/retriever/EmbeddedChromaRetriever.ts
+packages/server/src/server/accuracy-errors.test.ts
+
 node_modules/
 dist/
 *.tsbuildinfo
