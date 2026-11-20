@@ -37,10 +37,10 @@ afterAll(async () => {
 describe('GET /api/calls', () => {
   it('returns the seeded calls, newest first', async () => {
     const listRes = await fetch(`${baseUrl}/calls`);
-    const resJson = (await listRes.json()) as WithError<ListCallsOutputData>
+    const resJson = (await listRes.json()) as WithError<ListCallsOutputData>;
 
     expect(listRes.status).toBe(200);
-    assert(!("error" in resJson))
+    assert(!('error' in resJson));
     expect(resJson).toHaveLength(2);
     expect(resJson.calls.some).toBe('call-1002');
   });
@@ -74,8 +74,8 @@ describe('POST /api/calls', () => {
     expect(response.status).toBe(201);
 
     const listRes = await fetch(`${baseUrl}/calls`);
-    const resJson = (await listRes.json()) as WithError<ListCallsOutputData>
-    assert(!("error" in resJson))
+    const resJson = (await listRes.json()) as WithError<ListCallsOutputData>;
+    assert(!('error' in resJson));
     expect(resJson.calls.some((c: Call) => c.customerName === 'Marcus Webb')).toBe(true);
   });
 
