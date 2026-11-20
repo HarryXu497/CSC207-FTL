@@ -1,6 +1,6 @@
 import type { Response } from 'express';
-import type { DeleteCallOutputBoundary } from './output';
 import type { WithError } from 'src/entities';
+import type { DeleteCallOutputBoundary } from './output';
 
 export class DeleteCallPresenter implements DeleteCallOutputBoundary {
   constructor(private readonly res: Response<WithError<never>>) {}

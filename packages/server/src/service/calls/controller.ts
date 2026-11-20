@@ -1,6 +1,6 @@
 import { Router, type Request } from 'express';
-import type { Call, Message } from 'src/entities';
 import type { CallRepository, MessageRepositoryBuilder } from 'src/repository';
+import type { Call, Message } from 'src/entities';
 import z from 'zod';
 import {
   CreateCallInteractor,
@@ -8,12 +8,12 @@ import {
   type CreateCallOutputBoundary,
 } from './CreateCall';
 import { GetCallInteractor, GetCallPresenter, type GetCallOutputBoundary } from './GetCall';
+import { ListCallsInteractor, ListCallsPresenter, type ListCallsOutputBoundary } from './ListCalls';
 import {
   DeleteCallInteractor,
   DeleteCallPresenter,
   type DeleteCallOutputBoundary,
 } from './DeleteCall';
-import { ListCallsInteractor, ListCallsPresenter, type ListCallsOutputBoundary } from './ListCalls';
 
 const messageSchema = z.object({
   role: z.enum(['agent', 'customer']),
@@ -91,13 +91,13 @@ export class CallController {
 
     router.post('/calls', async (req, res) => this.createCall(req, new CreateCallPresenter(res)));
 
-    router.delete('/calls/:id', async (req, res) =>
-      this.deleteCall(req, new DeleteCallPresenter(res)),
-    );
-
     router.get('/calls/:id', async (req, res) => this.getCall(req, new GetCallPresenter(res)));
 
     router.get('/calls', async (req, res) => this.listCalls(new ListCallsPresenter(res)));
+
+    router.delete('/calls/:id', async (req, res) =>
+      this.deleteCall(req, new DeleteCallPresenter(res)),
+    );
 
     return router;
   }
