@@ -41,6 +41,7 @@ export function createRouter(
     callRepo,
     messageRepoFactory,
     services.analyseMessages ?? null,
+    sentimentRepo,
   );
   const accuracyController = new AccuracyController(
     services.accuracyAnalyzer ?? null,
