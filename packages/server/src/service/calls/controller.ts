@@ -15,9 +15,11 @@ const messageSchema = z.object({
 });
 
 const createCallSchema = z.object({
-  customerName: z.string().trim().min(1, 'Customer name is required.').max(120),
-  topic: z.string().trim().min(1, 'Topic is required.').max(300),
-  messages: z.array(messageSchema),
+  callData: z.object({
+    customerName: z.string().trim().min(1, 'Customer name is required.').max(120),
+    topic: z.string().trim().min(1, 'Topic is required.').max(300),
+  }),
+  messageData: z.array(messageSchema),
 });
 
 export class CallController {
@@ -36,11 +38,10 @@ export class CallController {
 
     const callData: Omit<Call, 'id'> = {
       createdAt: new Date().toISOString(),
-      customerName: parsed.data.customerName,
-      topic: parsed.data.topic,
+      ...parsed.data.callData,
     };
 
-    const messageData: Omit<Message, 'id'>[] = parsed.data.messages;
+    const messageData: Omit<Message, 'id'>[] = parsed.data.messageData;
     const interactor = new CreateCallInteractor(this.callRepo, this.messageRepoFactory);
 
     await interactor.handle({ callData, messageData }, presenter);

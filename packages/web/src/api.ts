@@ -2,7 +2,13 @@ import type { ApiErrorBody } from '@recall/server/entities';
 import type { AnalyzeAccuracyInputData } from '@recall/server/service/accuracy/AnalyzeAccuracy/input';
 import type { AnalyzeAccuracyOutputData } from '@recall/server/service/accuracy/AnalyzeAccuracy/output';
 import type { GetCallsResponse } from '@recall/server/service/calls/GetCalls';
-import type { CreateCallRequest, CreateCallResponse } from '@recall/server/service/calls/PostCalls';
+import type {
+  ListCallSentimentsOutputData,
+  CreateCallInputData,
+  CreateCallOutputData,
+} from '@recall/server/service';
+import type { GetCallResponse } from '@recall/server/service/calls/GetCall';
+import type { WithError } from '@recall/server/entities';
 
 const BASE_URL = '/api';
 
@@ -27,12 +33,26 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return (await response.json()) as T;
 }
 
+interface CreateCallRequestBody {
+  callData: Omit<CreateCallInputData['callData'], 'createdAt'>;
+  messageData: CreateCallInputData['messageData'];
+}
+
 // Singleton object for making requests
 export const api = {
-  listCalls: () => request<GetCallsResponse>('/calls'),
+  listCalls: () => request<WithError<GetCallsResponse>>('/calls'),
 
-  createCall: (body: CreateCallRequest) =>
-    request<CreateCallResponse>('/calls', {
+  getCall: (callId: string) =>
+    request<WithError<GetCallResponse>>(`/calls/${encodeURIComponent(callId)}`),
+
+  getCallSentiment: (callId: string, signal: AbortSignal) =>
+    request<WithError<ListCallSentimentsOutputData>>(
+      `/calls/${encodeURIComponent(callId)}/sentiment`,
+      { signal },
+    ),
+
+  createCall: (body: CreateCallRequestBody) =>
+    request<WithError<CreateCallOutputData>>('/calls', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
