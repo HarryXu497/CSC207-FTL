@@ -35,11 +35,19 @@ export default function CallAnalysisPage() {
     const controller = new AbortController();
     async function load() {
       try {
-        const response = await api.getCallSentiment(callId, controller.signal);
-        if ('error' in response) {
-          throw new Error(response.error.message);
+        const saved = await api.getCallSentiment(callId, controller.signal).catch(() => null);
+        const savedSentiments = saved && !('error' in saved) ? saved.messageSentiments : [];
+        // A live call keeps adding messages, so re-analyze when the saved result is missing any.
+        const isCurrent = messages.every((m) => savedSentiments.some((s) => s.messageId === m.id));
+
+        let sentiments = savedSentiments;
+        if (!isCurrent) {
+          const response = await api.analyzeCallSentiment(callId, controller.signal);
+          if ('error' in response) {
+            throw new Error(response.error.message);
+          }
+          sentiments = response.messageSentiments;
         }
-        const sentiments = response.messageSentiments;
 
         if (controller.signal.aborted) return;
         setSentiments(sentiments);
