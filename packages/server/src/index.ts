@@ -4,15 +4,17 @@
 import { resolve } from 'node:path';
 import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
 import { ChromaClient } from 'chromadb';
-import type { AccuracyRepository, CallRepository } from 'src/repository';
+import type { AccuracyRepository, CallRepository, SentimentRepository } from 'src/repository';
 import {
   ChatModelLlmClient,
   ChromaRetriever,
   createMessageRepositoryBuilder,
   FirestoreAccuracyRepository,
   FirestoreCallRepository,
+  FirestoreSentimentRepository,
   InMemoryAccuracyRepository,
   InMemoryCallRepository,
+  InMemorySentimentRepository,
   LlmAccuracyAnalyzer,
   type AccuracyAnalyzer,
   type MessageRepositoryBuilder,
@@ -39,6 +41,12 @@ function buildAccuracyRepository(): AccuracyRepository {
   return BACKEND === 'firestore'
     ? new FirestoreAccuracyRepository()
     : new InMemoryAccuracyRepository();
+}
+
+function buildSentimentRepository(): SentimentRepository {
+  return BACKEND === 'firestore'
+    ? new FirestoreSentimentRepository()
+    : new InMemorySentimentRepository();
 }
 
 function buildBranchRepository(
@@ -100,12 +108,14 @@ async function main(): Promise<void> {
   const accuracyRepo = buildAccuracyRepository();
   const simulationRepo = buildSimulationRepository(callRepo, messageRepoFactory);
   const ingestor = buildRagIngestor();
+  const sentimentRepo = buildSentimentRepository();
   const app = createApp(callRepo, branchRepo, messageRepoFactory, BACKEND, {
     analyseMessages,
     accuracyAnalyzer,
     accuracyRepo,
     simulationRepo,
     ingestor,
+    sentimentRepo,
   });
 
   app.listen(PORT, () => {
