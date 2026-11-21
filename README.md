@@ -65,14 +65,16 @@ cp packages/server/.env.example packages/server/.env
 
 ## API
 
-| Method | Path                          | Body                                  | Returns                                                                              |
-| ------ | ----------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------ |
-| GET    | `/api/health`                 | —                                     | `{ status, backend }`                                                                |
-| GET    | `/api/calls`                  | —                                     | `{ calls: Call[] }`                                                                  |
-| POST   | `/api/calls`                  | `{ customerName, topic, score }`      | `201 { call }`                                                                       |
-| POST   | `/api/accuracy/analyze`       | `{ messages, topic? }`                | `200 { accuracy }` (`503` if not configured, `502` on unusable model output)         |
-| POST   | `/api/calls/:callId/accuracy` | none (analyzes the stored transcript) | `200 { accuracy }`, saved under the call (`404` unknown call, `503`, `502` as above) |
-| GET    | `/api/calls/:callId/accuracy` | none                                  | `200 { accuracy }`, or `404` if the call has not been analyzed                       |
+| Method | Path                           | Body                                  | Returns                                                                                      |
+| ------ | ------------------------------ | ------------------------------------- | -------------------------------------------------------------------------------------------- |
+| GET    | `/api/health`                  | —                                     | `{ status, backend }`                                                                        |
+| GET    | `/api/calls`                   | —                                     | `{ calls: Call[] }`                                                                          |
+| POST   | `/api/calls`                   | `{ customerName, topic, score }`      | `201 { call }`                                                                               |
+| POST   | `/api/accuracy/analyze`        | `{ messages, topic? }`                | `200 { accuracy }` (`503` if not configured, `502` on unusable model output)                 |
+| POST   | `/api/calls/:callId/accuracy`  | none (analyzes the stored transcript) | `200 { accuracy }`, saved under the call (`404` unknown call, `503`, `502` as above)         |
+| GET    | `/api/calls/:callId/accuracy`  | none                                  | `200 { accuracy }`, or `404` if the call has not been analyzed                               |
+| POST   | `/api/calls/:callId/sentiment` | none (analyzes the stored transcript) | `200 { messageSentiments }`, saved under the call (`404` unknown call, `503` without models) |
+| GET    | `/api/calls/:callId/sentiment` | none                                  | `200 { messageSentiments }`, or `404` if the call has not been analyzed                      |
 
 ## Sentiment Analysis
 
@@ -83,6 +85,8 @@ We are evaluating two Hugging Face transformer models for emotion classification
 
 Both models are candidates for identifying emotions expressed during calls. The final model will be selected based on classification quality and accuracy.
 The selected model will be integrated into the backend to analyze call transcripts and make emotion predictions available to the application.
+
+`POST /api/calls/:callId/sentiment` analyzes a stored call and saves the result (Firestore `sentiment/{callId}`, or memory), and `GET` on the same path reads it back; deleting a call deletes its result. Set `MODEL_DIR` to enable analysis; without it the `POST` answers `503`. The Call Analysis page reads the saved result and re-analyzes only when it is missing messages.
 
 ## Server Architecture
 
@@ -275,7 +279,9 @@ Prefer one topic per file and descriptive file names, because the file path is w
 
 #### Sentiment
 
-_TBD_
+Defined in `packages/server/src/entities/sentiment`. Saved in Firestore as `sentiment/{callId}` with one field, `messageSentiments`.
+
+`MessageSentiment`: `messageId` (string) and `result`, which is either `{ ok: true, sentiment: SentimentScore }` or `{ ok: false, reason }` (`empty` \| `not_a_string` \| `too_long`).
 
 #### Accuracy
 
