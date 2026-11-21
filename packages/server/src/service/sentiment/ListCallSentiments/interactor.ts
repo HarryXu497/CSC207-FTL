@@ -5,6 +5,7 @@ import {
   type AnalyseMessages,
   type MessageRepositoryBuilder,
   type MessageResult,
+  type SentimentRepository,
 } from 'src/repository';
 import type { ListCallSentimentsInputBoundary, ListCallSentimentsInputData } from './input';
 import type { ListCallSentimentsOutputBoundary } from './output';
@@ -14,6 +15,7 @@ export class ListCallSentimentsInteractor implements ListCallSentimentsInputBoun
     private readonly callsRepo: CallRepository,
     private readonly messageRepoFactory: MessageRepositoryBuilder,
     private readonly analyseMessages: AnalyseMessages,
+    private readonly sentimentRepo: SentimentRepository,
   ) {}
 
   async handle(
@@ -46,6 +48,8 @@ export class ListCallSentimentsInteractor implements ListCallSentimentsInputBoun
         const result = results[i] as MessageResult;
         return { messageId: message.id, result };
       });
+
+    await this.sentimentRepo.setSentiment(callId, messageSentiments);
 
     presenter.present({ messageSentiments });
   }

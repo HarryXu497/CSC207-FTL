@@ -60,6 +60,7 @@ export function createRouter(
     callRepo,
     messageRepoFactory,
     services.analyseMessages ?? null,
+    sentimentRepo,
   );
   const simulationRepo = services.simulationRepo ?? null;
   const simulationController = new SimulationController(
