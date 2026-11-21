@@ -8,9 +8,10 @@ import type {
   CallRepository,
   MessageRepositoryBuilder,
 } from 'src/repository';
-import { SentimentController } from 'src/service';
+import { CallController } from 'src/service';
 import { BranchController } from 'src/service';
-import { createCallsRouter, createHealthRouter, createMessagesRouter } from './routers';
+import { SentimentController } from 'src/service';
+import { createHealthRouter, createMessagesRouter } from './routers';
 
 export function createRouter(
   callRepo: CallRepository,
@@ -20,6 +21,7 @@ export function createRouter(
   analyseMessages: AnalyseMessages | null,
 ): Router {
   const router = Router();
+  const callController = new CallController(callRepo, messageRepoFactory);
   const branchController = new BranchController(callRepo, branchRepo);
   const sentimentController = new SentimentController(
     callRepo,
@@ -28,7 +30,7 @@ export function createRouter(
   );
 
   router.use(createHealthRouter(backend));
-  router.use(createCallsRouter(callRepo, messageRepoFactory));
+  router.use(callController.router());
   router.use(createMessagesRouter(callRepo, messageRepoFactory));
   router.use(branchController.router());
   router.use(sentimentController.router());

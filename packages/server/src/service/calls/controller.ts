@@ -1,12 +1,19 @@
 import { Router, type Request } from 'express';
-import type { Call, Message } from 'src/entities';
 import type { CallRepository, MessageRepositoryBuilder } from 'src/repository';
+import type { Call, Message } from 'src/entities';
 import z from 'zod';
 import {
   CreateCallInteractor,
   CreateCallPresenter,
   type CreateCallOutputBoundary,
 } from './CreateCall';
+import { GetCallInteractor, GetCallPresenter, type GetCallOutputBoundary } from './GetCall';
+import { ListCallsInteractor, ListCallsPresenter, type ListCallsOutputBoundary } from './ListCalls';
+import {
+  DeleteCallInteractor,
+  DeleteCallPresenter,
+  type DeleteCallOutputBoundary,
+} from './DeleteCall';
 
 const messageSchema = z.object({
   role: z.enum(['agent', 'customer']),
@@ -47,10 +54,50 @@ export class CallController {
     await interactor.handle({ callData, messageData }, presenter);
   }
 
+  async getCall(req: Request, presenter: GetCallOutputBoundary) {
+    const callId = req.params.callId;
+
+    if (!callId || typeof callId !== 'string') {
+      presenter.presentBadRequest('callId is required');
+      return;
+    }
+
+    const interactor = new GetCallInteractor(this.callRepo);
+
+    await interactor.handle({ callId: callId }, presenter);
+  }
+
+  async listCalls(presenter: ListCallsOutputBoundary) {
+    const interactor = new ListCallsInteractor(this.callRepo);
+
+    await interactor.handle(presenter);
+  }
+
+  async deleteCall(req: Request, presenter: DeleteCallOutputBoundary) {
+    const callId = req.params.callId;
+
+    if (!callId || typeof callId !== 'string') {
+      presenter.presentBadRequest('callId is required');
+      return;
+    }
+
+    const interactor = new DeleteCallInteractor(this.callRepo);
+
+    await interactor.handle({ callId }, presenter);
+  }
+
   router(): Router {
     const router = Router();
 
     router.post('/calls', async (req, res) => this.createCall(req, new CreateCallPresenter(res)));
+
+    router.get('/calls/:id', async (req, res) => this.getCall(req, new GetCallPresenter(res)));
+
+    router.get('/calls', async (_req, res) => this.listCalls(new ListCallsPresenter(res)));
+
+    router.delete('/calls/:id', async (req, res) =>
+      this.deleteCall(req, new DeleteCallPresenter(res)),
+    );
 
     return router;
   }
