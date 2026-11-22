@@ -3,7 +3,6 @@
  */
 import { Router } from 'express';
 import {
-  InMemoryAccuracyRepository,
   type AccuracyAnalyzer,
   type AccuracyRepository,
   type AnalyseMessages,
@@ -14,12 +13,11 @@ import {
 import { AccuracyController, BranchController, SentimentController } from 'src/service';
 import { createCallsRouter, createHealthRouter, createMessagesRouter } from './routers';
 
-/** Optional services. A missing one makes its routes answer 503 instead of stopping the server. */
+/** Optional services. A missing service makes the corresponding routes respond with 503 */
 export interface ServerServices {
   analyseMessages?: AnalyseMessages | null;
   accuracyAnalyzer?: AccuracyAnalyzer | null;
-  /** Where accuracy results are saved. Defaults to an in-memory store. */
-  accuracyRepo?: AccuracyRepository;
+  accuracyRepo?: AccuracyRepository | null;
 }
 
 export function createRouter(
@@ -30,8 +28,8 @@ export function createRouter(
   services: ServerServices = {},
 ): Router {
   const router = Router();
-  const accuracyRepo = services.accuracyRepo ?? new InMemoryAccuracyRepository();
-  const branchController = new BranchController(callRepo, branchRepo);
+  const accuracyRepo = services.accuracyRepo ?? null;
+  const branchController = new BranchController(callRepo, branchRepo, accuracyRepo);
   const sentimentController = new SentimentController(
     callRepo,
     messageRepoFactory,
@@ -41,11 +39,12 @@ export function createRouter(
     services.accuracyAnalyzer ?? null,
     accuracyRepo,
     callRepo,
+    branchRepo,
     messageRepoFactory,
   );
 
   router.use(createHealthRouter(backend));
-  router.use(createCallsRouter(callRepo, messageRepoFactory, accuracyRepo));
+  router.use(createCallsRouter(callRepo, messageRepoFactory, accuracyRepo ?? undefined));
   router.use(createMessagesRouter(callRepo, messageRepoFactory));
   router.use(branchController.router());
   router.use(sentimentController.router());

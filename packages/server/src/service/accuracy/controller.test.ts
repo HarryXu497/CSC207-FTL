@@ -1,11 +1,13 @@
 import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import {
+  InMemoryAccuracyRepository,
   InMemoryBranchRepository,
   InMemoryCallRepository,
   InMemoryMessageRepository,
   LlmAccuracyAnalyzer,
   type AccuracyAnalyzer,
+  type AccuracyRepository,
 } from 'src/repository';
 import { FakeLlm, FakeRetriever, json, type Script } from 'src/repository/accuracy/testing';
 import { createApp } from 'src/server';
@@ -30,7 +32,10 @@ const script: Script = {
     }),
 };
 
-async function start(accuracyAnalyzer: AccuracyAnalyzer | null) {
+async function start(
+  accuracyAnalyzer: AccuracyAnalyzer | null,
+  accuracyRepo: AccuracyRepository | null = new InMemoryAccuracyRepository(),
+) {
   const callRepo = new InMemoryCallRepository();
   const messages = () => new InMemoryMessageRepository();
   const server = createApp(
@@ -38,7 +43,7 @@ async function start(accuracyAnalyzer: AccuracyAnalyzer | null) {
     new InMemoryBranchRepository(callRepo, messages),
     messages,
     'memory',
-    { accuracyAnalyzer },
+    { accuracyAnalyzer, accuracyRepo },
   ).listen(0);
   await new Promise<void>((resolve) => server.once('listening', resolve));
   const { port } = server.address() as AddressInfo;
@@ -62,6 +67,7 @@ const valid = {
 let configured: { server: Server; url: string };
 let unconfigured: { server: Server; url: string };
 let broken: { server: Server; url: string };
+let noRepo: { server: Server; url: string };
 
 beforeAll(async () => {
   configured = await start(new LlmAccuracyAnalyzer(new FakeLlm(script), new FakeRetriever()));
@@ -69,10 +75,11 @@ beforeAll(async () => {
   broken = await start(
     new LlmAccuracyAnalyzer(new FakeLlm({ ...script, extract: () => 'nope' }), new FakeRetriever()),
   );
+  noRepo = await start(new LlmAccuracyAnalyzer(new FakeLlm(script), new FakeRetriever()), null);
 });
 
 afterAll(async () => {
-  for (const { server } of [configured, unconfigured, broken]) {
+  for (const { server } of [configured, unconfigured, broken, noRepo]) {
     await new Promise<void>((resolve) => server.close(() => resolve()));
   }
 });
@@ -149,5 +156,69 @@ describe('call-scoped accuracy routes', () => {
 
     expect((await fetch(`${base}/calls/call-1002`, { method: 'DELETE' })).status).toBe(204);
     expect((await fetch(`${base}/calls/call-1002/accuracy`)).status).toBe(404);
+  });
+
+  it('answers 503 for saved results when no accuracy repository is configured', async () => {
+    const base = api(noRepo);
+
+    expect((await fetch(`${base}/calls/call-1001/accuracy`, { method: 'POST' })).status).toBe(503);
+    expect((await fetch(`${base}/calls/call-1001/accuracy`)).status).toBe(503);
+  });
+
+  it('still analyzes a transcript from the request body without an accuracy repository', async () => {
+    expect((await post(noRepo.url, valid)).status).toBe(200);
+  });
+});
+
+describe('branch-scoped accuracy routes', () => {
+  const api = (ctx: { url: string }) => ctx.url.replace('/accuracy/analyze', '');
+
+  it('analyzes a stored branch, saves the result, and serves it back', async () => {
+    const base = `${api(configured)}/calls/call-1001/branches/branch-2001`;
+
+    expect((await fetch(`${base}/accuracy`)).status).toBe(404);
+
+    const analyzed = await fetch(`${base}/accuracy`, { method: 'POST' });
+    const analyzedBody = (await analyzed.json()) as AnalyzeAccuracyOutputData;
+    expect(analyzed.status).toBe(200);
+    expect(analyzedBody.accuracy.analyzedAt).toBeTruthy();
+
+    const saved = await fetch(`${base}/accuracy`);
+    expect(saved.status).toBe(200);
+    expect(((await saved.json()) as AnalyzeAccuracyOutputData).accuracy).toEqual(
+      analyzedBody.accuracy,
+    );
+  });
+
+  it('keeps a branch result separate from its parent call', async () => {
+    const base = api(configured);
+    await fetch(`${base}/calls/call-1002/branches/branch-2002/accuracy`, { method: 'POST' });
+
+    expect((await fetch(`${base}/calls/call-1002/accuracy`)).status).toBe(404);
+  });
+
+  it('answers 404 when analyzing a branch that does not exist', async () => {
+    const response = await fetch(`${api(configured)}/calls/call-1001/branches/nope/accuracy`, {
+      method: 'POST',
+    });
+    expect(response.status).toBe(404);
+  });
+
+  it('answers 503 when accuracy analysis is not configured', async () => {
+    const response = await fetch(
+      `${api(unconfigured)}/calls/call-1001/branches/branch-2001/accuracy`,
+      { method: 'POST' },
+    );
+    expect(response.status).toBe(503);
+  });
+
+  it('deletes the saved result along with the branch', async () => {
+    const base = api(configured);
+    const path = `${base}/calls/call-1002/branches/branch-2002`;
+    await fetch(`${path}/accuracy`, { method: 'POST' });
+    expect((await fetch(`${path}/accuracy`)).status).toBe(200);
+
+    expect((await fetch(path, { method: 'DELETE' })).status).toBe(204);
+    expect((await fetch(`${path}/accuracy`)).status).toBe(404);
   });
 });
