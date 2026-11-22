@@ -1,11 +1,14 @@
 import type { Accuracy } from 'src/entities';
 
+/**
+ * Stores accuracy results by id. A branch is a call (`Branch extends Call`) with its own id, so a
+ * branch's result is stored under its branch id in the same way.
+ */
 export interface AccuracyRepository {
   /**
-   * @param callId - The id of the call to get accuracy for
-   * @returns the Accuracy object for the given call
+   * @param callId - The id of the call (or branch) to get accuracy for
+   * @returns the Accuracy object for the given call, or null if it hasn't been analyzed
    */
-
   getAccuracyForCall(callId: string): Promise<Accuracy | null>;
 
   /**
