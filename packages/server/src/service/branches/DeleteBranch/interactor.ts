@@ -1,10 +1,14 @@
 import { NotFoundError } from 'src/errors';
-import type { BranchRepository } from 'src/repository';
+import type { AccuracyRepository, BranchRepository, SentimentRepository } from 'src/repository';
 import type { DeleteBranchInputBoundary, DeleteBranchInputData } from './input';
 import type { DeleteBranchOutputBoundary } from './output';
 
 export class DeleteBranchInteractor implements DeleteBranchInputBoundary {
-  constructor(private readonly branchRepo: BranchRepository) {}
+  constructor(
+    private readonly branchRepo: BranchRepository,
+    private readonly accuracyRepo: AccuracyRepository | null = null,
+    private readonly sentimentRepo: SentimentRepository | null = null,
+  ) {}
 
   async handle(
     { branchId }: DeleteBranchInputData,
@@ -22,6 +26,9 @@ export class DeleteBranchInteractor implements DeleteBranchInputBoundary {
     }
 
     await this.branchRepo.deleteBranch(branchId);
+    // A branch's saved results have no meaning without the branch, so they go with it.
+    await this.accuracyRepo?.deleteAccuracyForCall(branchId);
+    await this.sentimentRepo?.deleteSentimentForCall(branchId);
 
     presenter.present();
   }

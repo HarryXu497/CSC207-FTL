@@ -3,8 +3,6 @@
  */
 import { Router } from 'express';
 import {
-  InMemoryAccuracyRepository,
-  InMemorySentimentRepository,
   type AccuracyAnalyzer,
   type AccuracyRepository,
   type AnalyseMessages,
@@ -16,14 +14,12 @@ import {
 import { AccuracyController, BranchController, SentimentController } from 'src/service';
 import { createCallsRouter, createHealthRouter, createMessagesRouter } from './routers';
 
-/** Optional services. A missing one makes its routes answer 503 instead of stopping the server. */
+/** Optional services. A missing service makes the corresponding routes respond with 503 */
 export interface ServerServices {
   analyseMessages?: AnalyseMessages | null;
   accuracyAnalyzer?: AccuracyAnalyzer | null;
-  /** Where accuracy results are saved. Defaults to an in-memory store. */
-  accuracyRepo?: AccuracyRepository;
-  /** Where sentiment results are saved. Defaults to an in-memory store. */
-  sentimentRepo?: SentimentRepository;
+  accuracyRepo?: AccuracyRepository | null;
+  sentimentRepo?: SentimentRepository | null;
 }
 
 export function createRouter(
@@ -34,11 +30,12 @@ export function createRouter(
   services: ServerServices = {},
 ): Router {
   const router = Router();
-  const accuracyRepo = services.accuracyRepo ?? new InMemoryAccuracyRepository();
-  const sentimentRepo = services.sentimentRepo ?? new InMemorySentimentRepository();
-  const branchController = new BranchController(callRepo, branchRepo);
+  const accuracyRepo = services.accuracyRepo ?? null;
+  const sentimentRepo = services.sentimentRepo ?? null;
+  const branchController = new BranchController(callRepo, branchRepo, accuracyRepo, sentimentRepo);
   const sentimentController = new SentimentController(
     callRepo,
+    branchRepo,
     messageRepoFactory,
     services.analyseMessages ?? null,
     sentimentRepo,
@@ -47,11 +44,19 @@ export function createRouter(
     services.accuracyAnalyzer ?? null,
     accuracyRepo,
     callRepo,
+    branchRepo,
     messageRepoFactory,
   );
 
   router.use(createHealthRouter(backend));
-  router.use(createCallsRouter(callRepo, messageRepoFactory, accuracyRepo, sentimentRepo));
+  router.use(
+    createCallsRouter(
+      callRepo,
+      messageRepoFactory,
+      accuracyRepo ?? undefined,
+      sentimentRepo ?? undefined,
+    ),
+  );
   router.use(createMessagesRouter(callRepo, messageRepoFactory));
   router.use(branchController.router());
   router.use(sentimentController.router());

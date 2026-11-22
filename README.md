@@ -65,16 +65,20 @@ cp packages/server/.env.example packages/server/.env
 
 ## API
 
-| Method | Path                           | Body                                  | Returns                                                                                      |
-| ------ | ------------------------------ | ------------------------------------- | -------------------------------------------------------------------------------------------- |
-| GET    | `/api/health`                  | —                                     | `{ status, backend }`                                                                        |
-| GET    | `/api/calls`                   | —                                     | `{ calls: Call[] }`                                                                          |
-| POST   | `/api/calls`                   | `{ customerName, topic, score }`      | `201 { call }`                                                                               |
-| POST   | `/api/accuracy/analyze`        | `{ messages, topic? }`                | `200 { accuracy }` (`503` if not configured, `502` on unusable model output)                 |
-| POST   | `/api/calls/:callId/accuracy`  | none (analyzes the stored transcript) | `200 { accuracy }`, saved under the call (`404` unknown call, `503`, `502` as above)         |
-| GET    | `/api/calls/:callId/accuracy`  | none                                  | `200 { accuracy }`, or `404` if the call has not been analyzed                               |
-| POST   | `/api/calls/:callId/sentiment` | none (analyzes the stored transcript) | `200 { messageSentiments }`, saved under the call (`404` unknown call, `503` without models) |
-| GET    | `/api/calls/:callId/sentiment` | none                                  | `200 { messageSentiments }`, or `404` if the call has not been analyzed                      |
+| Method | Path                                              | Body                                         | Returns                                                                                          |
+| ------ | ------------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| GET    | `/api/health`                                     | —                                            | `{ status, backend }`                                                                            |
+| GET    | `/api/calls`                                      | —                                            | `{ calls: Call[] }`                                                                              |
+| POST   | `/api/calls`                                      | `{ customerName, topic, score }`             | `201 { call }`                                                                                   |
+| POST   | `/api/accuracy/analyze`                           | `{ messages, topic? }`                       | `200 { accuracy }` (`503` if not configured, `502` on unusable model output)                     |
+| POST   | `/api/calls/:callId/accuracy`                     | none (analyzes the stored transcript)        | `200 { accuracy }`, saved under the call (`404` unknown call, `503`, `502` as above)             |
+| GET    | `/api/calls/:callId/accuracy`                     | none                                         | `200 { accuracy }`, or `404` if the call has not been analyzed                                   |
+| POST   | `/api/calls/:callId/branches/:branchId/accuracy`  | none (analyzes the stored branch transcript) | `200 { accuracy }`, saved under the branch (`404` unknown branch, `503`, `502` as above)         |
+| GET    | `/api/calls/:callId/branches/:branchId/accuracy`  | none                                         | `200 { accuracy }`, or `404` if the branch has not been analyzed                                 |
+| POST   | `/api/calls/:callId/sentiment`                    | none (analyzes the stored transcript)        | `200 { messageSentiments }`, saved under the call (`404` unknown call, `503` without models)     |
+| GET    | `/api/calls/:callId/sentiment`                    | none                                         | `200 { messageSentiments }`, or `404` if the call has not been analyzed                          |
+| POST   | `/api/calls/:callId/branches/:branchId/sentiment` | none (analyzes the stored branch transcript) | `200 { messageSentiments }`, saved under the branch (`404` unknown branch, `503` without models) |
+| GET    | `/api/calls/:callId/branches/:branchId/sentiment` | none                                         | `200 { messageSentiments }`, or `404` if the branch has not been analyzed                        |
 
 ## Sentiment Analysis
 
@@ -86,7 +90,7 @@ We are evaluating two Hugging Face transformer models for emotion classification
 Both models are candidates for identifying emotions expressed during calls. The final model will be selected based on classification quality and accuracy.
 The selected model will be integrated into the backend to analyze call transcripts and make emotion predictions available to the application.
 
-`POST /api/calls/:callId/sentiment` analyzes a stored call and saves the result (Firestore `sentiment/{callId}`, or memory), and `GET` on the same path reads it back; deleting a call deletes its result. Set `MODEL_DIR` to enable analysis; without it the `POST` answers `503`. The Call Analysis page reads the saved result and re-analyzes only when it is missing messages.
+`POST /api/calls/:callId/sentiment` analyzes a stored call and saves the result (Firestore `sentiment/{callId}`, or memory), and `GET` on the same path reads it back; deleting a call deletes its result. Branches work the same way under `/api/calls/:callId/branches/:branchId/sentiment` (stored under `sentiment/{branchId}`), using the same use case with the branch's message collection. If no sentiment repository is configured, the saved-result routes answer `503`. Set `MODEL_DIR` to enable analysis; without it the `POST` answers `503`. The Call Analysis page reads the saved result and re-analyzes only when it is missing messages.
 
 ## Server Architecture
 
@@ -192,21 +196,22 @@ transcript ──► 1. Extract   LLM lists the checkable claims the agent made
 - **Input:** the call's `messages` (each a `{ role, content }` with role `agent` or `customer`) and an optional `topic`.
 - **Output:** an `Accuracy` object (see [Database Structure](#accuracy-1)).
 - **RAG interaction:** read-only. It calls `search(query, limit)` on a `Retriever` and never writes to the knowledge base, so `ChromaRetriever` or `InMemoryRetriever` both work.
-- **Endpoint:** `POST /api/accuracy/analyze` takes a transcript and returns the result without storing it. `POST /api/calls/:callId/accuracy` analyzes a stored call and saves the result (Firestore `accuracy/{callId}`, or memory), and `GET` on the same path reads it back; deleting a call deletes its result. Set `OPENAI_API_KEY` (and the `CHROMA_*` settings) in `packages/server/.env` to enable it; without a key it answers `503`.
+- **Endpoint:** `POST /api/accuracy/analyze` takes a transcript and returns the result without storing it. `POST /api/calls/:callId/accuracy` analyzes a stored call and saves the result (Firestore `accuracy/{callId}`, or memory), and `GET` on the same path reads it back; deleting a call deletes its result. Branches work the same way under `/api/calls/:callId/branches/:branchId/accuracy` (stored under `accuracy/{branchId}`), using the same use case with the branch's message collection. If no accuracy repository is configured, the saved-result routes answer `503`. Set `OPENAI_API_KEY` (and the `CHROMA_*` settings) in `packages/server/.env` to enable it; without a key it answers `503`.
 - **Limits:** at most 200 messages and 30,000 characters of message text per request (`400` otherwise). JSON bodies over 100 KB get `413`, and unreadable JSON gets `400`.
 
 ### Code
 
 The metric follows the same layers as the rest of the server:
 
-| Layer        | Where                               | What                                                                              |
-| ------------ | ----------------------------------- | --------------------------------------------------------------------------------- |
-| `entities`   | `entities/accuracy/`                | Claim and result types, and `scoring.ts` (the scoring rules)                      |
-| `repository` | `repository/llm/`                   | `LlmClient` port, its LangChain adapter, and `completeJson` (validated JSON)      |
-| `repository` | `repository/accuracy/`              | `AccuracyAnalyzer` port and `LlmAccuracyAnalyzer`: prompts, schemas, RAG lookups  |
-| `service`    | `service/accuracy/AnalyzeAccuracy/` | The use case: input/output boundaries, the interactor (scoring) and the presenter |
-| `service`    | `service/accuracy/controller.ts`    | Request validation and routing                                                    |
-| `server`     | `routes.ts`, `index.ts`             | Mounts the controller; builds the OpenAI and Chroma adapters from the environment |
+| Layer        | Where                                     | What                                                                                        |
+| ------------ | ----------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `entities`   | `entities/accuracy/`                      | Claim and result types, and `scoring.ts` (the scoring rules)                                |
+| `repository` | `repository/llm/`                         | `LlmClient` port, its LangChain adapter, and `completeJson` (validated JSON)                |
+| `repository` | `repository/accuracy/`                    | `AccuracyAnalyzer` port and `LlmAccuracyAnalyzer`: prompts, schemas, RAG lookups            |
+| `service`    | `service/accuracy/AnalyzeAccuracy/`       | The use case: input/output boundaries, the interactor (scoring) and the presenter           |
+| `service`    | `service/accuracy/AnalyzeStoredAccuracy/` | The use case for a stored call or branch: loads it, checks the transcript, saves the result |
+| `service`    | `service/accuracy/controller.ts`          | Request parsing and routing                                                                 |
+| `server`     | `routes.ts`, `index.ts`                   | Mounts the controller; builds the OpenAI and Chroma adapters from the environment           |
 
 All prompts are in `repository/accuracy/prompts.ts` and carry a `PROMPT_VERSION`.
 

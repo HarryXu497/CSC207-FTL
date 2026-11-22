@@ -1,5 +1,9 @@
 import type { MessageSentiment } from 'src/entities';
 
+/**
+ * Stores sentiment results by id. A branch is a call (`Branch extends Call`) with its own id, so a
+ * branch's result is stored under its branch id in the same way.
+ */
 export interface SentimentRepository {
   /**
    * @param callId - The id of the call to get sentiment for

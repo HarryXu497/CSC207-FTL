@@ -12,4 +12,12 @@ export class GetAccuracyPresenter implements GetAccuracyOutputBoundary {
   presentNotFound(message: string): void {
     this.res.status(404).json({ error: { message } });
   }
+
+  presentServiceUnavailable(): void {
+    this.res.status(503).json({
+      error: {
+        message: 'Saving accuracy results is not configured on this server.',
+      },
+    });
+  }
 }
