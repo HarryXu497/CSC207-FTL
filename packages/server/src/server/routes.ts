@@ -3,7 +3,6 @@
  */
 import { Router } from 'express';
 import {
-  InMemoryAccuracyRepository,
   InMemorySentimentRepository,
   type AccuracyAnalyzer,
   type AccuracyRepository,
@@ -32,7 +31,7 @@ import { createHealthRouter, createMessagesRouter } from './routers';
 export interface ServerServices {
   analyseMessages?: AnalyseMessages | null;
   accuracyAnalyzer?: AccuracyAnalyzer | null;
-  accuracyRepo?: AccuracyRepository;
+  accuracyRepo?: AccuracyRepository | null;
   sentimentRepo?: SentimentRepository;
   simulationRepo?: SimulationRepository | null;
   ingestor?: Ingestor | null;
@@ -46,10 +45,10 @@ export function createRouter(
   services: ServerServices = {},
 ): Router {
   const router = Router();
-  const accuracyRepo = services.accuracyRepo ?? new InMemoryAccuracyRepository();
+  const accuracyRepo = services.accuracyRepo ?? null;
   const sentimentRepo = services.sentimentRepo ?? new InMemorySentimentRepository();
   const callController = new CallController(callRepo, messageRepoFactory, accuracyRepo, sentimentRepo);
-  const branchController = new BranchController(callRepo, branchRepo);
+  const branchController = new BranchController(callRepo, branchRepo, accuracyRepo);
   const ingestor = services.ingestor ?? null;
   const documentsController = new DocumentsController(
     ingestor ? new UploadDocumentInteractor(ingestor) : null,
@@ -70,6 +69,7 @@ export function createRouter(
     services.accuracyAnalyzer ?? null,
     accuracyRepo,
     callRepo,
+    branchRepo,
     messageRepoFactory,
   );
 

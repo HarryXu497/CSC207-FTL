@@ -1,3 +1,4 @@
+import type { AccuracyTarget } from '../target';
 import type { GetAccuracyOutputBoundary } from './output';
 
 export interface GetAccuracyInputBoundary {
@@ -5,5 +6,7 @@ export interface GetAccuracyInputBoundary {
 }
 
 export interface GetAccuracyInputData {
-  callId: string;
+  /** The id of the call or branch whose saved result is read. */
+  id: string;
+  target: AccuracyTarget;
 }

@@ -6,8 +6,6 @@ export interface AnalyzeAccuracyInputBoundary {
 }
 
 export interface AnalyzeAccuracyInputData {
-  /** When set, the result is saved under this call. Without it the analysis is not stored. */
-  callId?: string;
   messages: TranscriptMessage[];
   topic?: string;
 }
