@@ -2,6 +2,7 @@ import type { ApiErrorBody } from '@recall/server/entities';
 import type { AnalyzeAccuracyInputData } from '@recall/server/service/accuracy/AnalyzeAccuracy/input';
 import type { AnalyzeAccuracyOutputData } from '@recall/server/service/accuracy/AnalyzeAccuracy/output';
 import type {
+  GetSentimentOutputData,
   ListCallSentimentsOutputData,
   CreateCallInputData,
   CreateCallOutputData,
@@ -46,9 +47,14 @@ export const api = {
     request<WithError<GetCallOutputData>>(`/calls/${encodeURIComponent(callId)}`),
 
   getCallSentiment: (callId: string, signal: AbortSignal) =>
+    request<WithError<GetSentimentOutputData>>(`/calls/${encodeURIComponent(callId)}/sentiment`, {
+      signal,
+    }),
+
+  analyzeCallSentiment: (callId: string, signal: AbortSignal) =>
     request<WithError<ListCallSentimentsOutputData>>(
       `/calls/${encodeURIComponent(callId)}/sentiment`,
-      { signal },
+      { method: 'POST', signal },
     ),
 
   createCall: (body: CreateCallRequestBody) =>

@@ -9,6 +9,7 @@ import {
   type BranchRepository,
   type CallRepository,
   type MessageRepositoryBuilder,
+  type SentimentRepository,
 } from 'src/repository';
 import {
   AccuracyController,
@@ -23,6 +24,7 @@ export interface ServerServices {
   analyseMessages?: AnalyseMessages | null;
   accuracyAnalyzer?: AccuracyAnalyzer | null;
   accuracyRepo?: AccuracyRepository | null;
+  sentimentRepo?: SentimentRepository | null;
 }
 
 export function createRouter(
@@ -34,12 +36,20 @@ export function createRouter(
 ): Router {
   const router = Router();
   const accuracyRepo = services.accuracyRepo ?? null;
-  const callController = new CallController(callRepo, messageRepoFactory, accuracyRepo);
-  const branchController = new BranchController(callRepo, branchRepo, accuracyRepo);
-  const sentimentController = new SentimentController(
+  const sentimentRepo = services.sentimentRepo ?? null;
+  const callController = new CallController(
     callRepo,
     messageRepoFactory,
+    accuracyRepo,
+    sentimentRepo,
+  );
+  const branchController = new BranchController(callRepo, branchRepo, accuracyRepo, sentimentRepo);
+  const sentimentController = new SentimentController(
+    callRepo,
+    branchRepo,
+    messageRepoFactory,
     services.analyseMessages ?? null,
+    sentimentRepo,
   );
   const accuracyController = new AccuracyController(
     services.accuracyAnalyzer ?? null,
