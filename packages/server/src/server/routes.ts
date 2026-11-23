@@ -10,8 +10,13 @@ import {
   type CallRepository,
   type MessageRepositoryBuilder,
 } from 'src/repository';
-import { AccuracyController, BranchController, SentimentController } from 'src/service';
-import { createCallsRouter, createHealthRouter, createMessagesRouter } from './routers';
+import {
+  AccuracyController,
+  BranchController,
+  CallController,
+  SentimentController,
+} from 'src/service';
+import { createHealthRouter, createMessagesRouter } from './routers';
 
 /** Optional services. A missing service makes the corresponding routes respond with 503 */
 export interface ServerServices {
@@ -29,6 +34,7 @@ export function createRouter(
 ): Router {
   const router = Router();
   const accuracyRepo = services.accuracyRepo ?? null;
+  const callController = new CallController(callRepo, messageRepoFactory, accuracyRepo);
   const branchController = new BranchController(callRepo, branchRepo, accuracyRepo);
   const sentimentController = new SentimentController(
     callRepo,
@@ -44,7 +50,7 @@ export function createRouter(
   );
 
   router.use(createHealthRouter(backend));
-  router.use(createCallsRouter(callRepo, messageRepoFactory, accuracyRepo ?? undefined));
+  router.use(callController.router());
   router.use(createMessagesRouter(callRepo, messageRepoFactory));
   router.use(branchController.router());
   router.use(sentimentController.router());

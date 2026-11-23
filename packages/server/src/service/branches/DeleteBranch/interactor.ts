@@ -25,7 +25,6 @@ export class DeleteBranchInteractor implements DeleteBranchInputBoundary {
     }
 
     await this.branchRepo.deleteBranch(branchId);
-    // A branch's accuracy result has no meaning without the branch, so it goes with it.
     await this.accuracyRepo?.deleteAccuracyForCall(branchId);
 
     presenter.present();
