@@ -12,11 +12,14 @@ export class DocumentsController {
   async uploadDocument(req: Request, presenter: UploadDocumentOutputBoundary): Promise<void> {
     const file = req.file;
 
+    if (!file) {
+      presenter.presentBadRequest('A document file is required.');
+      return;
+    }
+
     await this.interactor.handle(
       {
-        file: file
-          ? { filename: file.filename, originalName: file.originalname, size: file.size }
-          : null,
+        file: { filename: file.filename, originalName: file.originalname, size: file.size },
       },
       presenter,
     );

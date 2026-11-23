@@ -9,5 +9,5 @@ export interface UploadDocumentInputData {
     filename: string;
     originalName: string;
     size: number;
-  } | null;
+  };
 }

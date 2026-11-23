@@ -6,11 +6,6 @@ export class UploadDocumentInteractor implements UploadDocumentInputBoundary {
     { file }: UploadDocumentInputData,
     presenter: UploadDocumentOutputBoundary,
   ): Promise<void> {
-    if (!file) {
-      presenter.presentBadRequest('A document file is required.');
-      return;
-    }
-
     presenter.present({
       document: {
         filename: file.filename,
