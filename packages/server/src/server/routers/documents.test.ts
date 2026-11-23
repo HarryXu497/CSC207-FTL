@@ -1,4 +1,4 @@
-import type { UploadDocumentResponse } from 'src/entities';
+import type { UploadDocumentOutputData } from 'src/service/documents/UploadDocument';
 import type { Ingestor } from 'src/repository';
 import { readFile, readdir, unlink } from 'node:fs/promises';
 import { createServer, type Server } from 'node:http';
@@ -93,7 +93,7 @@ describe('POST /api/documents', () => {
     const response = await fetch(url, { method: 'POST', body: documentForm(filename, contents) });
     expect(response.status).toBe(201);
 
-    const result = (await response.json()) as UploadDocumentResponse;
+    const result = (await response.json()) as UploadDocumentOutputData;
     expect(result.document.filename).toMatch(/^[0-9a-f-]{36}\.txt$/);
     const path = join(DOCUMENT_UPLOAD_DIRECTORY, result.document.filename);
     savedFiles.add(path);
