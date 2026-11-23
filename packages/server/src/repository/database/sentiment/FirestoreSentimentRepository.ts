@@ -2,7 +2,6 @@ import type { MessageSentiment } from 'src/entities';
 import { Firebase } from '../utils';
 import type { SentimentRepository } from './SentimentRepository';
 
-/** A Firestore document can't be a bare array, so the sentiments are wrapped in this object. */
 interface SentimentDocument {
   messageSentiments: MessageSentiment[];
 }
