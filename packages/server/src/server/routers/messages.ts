@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { buildErrorFromSafeParseError } from '../utils';
 import type { Message, WithError } from 'src/entities';
 import { MessagesController } from 'src/service';
-import type { CreateMessageResponse } from 'src/service/messages/PostMessages';
+import type { CreateMessageResponse } from 'src/service/messages/StreamMessages/PostMessages';
 
 const postMessageSchema = z.object({
   role: z.enum(['agent', 'customer']),

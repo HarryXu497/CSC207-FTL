@@ -1,9 +1,9 @@
 export * from './controller';
 export * from './ListMessages';
 
-import { PostMessages } from './PostMessages';
-import { PostMessagesBatch } from './PostMessagesBatch';
-import { StreamMessages } from './StreamMessages';
+import { PostMessages } from './StreamMessages/PostMessages';
+import { PostMessagesBatch } from './StreamMessages/PostMessagesBatch';
+import { StreamMessages } from './StreamMessages/StreamMessages';
 
 export const MessagesService = {
   PostMessages,
