@@ -24,6 +24,7 @@ describe('UploadDocumentInteractor', () => {
     presenter = {
       present: vi.fn<UploadDocumentOutputBoundary['present']>(),
       presentBadRequest: vi.fn<UploadDocumentOutputBoundary['presentBadRequest']>(),
+      presentServiceUnavailable: vi.fn<UploadDocumentOutputBoundary['presentServiceUnavailable']>(),
     };
     interactor = new UploadDocumentInteractor(ingestor);
   });

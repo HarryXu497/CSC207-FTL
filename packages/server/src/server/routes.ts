@@ -9,8 +9,14 @@ import type {
   Ingestor,
   MessageRepositoryBuilder,
 } from 'src/repository';
-import { BranchController, CallController, SentimentController } from 'src/service';
-import { createDocumentsRouter, createHealthRouter, createMessagesRouter } from './routers';
+import {
+  BranchController,
+  CallController,
+  DocumentsController,
+  SentimentController,
+  UploadDocumentInteractor,
+} from 'src/service';
+import { createHealthRouter, createMessagesRouter } from './routers';
 
 export function createRouter(
   callRepo: CallRepository,
@@ -23,6 +29,9 @@ export function createRouter(
   const router = Router();
   const callController = new CallController(callRepo, messageRepoFactory);
   const branchController = new BranchController(callRepo, branchRepo);
+  const documentsController = new DocumentsController(
+    ingestor ? new UploadDocumentInteractor(ingestor) : null,
+  );
   const sentimentController = new SentimentController(
     callRepo,
     messageRepoFactory,
@@ -31,7 +40,7 @@ export function createRouter(
 
   router.use(createHealthRouter(backend));
   router.use(callController.router());
-  router.use(createDocumentsRouter(ingestor));
+  router.use(documentsController.router());
   router.use(createMessagesRouter(callRepo, messageRepoFactory));
   router.use(branchController.router());
   router.use(sentimentController.router());
