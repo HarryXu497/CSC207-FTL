@@ -9,7 +9,7 @@ const file = {
   filename: 'document-id.txt',
   originalName: 'Refund policy.txt',
   size: 128,
-} satisfies NonNullable<UploadDocumentInputData['file']>;
+} satisfies UploadDocumentInputData['file'];
 
 describe('UploadDocumentInteractor', () => {
   let ingestor: Ingestor;
@@ -43,16 +43,6 @@ describe('UploadDocumentInteractor', () => {
       },
     });
     expect(presenter.presentBadRequest).not.toHaveBeenCalled();
-  });
-
-  it('rejects missing files without calling the ingestor', async () => {
-    await interactor.handle({ file: null }, presenter);
-
-    expect(presenter.presentBadRequest).toHaveBeenCalledExactlyOnceWith(
-      'A document file is required.',
-    );
-    expect(ingestor.ingestFile).not.toHaveBeenCalled();
-    expect(presenter.present).not.toHaveBeenCalled();
   });
 
   it('rejects documents with no ingestible text', async () => {

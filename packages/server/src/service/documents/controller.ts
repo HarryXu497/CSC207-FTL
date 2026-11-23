@@ -17,16 +17,19 @@ export class DocumentsController {
 
     const file = req.file;
 
+    if (!file) {
+      presenter.presentBadRequest('A document file is required.');
+      return;
+    }
+
     await this.interactor.handle(
       {
-        file: file
-          ? {
-              path: file.path,
-              filename: file.filename,
-              originalName: file.originalname,
-              size: file.size,
-            }
-          : null,
+        file: {
+          path: file.path,
+          filename: file.filename,
+          originalName: file.originalname,
+          size: file.size,
+        },
       },
       presenter,
     );
