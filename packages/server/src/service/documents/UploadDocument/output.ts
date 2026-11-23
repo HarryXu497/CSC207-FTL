@@ -1,3 +1,5 @@
+import type { IngestedDocument } from 'src/entities';
+
 export interface UploadDocumentOutputBoundary {
   present(output: UploadDocumentOutputData): void;
   presentBadRequest(message: string): void;
@@ -5,10 +7,5 @@ export interface UploadDocumentOutputBoundary {
 }
 
 export interface UploadDocumentOutputData {
-  document: {
-    filename: string;
-    originalName: string;
-    size: number;
-    chunksStored: number;
-  };
+  document: IngestedDocument;
 }
