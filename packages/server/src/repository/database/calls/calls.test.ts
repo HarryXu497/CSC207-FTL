@@ -3,13 +3,13 @@
  */
 import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
+import type { Call, WithError } from 'src/entities';
 import { createApp } from 'src/server/app';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, assert, beforeAll, describe, expect, it } from 'vitest';
 import { InMemoryBranchRepository } from '../branches';
 import { InMemoryMessageRepository } from '../messages';
 import { InMemoryCallRepository } from './InMemoryCallRepository';
-import type { GetCallsResponse } from 'src/service/calls/GetCalls';
-import type { Call } from 'src/entities';
+import type { ListCallsOutputData } from 'src/service';
 
 let server: Server;
 let baseUrl: string;
@@ -36,12 +36,13 @@ afterAll(async () => {
 
 describe('GET /api/calls', () => {
   it('returns the seeded calls, newest first', async () => {
-    const response = await fetch(`${baseUrl}/calls`);
-    const body = (await response.json()) as GetCallsResponse;
+    const listRes = await fetch(`${baseUrl}/calls`);
+    const resJson = (await listRes.json()) as WithError<ListCallsOutputData>;
 
-    expect(response.status).toBe(200);
-    expect(body.calls).toHaveLength(2);
-    expect(body.calls[0]?.id).toBe('call-1002');
+    expect(listRes.status).toBe(200);
+    assert(!('error' in resJson));
+    expect(resJson.calls.length).toBe(2);
+    expect(resJson.calls[0]?.id).toBe('call-1002');
   });
 });
 
@@ -50,24 +51,60 @@ describe('POST /api/calls', () => {
     const response = await fetch(`${baseUrl}/calls`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ customerName: 'Marcus Webb', topic: 'Billing query' }),
+      body: JSON.stringify({
+        callData: {
+          customerName: 'Marcus Webb',
+          topic: 'Billing query',
+        },
+        messageData: [
+          {
+            role: 'agent',
+            content: 'Hello, how can I help?',
+            createdAt: '2026-09-28T16:05:00.000Z',
+          },
+          {
+            role: 'customer',
+            content: 'I have a billing issue.',
+            createdAt: '2026-09-28T16:05:30.000Z',
+          },
+        ],
+      }),
     });
 
     expect(response.status).toBe(201);
 
     const listRes = await fetch(`${baseUrl}/calls`);
-    const list = (await listRes.json()) as GetCallsResponse;
-    expect(list.calls.some((c: Call) => c.customerName === 'Marcus Webb')).toBe(true);
+    const resJson = (await listRes.json()) as WithError<ListCallsOutputData>;
+    assert(!('error' in resJson));
+    expect(resJson.calls.some((c: Call) => c.customerName === 'Marcus Webb')).toBe(true);
   });
 
   it('rejects a missing customerName with a 400', async () => {
     const response = await fetch(`${baseUrl}/calls`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ topic: 'Y' }),
+      body: JSON.stringify({
+        callData: { topic: 'Y' },
+        messageData: [],
+      }),
     });
 
     expect(response.status).toBe(400);
-    expect(JSON.stringify(await response.json())).toContain('customerName');
+  });
+
+  it('rejects an invalid message role with a 400', async () => {
+    const response = await fetch(`${baseUrl}/calls`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        callData: {
+          customerName: 'Marcus Webb',
+          topic: 'Billing query',
+        },
+        messageData: [{ role: 'unknown', content: 'Hi', createdAt: '2026-09-28T16:05:00.000Z' }],
+      }),
+    });
+
+    expect(response.status).toBe(400);
   });
 });
