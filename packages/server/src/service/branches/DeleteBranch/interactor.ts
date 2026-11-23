@@ -26,7 +26,6 @@ export class DeleteBranchInteractor implements DeleteBranchInputBoundary {
     }
 
     await this.branchRepo.deleteBranch(branchId);
-    // A branch's saved results have no meaning without the branch, so they go with it.
     await this.accuracyRepo?.deleteAccuracyForCall(branchId);
     await this.sentimentRepo?.deleteSentimentForCall(branchId);
 

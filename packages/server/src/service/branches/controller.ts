@@ -11,17 +11,17 @@ import {
   CreateBranchPresenter,
   type CreateBranchOutputBoundary,
 } from './CreateBranch';
-import {
-  DeleteBranchInteractor,
-  DeleteBranchPresenter,
-  type DeleteBranchOutputBoundary,
-} from './DeleteBranch';
 import { GetBranchInteractor, GetBranchPresenter, type GetBranchOutputBoundary } from './GetBranch';
 import {
   ListCallBranchesInteractor,
   ListCallBranchesPresenter,
   type ListCallBranchesOutputBoundary,
 } from './ListCallBranches';
+import {
+  DeleteBranchInteractor,
+  DeleteBranchPresenter,
+  type DeleteBranchOutputBoundary,
+} from './DeleteBranch';
 
 const createBranchSchema = z.object({
   branchIndex: z.number().int().min(0, 'Branch index must be non-negative'),
@@ -101,16 +101,16 @@ export class BranchController {
   router(): Router {
     const router = Router();
 
+    router.post('/calls/:callId/branches', async (req, res) =>
+      this.createBranch(req, new CreateBranchPresenter(res)),
+    );
+
     router.get('/calls/:callId/branches/:branchId', async (req, res) =>
       this.getBranch(req, new GetBranchPresenter(res)),
     );
 
     router.get('/calls/:callId/branches', async (req, res) =>
       this.listCallBranches(req, new ListCallBranchesPresenter(res)),
-    );
-
-    router.post('/calls/:callId/branches', async (req, res) =>
-      this.createBranch(req, new CreateBranchPresenter(res)),
     );
 
     router.delete('/calls/:callId/branches/:branchId', async (req, res) =>
