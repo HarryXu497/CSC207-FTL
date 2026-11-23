@@ -5,7 +5,7 @@ import type { Message } from 'src/entities';
  * Keeps response handling outside the use case so it does not depend on Express.
  */
 export interface StreamMessagesOutputBoundary {
-    /** Prepares the response to begin streaming messages. */
+    /** Prepares the streaming response to begin streaming messages (before any messages arrive).*/
     start(): void;
     /** Sends a message update to the client. */
     present(output: StreamMessagesOutputData): void;
