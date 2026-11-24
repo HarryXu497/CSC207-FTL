@@ -108,7 +108,12 @@ function BranchDetails({ callId, branchId }: { callId: string; branchId: string 
                 className="h-auto max-h-[60vh]"
               />
             )}
-            <PracticeReplyForm callId={callId} branchId={branchId} onSaved={includeSavedMessage} />
+            <PracticeReplyForm
+              callId={callId}
+              branchId={branchId}
+              lastMessage={messages.at(-1)}
+              onSaved={includeSavedMessage}
+            />
           </>
         )}
       </div>

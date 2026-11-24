@@ -1,19 +1,28 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type { Message } from '@recall/server/entities';
-import { api } from '../api';
+import { api, ApiError } from '../api';
 
 interface PracticeReplyFormProps {
   callId: string;
   branchId: string;
+  lastMessage?: Message;
   onSaved: (message: Message) => void;
 }
 
-export default function PracticeReplyForm({ callId, branchId, onSaved }: PracticeReplyFormProps) {
+export default function PracticeReplyForm({
+  callId,
+  branchId,
+  lastMessage,
+  onSaved,
+}: PracticeReplyFormProps) {
   const active = useRef(false);
   const submitting = useRef(false);
   const [draft, setDraft] = useState('');
   const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const pendingAgentId = lastMessage?.role === 'agent' ? lastMessage.id : null;
+  const busy = saving || generating;
 
   useEffect(() => {
     active.current = true;
@@ -22,10 +31,40 @@ export default function PracticeReplyForm({ callId, branchId, onSaved }: Practic
     };
   }, []);
 
+  async function generateReply(agentId: string) {
+    setGenerating(true);
+    try {
+      const { message } = await api.simulateMessage(callId, branchId, {
+        expectedLastMessageId: agentId,
+      });
+      if (active.current) onSaved(message);
+    } catch (error) {
+      if (!active.current) return;
+      setError(
+        error instanceof ApiError && error.status === 503
+          ? 'Customer replies are unavailable right now. Your reply is saved.'
+          : 'Your reply is saved. Could not get the customer reply. Try again.',
+      );
+    } finally {
+      if (active.current) setGenerating(false);
+    }
+  }
+
+  async function retryReply() {
+    if (!pendingAgentId || submitting.current) return;
+    submitting.current = true;
+    setError(null);
+    try {
+      await generateReply(pendingAgentId);
+    } finally {
+      submitting.current = false;
+    }
+  }
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const content = draft.trim();
-    if (!content || submitting.current) return;
+    if (!content || pendingAgentId || submitting.current) return;
     submitting.current = true;
     setSaving(true);
     setError(null);
@@ -37,6 +76,8 @@ export default function PracticeReplyForm({ callId, branchId, onSaved }: Practic
       if (!active.current) return;
       onSaved(message);
       setDraft('');
+      setSaving(false);
+      await generateReply(message.id);
     } catch (error) {
       if (!active.current) return;
       setError(error instanceof Error ? error.message : 'Could not save your reply. Try again.');
@@ -55,24 +96,44 @@ export default function PracticeReplyForm({ callId, branchId, onSaved }: Practic
         id="practice-reply"
         value={draft}
         onChange={(event) => setDraft(event.target.value)}
-        disabled={saving}
+        disabled={busy || pendingAgentId !== null}
         required
         rows={3}
         placeholder="Write your response as the agent…"
         className="mt-2 w-full rounded border border-tertiary p-3 disabled:opacity-60"
       />
+      {generating ? (
+        <p role="status" className="mt-2 text-secondary">
+          Waiting for the customer reply…
+        </p>
+      ) : pendingAgentId ? (
+        <p role="status" className="mt-2 text-secondary">
+          Your last reply is saved. Get the customer reply to continue.
+        </p>
+      ) : null}
       {error && (
         <p role="alert" className="mt-2">
           {error}
         </p>
       )}
-      <button
-        type="submit"
-        disabled={saving || !draft.trim()}
-        className="mt-3 rounded bg-primary px-4 py-2 text-inverse disabled:opacity-50"
-      >
-        {saving ? 'Saving reply…' : 'Save reply'}
-      </button>
+      {pendingAgentId ? (
+        <button
+          type="button"
+          onClick={() => void retryReply()}
+          disabled={busy}
+          className="mt-3 rounded bg-primary px-4 py-2 text-inverse disabled:opacity-50"
+        >
+          {error ? 'Retry customer reply' : 'Get customer reply'}
+        </button>
+      ) : (
+        <button
+          type="submit"
+          disabled={busy || !draft.trim()}
+          className="mt-3 rounded bg-primary px-4 py-2 text-inverse disabled:opacity-50"
+        >
+          {saving ? 'Saving reply…' : 'Send reply'}
+        </button>
+      )}
     </form>
   );
 }
