@@ -48,6 +48,17 @@ export class InMemoryMessageRepository implements MessageRepository {
     return id;
   }
 
+  async addMessageIfLastMatches(
+    message: Omit<Message, 'id'>,
+    expectedLastMessageId: string,
+  ): Promise<string | null> {
+    const latest = [...this.messages].sort((a, b) => a.createdAt.localeCompare(b.createdAt)).at(-1);
+    if (latest?.id !== expectedLastMessageId) return null;
+
+    // Keep the check and append in one synchronous operation.
+    return this.addMessage(message);
+  }
+
   /**
    * Appends multiple messages in one batch, automatically generating the ids.
    * @param messages - The messages to append

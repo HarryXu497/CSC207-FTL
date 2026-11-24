@@ -18,6 +18,15 @@ export interface MessageRepository {
   addMessage(message: Omit<Message, 'id'>): Promise<string>;
 
   /**
+   * Atomically appends only if the latest saved message has the expected ID.
+   * Returns the new message ID, or null if the expected message is no longer last.
+   */
+  addMessageIfLastMatches(
+    message: Omit<Message, 'id'>,
+    expectedLastMessageId: string,
+  ): Promise<string | null>;
+
+  /**
    * Appends multiple messages in one batch, automatically
    * generating the ids.
    * @param messages - The messages to append

@@ -49,6 +49,26 @@ export class FirestoreMessageRepository implements MessageRepository {
     return docRef.id;
   }
 
+  async addMessageIfLastMatches(
+    message: Omit<Message, 'id'>,
+    expectedLastMessageId: string,
+  ): Promise<string | null> {
+    const db = Firebase.getInstance();
+    const collectionRef = db
+      .collection(this.parentCollection)
+      .doc(this.parentId)
+      .collection(FirestoreMessageRepository.COLLECTION);
+    const docRef = collectionRef.doc();
+
+    return db.runTransaction(async (transaction) => {
+      const snapshot = await transaction.get(collectionRef.orderBy('createdAt', 'desc').limit(1));
+      if (snapshot.docs[0]?.id !== expectedLastMessageId) return null;
+
+      transaction.create(docRef, message);
+      return docRef.id;
+    });
+  }
+
   /**
    * Appends multiple messages in one batch, automatically
    * generating the ids.
