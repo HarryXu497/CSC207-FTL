@@ -1,4 +1,4 @@
-import { Router, type Request } from 'express';
+import { Router, type Request, type Response } from 'express';
 import z from 'zod';
 import type { BranchRepository, CallRepository, MessageRepositoryBuilder } from 'src/repository';
 import {
@@ -11,6 +11,11 @@ import {
   PostMessagePresenter,
   type PostMessageOutputBoundary,
 } from './PostMessage';
+import {
+  StreamMessagesInteractor,
+  StreamMessagesPresenter,
+  type StreamMessagesOutputBoundary,
+} from './StreamMessages';
 
 const postMessageSchema = z.object({
   role: z.enum(['agent', 'customer']),
@@ -88,6 +93,28 @@ export class MessagesController {
     await interactor.handle({ callId, branchId, messageData: parsed.data }, presenter);
   }
 
+  async streamMessages(
+    req: Request,
+    presenter: StreamMessagesOutputBoundary,
+  ): Promise<(() => void) | null> {
+    const { callId, branchId } = req.params;
+    if (
+      typeof callId !== 'string' ||
+      !callId.trim() ||
+      (branchId !== undefined && (typeof branchId !== 'string' || !branchId.trim()))
+    ) {
+      presenter.presentBadRequest('A callId and, for branch messages, a branchId are required.');
+      return null;
+    }
+
+    const interactor = new StreamMessagesInteractor(
+      this.callsRepo,
+      this.branchRepo,
+      this.messageRepoFactory,
+    );
+    return interactor.handle({ callId, branchId }, presenter);
+  }
+
   router(): Router {
     const router = Router();
 
@@ -106,6 +133,20 @@ export class MessagesController {
     router.post('/calls/:callId/branches/:branchId/messages', async (req, res) =>
       this.postMessage(req, new PostMessagePresenter(res)),
     );
+
+    const stream = async (req: Request, res: Response): Promise<void> => {
+      let disconnected = false;
+      let unsubscribe: (() => void) | null = null;
+      res.once('close', () => {
+        disconnected = true;
+        unsubscribe?.();
+      });
+
+      unsubscribe = await this.streamMessages(req, new StreamMessagesPresenter(res));
+      if (disconnected) unsubscribe?.();
+    };
+    router.get('/calls/:callId/messages/stream', stream);
+    router.get('/calls/:callId/branches/:branchId/messages/stream', stream);
 
     return router;
   }

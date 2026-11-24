@@ -28,6 +28,7 @@ beforeAll(async () => {
   const branches = new InMemoryBranchRepository(calls, factory, [
     branch,
     { ...branch, id: 'posting-branch' },
+    { ...branch, id: 'streaming-branch' },
   ]);
   await factory('calls', call.id).addMessage({
     role: 'agent',
@@ -37,6 +38,11 @@ beforeAll(async () => {
   await factory('branches', branch.id).addMessage({
     role: 'customer',
     content: 'Practice branch transcript.',
+    createdAt: call.createdAt,
+  });
+  await factory('branches', 'streaming-branch').addMessage({
+    role: 'customer',
+    content: 'My delivery arrived damaged.',
     createdAt: call.createdAt,
   });
   callMessages = await factory('calls', call.id).getAllMessages();
@@ -71,8 +77,10 @@ async function postMessage(path: string, body: unknown) {
 }
 
 describe('MessagesController', () => {
-  it('streams the saved branch transcript before any new message is posted', async () => {
-    const response = await fetch(`${url}/calls/call-1/branches/branch-1/messages/stream`, {
+  it('streams saved branch history and subsequent messages through the controller', async () => {
+    const path = '/calls/call-1/branches/streaming-branch/messages';
+    const initial = (await getMessages(path)).body as { messages: Message[] };
+    const response = await fetch(`${url}${path}/stream`, {
       signal: AbortSignal.timeout(3000),
     });
     expect(response.status).toBe(200);
@@ -82,17 +90,44 @@ describe('MessagesController', () => {
 
     try {
       const decoder = new TextDecoder();
-      let event = '';
-      while (!event.includes('\n\n')) {
-        const chunk = await reader.read();
-        if (chunk.done) throw new Error('Stream closed before the initial snapshot.');
-        event += decoder.decode(chunk.value, { stream: true });
+      let buffer = '';
+      async function nextSnapshot() {
+        while (!buffer.includes('\n\n')) {
+          const chunk = await reader!.read();
+          if (chunk.done) throw new Error('Stream closed before the next snapshot.');
+          buffer += decoder.decode(chunk.value, { stream: true });
+        }
+        const end = buffer.indexOf('\n\n');
+        const event = buffer.slice(0, end);
+        buffer = buffer.slice(end + 2);
+        return JSON.parse(event.slice('data: '.length)) as Message[];
       }
-      const data = event.split('\n\n')[0]!.slice('data: '.length);
-      expect(JSON.parse(data)).toEqual(branchMessages);
+
+      expect(await nextSnapshot()).toEqual(initial.messages);
+      const posted = await postMessage(path, {
+        role: 'agent',
+        content: 'I can arrange a replacement.',
+      });
+      expect(posted.status).toBe(201);
+      const { message } = posted.body as PostMessageOutputData;
+      const updated = await nextSnapshot();
+      expect(updated).toHaveLength(initial.messages.length + 1);
+      expect(updated).toEqual(expect.arrayContaining([...initial.messages, message]));
     } finally {
       await reader.cancel();
     }
+  });
+
+  it.each([
+    '/calls/missing-call/messages/stream',
+    '/calls/call-1/branches/missing-branch/messages/stream',
+    '/calls/other-call/branches/branch-1/messages/stream',
+  ])('rejects an invalid stream target with JSON at %s', async (path) => {
+    const response = await fetch(`${url}${path}`, { signal: AbortSignal.timeout(3000) });
+
+    expect(response.status).toBe(404);
+    expect(response.headers.get('content-type')).toContain('application/json');
+    expect(await response.json()).toEqual({ error: { message: expect.any(String) } });
   });
 
   it('loads the selected branch transcript and keeps original call loading separate', async () => {
