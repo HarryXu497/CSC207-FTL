@@ -2,6 +2,7 @@
  * In memory implementation of the data layer
  */
 import type { Branch } from 'src/entities';
+import { NotFoundError } from 'src/errors';
 import type { CallRepository } from '../calls/CallRepository';
 import type { MessageRepositoryBuilder } from '../messages/MessageRepositoryFactory';
 import type { BranchRepository } from './BranchRepository';
@@ -48,7 +49,7 @@ export class InMemoryBranchRepository implements BranchRepository {
   async getBranch(branchId: string): Promise<Branch> {
     const branch = this.branches.get(branchId);
     if (!branch) {
-      throw Error(`Branch document with id does not exist, got ${branchId}`);
+      throw new NotFoundError('Branch', branchId);
     }
     return branch;
   }

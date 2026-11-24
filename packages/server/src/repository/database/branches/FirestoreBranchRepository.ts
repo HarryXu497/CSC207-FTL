@@ -1,4 +1,5 @@
 import type { Branch, Call, Message } from 'src/entities';
+import { NotFoundError } from 'src/errors';
 import { FirestoreCallRepository } from '../calls';
 import { FirestoreMessageRepository } from '../messages';
 import { Firebase } from '../utils';
@@ -36,7 +37,7 @@ export class FirestoreBranchRepository implements BranchRepository {
     const snapshot = await docRef.get();
 
     if (!snapshot.exists) {
-      throw Error(`Branch document with id does not exist, got ${branchId}`);
+      throw new NotFoundError('Branch', branchId);
     }
 
     return { id: snapshot.id, ...snapshot.data() } as Branch;
