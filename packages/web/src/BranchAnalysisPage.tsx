@@ -135,19 +135,16 @@ function BranchDetails({ callId, branchId }: { callId: string; branchId: string 
               <PracticeSentimentPanel messages={messages} analysis={sentiment} />
               <PracticeAccuracyPanel messages={messages} revision={revision} analysis={accuracy} />
             </div>
-            {messages.length === 0 ? (
-              <p className="rounded-lg border border-tertiary bg-card p-6">
-                This practice branch has no messages yet.
-              </p>
-            ) : (
-              <Conversation
-                messages={messages}
-                sentimentMap={sentimentMap}
-                title="Practice conversation"
-                className="h-auto max-h-[60vh]"
-                followLatest
-              />
-            )}
+            <Conversation
+              messages={messages}
+              sentimentMap={sentimentMap}
+              title="Practice conversation"
+              className="h-auto max-h-[60vh]"
+              followLatest
+              contextMessageCount={
+                branch.branchIndex + (branch.branchPosition === 'before' ? 0 : 1)
+              }
+            />
             <PracticeReplyForm
               callId={callId}
               branchId={branchId}

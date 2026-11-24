@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from 'react';
+import { Fragment, useLayoutEffect, useRef } from 'react';
 import Card from './Card';
 import Message from './Message';
 import type { Message as MessageData, SentimentScore } from '@recall/server/entities';
@@ -12,6 +12,7 @@ type ConversationProps = {
   onBranch?: (messageId: string) => void;
   branchingMessageId?: string | null;
   followLatest?: boolean;
+  contextMessageCount?: number;
 };
 
 export default function Conversation({
@@ -22,10 +23,18 @@ export default function Conversation({
   onBranch,
   branchingMessageId = null,
   followLatest = false,
+  contextMessageCount,
 }: ConversationProps) {
   const viewport = useRef<HTMLDivElement>(null);
   const following = useRef(true);
   const latestMessageId = messages.at(-1)?.id;
+  const practiceStart =
+    contextMessageCount !== undefined &&
+    Number.isInteger(contextMessageCount) &&
+    contextMessageCount >= 0 &&
+    contextMessageCount <= messages.length
+      ? contextMessageCount
+      : null;
 
   function showLatest() {
     following.current = true;
@@ -63,23 +72,52 @@ export default function Conversation({
         )}
       </header>
       <div className="conversationBody">
-        {messages.map((message) => (
-          <Message
-            key={message.id}
-            id={messageAnchorId(message.id)}
-            name={message.role}
-            time={new Date(message.createdAt)}
-            content={message.content}
-            sentiment={sentimentMap.get(message.id)}
-            onBranch={onBranch && message.role === 'agent' ? () => onBranch(message.id) : undefined}
-            branching={message.id === branchingMessageId}
-            branchDisabled={branchingMessageId !== null}
-          />
+        {practiceStart !== null && practiceStart > 0 && (
+          <h3 className="mb-3 text-sm font-semibold text-secondary">Original call context</h3>
+        )}
+        {messages.map((message, index) => (
+          <Fragment key={message.id}>
+            {practiceStart === index && <PracticeStartDivider />}
+            <Message
+              id={messageAnchorId(message.id)}
+              name={message.role}
+              time={new Date(message.createdAt)}
+              content={message.content}
+              sentiment={sentimentMap.get(message.id)}
+              onBranch={
+                onBranch && message.role === 'agent' ? () => onBranch(message.id) : undefined
+              }
+              branching={message.id === branchingMessageId}
+              branchDisabled={branchingMessageId !== null}
+            />
+          </Fragment>
         ))}
+        {practiceStart === messages.length && <PracticeStartDivider />}
+        {messages.length === 0 && contextMessageCount !== undefined && (
+          <p className="text-sm text-secondary">This practice has no messages yet.</p>
+        )}
       </div>
       <div className="conversationEnd">
-        <p>This is the end of the conversation transcript.</p>
+        <p>
+          {contextMessageCount === undefined
+            ? 'This is the end of the conversation transcript.'
+            : 'Write your next reply below.'}
+        </p>
       </div>
     </Card>
+  );
+}
+
+function PracticeStartDivider() {
+  return (
+    <div
+      role="separator"
+      aria-label="Practice starts here"
+      className="my-4 flex items-center gap-3 text-sm font-semibold text-score-weak"
+    >
+      <span aria-hidden="true" className="grow border-t border-score-weak" />
+      <span>Practice starts here</span>
+      <span aria-hidden="true" className="grow border-t border-score-weak" />
+    </div>
   );
 }
