@@ -3,7 +3,12 @@ import { Link } from 'react-router';
 import type { Branch } from '@recall/server/entities';
 import { api } from '../api';
 
-export default function PracticeBranches({ callId }: { callId: string }) {
+interface PracticeBranchesProps {
+  callId: string;
+  currentBranchId?: string;
+}
+
+export default function PracticeBranches({ callId, currentBranchId }: PracticeBranchesProps) {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +71,8 @@ export default function PracticeBranches({ callId }: { callId: string }) {
             <li key={branch.id}>
               <Link
                 to={`/calls/${encodeURIComponent(callId)}/branch/${encodeURIComponent(branch.id)}`}
-                className="block rounded-lg border border-tertiary bg-card p-4 hover:border-accent-blue focus-visible:outline-2 focus-visible:outline-accent-blue"
+                aria-current={branch.id === currentBranchId ? 'page' : undefined}
+                className={`block rounded-lg border bg-card p-4 hover:border-accent-blue focus-visible:outline-2 focus-visible:outline-accent-blue ${branch.id === currentBranchId ? 'border-accent-blue' : 'border-tertiary'}`}
               >
                 <span className="font-medium">
                   Practice {branch.branchPosition ?? 'after'} message {branch.branchIndex + 1}
@@ -74,7 +80,9 @@ export default function PracticeBranches({ callId }: { callId: string }) {
                 <time dateTime={branch.createdAt} className="mt-1 block text-sm text-secondary">
                   {new Date(branch.createdAt).toLocaleString()}
                 </time>
-                <span className="mt-2 block text-sm text-score-ok">Open practice →</span>
+                <span className="mt-2 block text-sm text-score-ok">
+                  {branch.id === currentBranchId ? 'Current practice' : 'Open practice →'}
+                </span>
               </Link>
             </li>
           ))}

@@ -5,6 +5,7 @@ import { api } from './api';
 import Conversation from './components/Conversation';
 import NavBar from './components/NavBar';
 import PracticeReplyForm from './components/PracticeReplyForm';
+import PracticeBranches from './components/PracticeBranches';
 import { useMessageStream } from './useMessageStream';
 
 const noSentiments = new Map<string, SentimentScore>();
@@ -91,6 +92,10 @@ function BranchDetails({ callId, branchId }: { callId: string; branchId: string 
                 Started {branch.branchPosition ?? 'after'} message {branch.branchIndex + 1}
               </p>
             </header>
+            <details className="my-4 rounded-lg border border-tertiary bg-card p-4">
+              <summary className="cursor-pointer font-medium">Switch practice branch</summary>
+              <PracticeBranches callId={callId} currentBranchId={branchId} />
+            </details>
             {streamError && (
               <p role="status" className="mb-3 text-secondary">
                 {streamError}
