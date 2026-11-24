@@ -2,6 +2,7 @@ import type { Message } from '@recall/server/entities';
 import type { ListCallSentimentsOutputData } from '@recall/server/service';
 import type { StoredBranchAnalysis } from '../useStoredBranchAnalysis';
 import Score from './Score';
+import SentimentTrend from './SentimentTrend';
 
 interface PracticeSentimentPanelProps {
   messages: Message[];
@@ -48,13 +49,18 @@ export default function PracticeSentimentPanel({
             Analyzed {covered.length} of {messages.length} messages.
           </p>
           {covered.length < messages.length && <p className="mt-1">New messages need analysis.</p>}
-          {failed > 0 && <p className="mt-1">{failed} messages could not be scored.</p>}
+          {failed > 0 && (
+            <p className="mt-1">
+              {failed} {failed === 1 ? 'message' : 'messages'} could not be scored.
+            </p>
+          )}
           {latestResult?.ok && (
             <div className="mt-3">
               <p className="text-sm">Latest customer sentiment</p>
               <Score score={latestResult.sentiment.score} sentimentScale />
             </div>
           )}
+          <SentimentTrend messages={messages} results={analysis.data.messageSentiments} />
         </div>
       )}
       {analysis.error && (
