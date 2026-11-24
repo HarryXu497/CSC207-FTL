@@ -63,7 +63,8 @@ function branchPath(callId: string, branchId: string): string {
 
 // Singleton object for making requests
 export const api = {
-  listCalls: () => request<WithError<ListCallsOutputData>>('/calls'),
+  listCalls: (signal?: AbortSignal) =>
+    request<WithError<ListCallsOutputData>>('/calls', { signal }),
 
   getCall: (callId: string) =>
     request<WithError<GetCallOutputData>>(`/calls/${encodeURIComponent(callId)}`),
