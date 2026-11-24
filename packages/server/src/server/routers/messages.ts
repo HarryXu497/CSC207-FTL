@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from 'express';
-import type { CallRepository, MessageRepository } from 'src/repository';
+import type { BranchRepository, CallRepository, MessageRepository } from 'src/repository';
 import { MessagesService } from 'src/service';
 import type { MessageRepositoryBuilder } from 'src/repository';
 import { z } from 'zod';
@@ -48,9 +48,10 @@ function streamMessages(repo: MessageRepository, req: Request, res: Response): v
 
 export function createMessagesRouter(
   callsRepo: CallRepository,
+  branchRepo: BranchRepository,
   messageRepoFactory: MessageRepositoryBuilder,
 ): Router {
-  const messagesController = new MessagesController(callsRepo, messageRepoFactory);
+  const messagesController = new MessagesController(callsRepo, branchRepo, messageRepoFactory);
   const router = messagesController.router();
 
   router.post('/calls/:callId/messages', (req, res) => {

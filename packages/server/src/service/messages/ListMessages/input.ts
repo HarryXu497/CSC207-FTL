@@ -6,4 +6,6 @@ export interface ListMessagesInputBoundary {
 
 export interface ListMessagesInputData {
   callId: string;
+  /** Omit to list the original call's messages. */
+  branchId?: string;
 }
