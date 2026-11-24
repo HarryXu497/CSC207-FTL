@@ -1,4 +1,4 @@
-import type { ApiErrorBody } from '@recall/server/entities';
+import type { Accuracy, ApiErrorBody } from '@recall/server/entities';
 import type {
   ListCallSentimentsOutputData,
   CreateCallInputData,
@@ -55,6 +55,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 interface CreateCallRequestBody {
   callData: Omit<CreateCallInputData['callData'], 'createdAt'>;
   messageData: CreateCallInputData['messageData'];
+}
+
+export interface AccuracyResponse {
+  accuracy: Accuracy;
 }
 
 function branchPath(callId: string, branchId: string): string {
@@ -114,6 +118,24 @@ export const api = {
       `/calls/${encodeURIComponent(callId)}/sentiment`,
       { signal },
     ),
+
+  getBranchSentiment: (callId: string, branchId: string, signal?: AbortSignal) =>
+    request<ListCallSentimentsOutputData>(`${branchPath(callId, branchId)}/sentiment`, { signal }),
+
+  analyzeBranchSentiment: (callId: string, branchId: string, signal?: AbortSignal) =>
+    request<ListCallSentimentsOutputData>(`${branchPath(callId, branchId)}/sentiment`, {
+      method: 'POST',
+      signal,
+    }),
+
+  getBranchAccuracy: (callId: string, branchId: string, signal?: AbortSignal) =>
+    request<AccuracyResponse>(`${branchPath(callId, branchId)}/accuracy`, { signal }),
+
+  analyzeBranchAccuracy: (callId: string, branchId: string, signal?: AbortSignal) =>
+    request<AccuracyResponse>(`${branchPath(callId, branchId)}/accuracy`, {
+      method: 'POST',
+      signal,
+    }),
 
   createCall: (body: CreateCallRequestBody) =>
     request<WithError<CreateCallOutputData>>('/calls', {
