@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router';
 import Conversation from './components/Conversation';
 import NavBar from './components/NavBar';
 import type { Call, Message, MessageSentiment, SentimentScore } from '@recall/server/entities';
@@ -16,12 +16,53 @@ export default function CallAnalysisPage() {
 }
 
 function CallDetails({ callId }: { callId: string }) {
+  const navigate = useNavigate();
+  const active = useRef(false);
+  const [branchingMessageId, setBranchingMessageId] = useState<string | null>(null);
+  const [branchError, setBranchError] = useState<string | null>(null);
   const [call, setCall] = useState<Call | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [sentiments, setSentiments] = useState<MessageSentiment[]>([]);
   const [sentimentError, setSentimentError] = useState<string | null>(null);
   const streamError = useMessageStream({ callId, enabled: call !== null, onMessages: setMessages });
+
+  useEffect(() => {
+    active.current = true;
+    return () => {
+      active.current = false;
+    };
+  }, []);
+
+  async function startBranch(messageId: string) {
+    if (branchingMessageId !== null) return;
+    const branchIndex = messages.findIndex((message) => message.id === messageId);
+    if (branchIndex === -1) {
+      setBranchError('This response is no longer available. Reload the call and try again.');
+      return;
+    }
+    setBranchingMessageId(messageId);
+    setBranchError(null);
+    try {
+      const { branch } = await api.createBranch(callId, { branchIndex, position: 'before' });
+      if (active.current) {
+        await navigate(
+          `/calls/${encodeURIComponent(callId)}/branch/${encodeURIComponent(branch.id)}`,
+        );
+      }
+    } catch (error) {
+      if (!active.current) return;
+      setBranchError(
+        error instanceof ApiError && (error.status === 400 || error.status === 404)
+          ? 'This response is no longer available. Reload the call and try again.'
+          : error instanceof Error
+            ? error.message
+            : 'Could not create a practice branch.',
+      );
+    } finally {
+      if (active.current) setBranchingMessageId(null);
+    }
+  }
 
   const sentimentMap = useMemo(() => {
     const scores = new Map<string, SentimentScore>();
@@ -119,12 +160,23 @@ function CallDetails({ callId }: { callId: string }) {
                 {sentimentError}
               </p>
             )}
+            {branchError && (
+              <p role="alert" className="mb-3">
+                {branchError}
+              </p>
+            )}
             {messages.length === 0 ? (
               <p className="rounded-lg border border-tertiary bg-card p-6">
                 No messages were saved for this call.
               </p>
             ) : (
-              <Conversation messages={messages} sentimentMap={sentimentMap} title="Conversation" />
+              <Conversation
+                messages={messages}
+                sentimentMap={sentimentMap}
+                title="Conversation"
+                onBranch={startBranch}
+                branchingMessageId={branchingMessageId}
+              />
             )}
           </>
         )}

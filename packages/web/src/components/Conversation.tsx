@@ -7,11 +7,20 @@ type ConversationProps = {
   sentimentMap: Map<string, SentimentScore>;
   title: string;
   className?: string;
+  onBranch?: (messageId: string) => void;
+  branchingMessageId?: string | null;
 };
 
-export default function Conversation({ messages, sentimentMap, title }: ConversationProps) {
+export default function Conversation({
+  messages,
+  sentimentMap,
+  title,
+  className = '',
+  onBranch,
+  branchingMessageId = null,
+}: ConversationProps) {
   return (
-    <Card className="conversation">
+    <Card className={`conversation ${className}`}>
       <header className="conversationHeader">
         <h2 className="text-xl font-bold p-4 align-left">{title}</h2>
       </header>
@@ -23,6 +32,9 @@ export default function Conversation({ messages, sentimentMap, title }: Conversa
             time={new Date(message.createdAt)}
             content={message.content}
             sentiment={sentimentMap.get(message.id)}
+            onBranch={onBranch && message.role === 'agent' ? () => onBranch(message.id) : undefined}
+            branching={message.id === branchingMessageId}
+            branchDisabled={branchingMessageId !== null}
           />
         ))}
       </div>
