@@ -18,3 +18,10 @@ export class SimulationConflictError extends Error {
     this.name = 'SimulationConflictError';
   }
 }
+
+export class InvalidBranchPointError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'InvalidBranchPointError';
+  }
+}

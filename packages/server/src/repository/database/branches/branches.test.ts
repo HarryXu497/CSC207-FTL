@@ -5,6 +5,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { InMemoryCallRepository } from '../calls/InMemoryCallRepository';
 import { InMemoryMessageRepository } from '../messages/InMemoryMessageRepository';
 import { InMemoryBranchRepository } from './InMemoryBranchRepository';
+import { createMessageRepositoryBuilder, type MessageRepositoryBuilder } from '../messages';
+import { InvalidBranchPointError } from 'src/errors';
 
 let callRepo: InMemoryCallRepository;
 let branchRepo: InMemoryBranchRepository;
@@ -41,13 +43,61 @@ describe('getBranch', () => {
 });
 
 describe('createBranchFromCall', () => {
-  it('creates a branch from a call and returns its id', async () => {
-    const id = await branchRepo.createBranchFromCall('call-1002', 1);
-    const branch = await branchRepo.getBranch(id);
+  let factory: MessageRepositoryBuilder;
 
-    expect(branch.parentId).toBe('call-1002');
-    expect(branch.branchIndex).toBe(1);
-    expect(branch.customerName).toBe('Dana Olofsson');
+  beforeEach(async () => {
+    factory = createMessageRepositoryBuilder('memory');
+    branchRepo = new InMemoryBranchRepository(callRepo, factory, []);
+    await factory('calls', 'call-1002').addMessages([
+      { role: 'customer', content: 'Customer opening', createdAt: '2026-01-01T12:00:00.000Z' },
+      { role: 'agent', content: 'Original agent reply', createdAt: '2026-01-01T12:01:00.000Z' },
+      { role: 'customer', content: 'Later customer turn', createdAt: '2026-01-01T12:02:00.000Z' },
+    ]);
+  });
+
+  it('keeps the selected turn by default and excludes it when branching before', async () => {
+    const original = await factory('calls', 'call-1002').getAllMessages();
+    const afterId = await branchRepo.createBranchFromCall('call-1002', 1);
+    const beforeId = await branchRepo.createBranchFromCall('call-1002', 1, 'before');
+    const after = await factory('branches', afterId).getAllMessages();
+    const before = await factory('branches', beforeId).getAllMessages();
+
+    expect(after.map((message) => message.content)).toEqual([
+      'Customer opening',
+      'Original agent reply',
+    ]);
+    expect(before).toEqual([{ ...original[0], id: expect.any(String) }]);
+    expect(before[0]!.id).not.toBe(original[0]!.id);
+    expect(await branchRepo.getBranch(beforeId)).toMatchObject({
+      parentId: 'call-1002',
+      branchIndex: 1,
+      branchPosition: 'before',
+    });
+    expect((await branchRepo.getBranch(afterId)).branchPosition).toBe('after');
+
+    await factory('branches', beforeId).addMessage({
+      role: 'agent',
+      content: 'Practice reply',
+      createdAt: '2026-01-01T12:03:00.000Z',
+    });
+    expect(await factory('calls', 'call-1002').getAllMessages()).toEqual(original);
+    expect(await factory('branches', afterId).getAllMessages()).toEqual(after);
+  });
+
+  it('creates an empty practice history before the first message', async () => {
+    const id = await branchRepo.createBranchFromCall('call-1002', 0, 'before');
+    expect(await factory('branches', id).getAllMessages()).toEqual([]);
+    expect(await branchRepo.getBranch(id)).toMatchObject({
+      branchIndex: 0,
+      branchPosition: 'before',
+    });
+  });
+
+  it('rejects an out-of-range point without creating a branch', async () => {
+    await expect(branchRepo.createBranchFromCall('call-1002', 3, 'before')).rejects.toBeInstanceOf(
+      InvalidBranchPointError,
+    );
+    expect(await branchRepo.getAllBranchesOfCall('call-1002')).toEqual([]);
   });
 
   it('throws when the call does not exist', async () => {
