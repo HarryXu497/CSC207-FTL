@@ -41,13 +41,29 @@ describe('StoredSimulationRepository', () => {
     repository = new StoredSimulationRepository(calls, factory, { generate });
   });
 
-  it('generates from branch history and saves a customer reply without changing the original call', async () => {
+  it('shares overlapping requests for an agent turn and saves one reply without changing the original call', async () => {
     const history = await messages.getAllMessages();
     const original = await originalMessages.getAllMessages();
+    let finish!: (text: string) => void;
+    let started!: () => void;
+    const generating = new Promise<void>((resolve) => {
+      started = resolve;
+    });
+    generate.mockImplementationOnce(() => {
+      started();
+      return new Promise<string>((resolve) => {
+        finish = resolve;
+      });
+    });
 
-    const reply = await repository.simulateCustomerReply(target, expectedLastMessageId);
+    const first = repository.simulateCustomerReply(target, expectedLastMessageId);
+    await generating;
+    const second = repository.simulateCustomerReply(target, expectedLastMessageId);
+    finish(replyText);
+    const [reply, duplicate] = await Promise.all([first, second]);
 
     expect(generate).toHaveBeenCalledExactlyOnceWith({ scenario: call, history });
+    expect(duplicate).toEqual(reply);
     expect(reply).toEqual({
       id: expect.any(String),
       role: 'customer',
@@ -57,6 +73,27 @@ describe('StoredSimulationRepository', () => {
     expect(Date.parse(reply.createdAt)).toBeGreaterThan(Date.parse(agentMessage.createdAt));
     expect(await messages.getAllMessages()).toEqual([...history, reply]);
     expect(await originalMessages.getAllMessages()).toEqual(original);
+    await expect(
+      repository.simulateCustomerReply(target, expectedLastMessageId),
+    ).rejects.toBeInstanceOf(SimulationConflictError);
+    expect(generate).toHaveBeenCalledTimes(1);
+  });
+
+  it('lets the same agent turn retry after a shared generation fails', async () => {
+    const before = await messages.getAllMessages();
+    const failure = new Error('Model unavailable');
+    generate.mockRejectedValueOnce(failure);
+
+    const first = repository.simulateCustomerReply(target, expectedLastMessageId);
+    const second = repository.simulateCustomerReply(target, expectedLastMessageId);
+    await Promise.all([expect(first).rejects.toBe(failure), expect(second).rejects.toBe(failure)]);
+    expect(generate).toHaveBeenCalledTimes(1);
+    expect(await messages.getAllMessages()).toEqual(before);
+
+    const reply = await repository.simulateCustomerReply(target, expectedLastMessageId);
+    expect(reply).toMatchObject({ role: 'customer', content: replyText });
+    expect(generate).toHaveBeenCalledTimes(2);
+    expect(await messages.getAllMessages()).toEqual([...before, reply]);
   });
 
   it('rejects a stale expected message before calling the generator', async () => {

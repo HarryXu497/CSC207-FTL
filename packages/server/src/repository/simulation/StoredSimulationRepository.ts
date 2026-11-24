@@ -6,13 +6,28 @@ import type { SimulationRepository, SimulationTarget } from './SimulationReposit
 
 /** Generates and saves replies using the selected branch's persisted conversation. */
 export class StoredSimulationRepository implements SimulationRepository {
+  // Share work for identical agent turns within this server instance.
+  private readonly pendingReplies = new Map<string, Promise<Message>>();
+
   constructor(
     private readonly callRepo: CallRepository,
     private readonly messageRepoFactory: MessageRepositoryBuilder,
     private readonly generator: SimulationGenerator,
   ) {}
 
-  async simulateCustomerReply(
+  simulateCustomerReply(target: SimulationTarget, expectedLastMessageId: string): Promise<Message> {
+    const key = JSON.stringify([target.callId, target.branchId, expectedLastMessageId]);
+    const pending = this.pendingReplies.get(key);
+    if (pending) return pending;
+
+    const reply = this.generateAndSave(target, expectedLastMessageId).finally(() => {
+      this.pendingReplies.delete(key);
+    });
+    this.pendingReplies.set(key, reply);
+    return reply;
+  }
+
+  private async generateAndSave(
     { callId, branchId }: SimulationTarget,
     expectedLastMessageId: string,
   ): Promise<Message> {
