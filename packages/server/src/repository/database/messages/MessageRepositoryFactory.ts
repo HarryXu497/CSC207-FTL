@@ -21,11 +21,12 @@ export function createMessageRepositoryBuilder(
   }
 
   const instances = new Map<string, InMemoryMessageRepository>();
-  return (_parentCollection, parentId) => {
-    let instance = instances.get(parentId);
+  return (parentCollection, parentId) => {
+    const key = `${parentCollection}/${parentId}`;
+    let instance = instances.get(key);
     if (!instance) {
       instance = new InMemoryMessageRepository([]);
-      instances.set(parentId, instance);
+      instances.set(key, instance);
     }
     return instance;
   };
