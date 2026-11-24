@@ -58,6 +58,30 @@ async function getMessages(path: string) {
 }
 
 describe('MessagesController', () => {
+  it('streams the saved branch transcript before any new message is posted', async () => {
+    const response = await fetch(`${url}/calls/call-1/branches/branch-1/messages/stream`, {
+      signal: AbortSignal.timeout(3000),
+    });
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toContain('text/event-stream');
+    const reader = response.body?.getReader();
+    if (!reader) throw new Error('Stream response has no body.');
+
+    try {
+      const decoder = new TextDecoder();
+      let event = '';
+      while (!event.includes('\n\n')) {
+        const chunk = await reader.read();
+        if (chunk.done) throw new Error('Stream closed before the initial snapshot.');
+        event += decoder.decode(chunk.value, { stream: true });
+      }
+      const data = event.split('\n\n')[0]!.slice('data: '.length);
+      expect(JSON.parse(data)).toEqual(branchMessages);
+    } finally {
+      await reader.cancel();
+    }
+  });
+
   it('loads the selected branch transcript and keeps original call loading separate', async () => {
     expect(await getMessages('/calls/call-1/branches/branch-1/messages')).toEqual({
       status: 200,

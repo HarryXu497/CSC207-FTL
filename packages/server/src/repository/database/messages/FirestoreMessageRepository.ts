@@ -96,8 +96,8 @@ export class FirestoreMessageRepository implements MessageRepository {
   }
 
   /**
-   * Subscribes to message updates.
-   * @param callback - Called with all messages whenever a message is appended
+   * Delivers the current snapshot, then updates, ordered by creation time ascending.
+   * @param callback - Receives the full message list, including an empty initial snapshot
    * @returns an unsubscribe function
    */
   subscribe(callback: (messages: Message[]) => void): () => void {
@@ -107,7 +107,7 @@ export class FirestoreMessageRepository implements MessageRepository {
       .doc(this.parentId)
       .collection(FirestoreMessageRepository.COLLECTION);
 
-    return collectionRef.onSnapshot((snapshot) => {
+    return collectionRef.orderBy('createdAt', 'asc').onSnapshot((snapshot) => {
       callback(snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }) as Message));
     });
   }
