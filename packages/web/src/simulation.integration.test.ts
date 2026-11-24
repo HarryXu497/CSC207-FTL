@@ -14,7 +14,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { api } from './api';
 
 describe('simulation through the web API client', () => {
-  it('branches, saves an agent turn, generates from company context, and reopens the saved conversation', async () => {
+  it('branches, saves an agent turn, retries generation with company context, and reopens the conversation', async () => {
     const call: Call = {
       id: 'call-1',
       customerName: 'Priya',
@@ -45,7 +45,10 @@ describe('simulation through the web API client', () => {
       metadata: { source: 'replacement-policy.txt' },
     };
     const retriever: Retriever = { search: vi.fn().mockResolvedValue([document]) };
-    const complete = vi.fn<LlmClient['complete']>().mockResolvedValue('My order number is 123.');
+    const complete = vi
+      .fn<LlmClient['complete']>()
+      .mockRejectedValueOnce(new Error('Provider temporarily unavailable'))
+      .mockResolvedValue('My order number is 123.');
     const simulationRepo = new StoredSimulationRepository(
       calls,
       factory,
@@ -85,6 +88,17 @@ describe('simulation through the web API client', () => {
         role: 'agent',
         content: 'I can arrange a replacement. What is your order number?',
       });
+      const logging = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        await expect(
+          api.simulateMessage(call.id, branch.id, { expectedLastMessageId: agent.id }),
+        ).rejects.toMatchObject({ status: 500 });
+      } finally {
+        logging.mockRestore();
+      }
+      expect(await api.getBranchMessages(call.id, branch.id)).toEqual({
+        messages: [...prefix, agent],
+      });
       const { message: customer } = await api.simulateMessage(call.id, branch.id, {
         expectedLastMessageId: agent.id,
       });
@@ -92,11 +106,9 @@ describe('simulation through the web API client', () => {
       const conversation = { messages: [...prefix, agent, customer] };
       expect(await api.getBranchMessages(call.id, branch.id)).toEqual(conversation);
       expect(await api.getCallMessages(call.id)).toEqual({ messages: original });
-      expect(retriever.search).toHaveBeenCalledExactlyOnceWith(
-        expect.stringContaining(agent.content),
-        5,
-      );
-      expect(complete).toHaveBeenCalledTimes(1);
+      expect(retriever.search).toHaveBeenCalledTimes(2);
+      expect(retriever.search).toHaveBeenCalledWith(expect.stringContaining(agent.content), 5);
+      expect(complete).toHaveBeenCalledTimes(2);
       expect(JSON.parse(complete.mock.calls[0]![0].user)).toEqual({
         scenario: { customerName: call.customerName, topic: call.topic },
         history: [
@@ -111,7 +123,7 @@ describe('simulation through the web API client', () => {
       await expect(
         api.simulateMessage(call.id, branch.id, { expectedLastMessageId: agent.id }),
       ).rejects.toMatchObject({ status: 409 });
-      expect(complete).toHaveBeenCalledTimes(1);
+      expect(complete).toHaveBeenCalledTimes(2);
       expect(await api.getBranchMessages(call.id, branch.id)).toEqual(conversation);
     } finally {
       vi.unstubAllGlobals();

@@ -22,15 +22,15 @@ function BranchDetails({ callId, branchId }: { callId: string; branchId: string 
   const [branch, setBranch] = useState<Branch | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [error, setError] = useState<string | null>(null);
-  function includeSavedMessage(message: Message) {
-    setMessages((current) =>
-      current.some((saved) => saved.id === message.id)
-        ? current
-        : [...current, message].sort(
-            (left, right) =>
-              left.createdAt.localeCompare(right.createdAt) || left.id.localeCompare(right.id),
-          ),
-    );
+  function includeSavedMessages(saved: Message[]) {
+    setMessages((current) => {
+      const combined = new Map(current.map((message) => [message.id, message]));
+      for (const message of saved) combined.set(message.id, message);
+      return [...combined.values()].sort(
+        (left, right) =>
+          left.createdAt.localeCompare(right.createdAt) || left.id.localeCompare(right.id),
+      );
+    });
   }
   const streamError = useMessageStream({
     callId,
@@ -112,7 +112,8 @@ function BranchDetails({ callId, branchId }: { callId: string; branchId: string 
               callId={callId}
               branchId={branchId}
               lastMessage={messages.at(-1)}
-              onSaved={includeSavedMessage}
+              onSaved={(message) => includeSavedMessages([message])}
+              onRefreshed={includeSavedMessages}
             />
           </>
         )}
