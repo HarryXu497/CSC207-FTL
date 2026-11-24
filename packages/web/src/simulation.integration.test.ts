@@ -70,6 +70,11 @@ describe('simulation through the web API client', () => {
         return realFetch(`${origin}${input}`, init);
       });
 
+      expect(await api.getCall(call.id)).toEqual({ call });
+      await expect(api.getCall('missing-call')).rejects.toMatchObject({
+        status: 404,
+        message: 'Call not found: missing-call',
+      });
       const { branch } = await api.createBranch(call.id, { branchIndex: 1, position: 'before' });
       expect((await api.listBranches(call.id)).branches).toEqual([branch]);
       expect((await api.getBranch(call.id, branch.id)).branch).toEqual(branch);
