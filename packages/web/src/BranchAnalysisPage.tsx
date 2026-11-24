@@ -111,6 +111,7 @@ function BranchDetails({ callId, branchId }: { callId: string; branchId: string 
                 sentimentMap={noSentiments}
                 title="Practice conversation"
                 className="h-auto max-h-[60vh]"
+                followLatest
               />
             )}
             <PracticeReplyForm
