@@ -28,10 +28,14 @@ export class PostMessageInteractor implements PostMessageInputBoundary {
         branchId === undefined
           ? this.messageRepoFactory('calls', callId)
           : this.messageRepoFactory('branches', branchId);
+      const latest = (await messages.getAllMessages()).at(-1);
       const message = {
         role: messageData.role,
         content: messageData.content,
-        createdAt: new Date().toISOString(),
+        // Append after saved history even if its timestamps are ahead of the server clock.
+        createdAt: new Date(
+          Math.max(Date.now(), latest ? Date.parse(latest.createdAt) + 1 : 0),
+        ).toISOString(),
       };
       const id = await messages.addMessage(message);
       presenter.present({ message: { id, ...message } });

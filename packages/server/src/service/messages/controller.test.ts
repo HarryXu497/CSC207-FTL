@@ -110,9 +110,7 @@ describe('MessagesController', () => {
       });
       expect(posted.status).toBe(201);
       const { message } = posted.body as PostMessageOutputData;
-      const updated = await nextSnapshot();
-      expect(updated).toHaveLength(initial.messages.length + 1);
-      expect(updated).toEqual(expect.arrayContaining([...initial.messages, message]));
+      expect(await nextSnapshot()).toEqual([...initial.messages, message]);
     } finally {
       await reader.cancel();
     }

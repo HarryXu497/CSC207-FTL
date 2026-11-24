@@ -31,7 +31,7 @@ describe('PostMessageInteractor', () => {
     presenter = { present: vi.fn(), presentBadRequest: vi.fn(), presentNotFound: vi.fn() };
   });
 
-  it('saves the branch message with server metadata and preserves the original transcript', async () => {
+  it('appends after future-dated branch history and preserves the original transcript', async () => {
     const original = factory('calls', call.id);
     await original.addMessage({
       ...messageData,
@@ -39,14 +39,27 @@ describe('PostMessageInteractor', () => {
       createdAt: call.createdAt,
     });
     const before = await original.getAllMessages();
+    const messages = factory('branches', branch.id);
+    const historyId = await messages.addMessage({
+      role: 'customer',
+      content: 'My delivery arrived damaged.',
+      createdAt: '2099-01-01T12:00:00.000Z',
+    });
 
     await interactor.handle({ callId: call.id, branchId: branch.id, messageData }, presenter);
 
-    const saved = await factory('branches', branch.id).getAllMessages();
+    const saved = await messages.getAllMessages();
     expect(saved).toEqual([
+      {
+        id: historyId,
+        role: 'customer',
+        content: 'My delivery arrived damaged.',
+        createdAt: '2099-01-01T12:00:00.000Z',
+      },
       { ...messageData, id: expect.any(String), createdAt: expect.any(String) },
     ]);
-    expect(presenter.present).toHaveBeenCalledExactlyOnceWith({ message: saved[0] });
+    expect(Date.parse(saved[1]!.createdAt)).toBeGreaterThan(Date.parse(saved[0]!.createdAt));
+    expect(presenter.present).toHaveBeenCalledExactlyOnceWith({ message: saved[1] });
     expect(await original.getAllMessages()).toEqual(before);
   });
 
