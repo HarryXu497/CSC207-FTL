@@ -8,6 +8,7 @@ import {
 } from 'src/repository';
 import { createApp } from 'src/server';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import type { PostMessageOutputData } from './PostMessage';
 
 const call: Call = {
   id: 'call-1',
@@ -24,7 +25,10 @@ let branchMessages: Message[];
 beforeAll(async () => {
   const calls = new InMemoryCallRepository([call, { ...call, id: 'other-call' }]);
   const factory = createMessageRepositoryBuilder('memory');
-  const branches = new InMemoryBranchRepository(calls, factory, [branch]);
+  const branches = new InMemoryBranchRepository(calls, factory, [
+    branch,
+    { ...branch, id: 'posting-branch' },
+  ]);
   await factory('calls', call.id).addMessage({
     role: 'agent',
     content: 'Original call transcript.',
@@ -54,6 +58,15 @@ afterAll(async () => {
 
 async function getMessages(path: string) {
   const response = await fetch(`${url}${path}`);
+  return { status: response.status, body: (await response.json()) as unknown };
+}
+
+async function postMessage(path: string, body: unknown) {
+  const response = await fetch(`${url}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
   return { status: response.status, body: (await response.json()) as unknown };
 }
 
@@ -108,5 +121,60 @@ describe('MessagesController', () => {
       status: 404,
       body: { error: { message: expect.any(String) } },
     });
+  });
+});
+
+describe('message posting', () => {
+  it.each(['/calls/other-call/messages', '/calls/call-1/branches/posting-branch/messages'])(
+    'saves a message through the controller at %s',
+    async (path) => {
+      const response = await postMessage(path, {
+        role: 'agent',
+        content: '  What is your order number?  ',
+        id: 'client-id',
+        createdAt: 'client-time',
+      });
+      expect(response).toEqual({
+        status: 201,
+        body: {
+          message: {
+            role: 'agent',
+            content: 'What is your order number?',
+            id: expect.any(String),
+            createdAt: expect.any(String),
+          },
+        },
+      });
+      const { message } = response.body as PostMessageOutputData;
+      expect(message.id).not.toBe('client-id');
+      expect(Number.isFinite(Date.parse(message.createdAt))).toBe(true);
+      expect(await getMessages(path)).toEqual({ status: 200, body: { messages: [message] } });
+      expect(await getMessages('/calls/call-1/messages')).toEqual({
+        status: 200,
+        body: { messages: callMessages },
+      });
+    },
+  );
+
+  it('rejects the wrong parent call without saving a branch message', async () => {
+    const path = '/calls/call-1/branches/posting-branch/messages';
+    const before = await getMessages(path);
+    expect(
+      await postMessage('/calls/other-call/branches/posting-branch/messages', {
+        role: 'agent',
+        content: 'This belongs to a different call.',
+      }),
+    ).toEqual({ status: 404, body: { error: { message: expect.any(String) } } });
+    expect(await getMessages(path)).toEqual(before);
+  });
+
+  it('rejects blank content without saving a message', async () => {
+    const path = '/calls/call-1/branches/posting-branch/messages';
+    const before = await getMessages(path);
+    expect(await postMessage(path, { role: 'agent', content: '   ' })).toEqual({
+      status: 400,
+      body: { error: { message: expect.any(String) } },
+    });
+    expect(await getMessages(path)).toEqual(before);
   });
 });
