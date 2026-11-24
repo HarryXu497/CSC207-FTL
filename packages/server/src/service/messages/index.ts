@@ -1,5 +1,6 @@
 export * from './controller';
 export * from './ListMessages';
+export * from './PostMessage';
 
 import { PostMessages } from './PostMessages';
 import { PostMessagesBatch } from './PostMessagesBatch';
