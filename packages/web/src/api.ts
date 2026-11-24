@@ -66,8 +66,8 @@ export const api = {
   listCalls: (signal?: AbortSignal) =>
     request<WithError<ListCallsOutputData>>('/calls', { signal }),
 
-  getCall: (callId: string) =>
-    request<WithError<GetCallOutputData>>(`/calls/${encodeURIComponent(callId)}`),
+  getCall: (callId: string, signal?: AbortSignal) =>
+    request<WithError<GetCallOutputData>>(`/calls/${encodeURIComponent(callId)}`, { signal }),
 
   listBranches: (callId: string, signal?: AbortSignal) =>
     request<ListCallBranchesOutputData>(`/calls/${encodeURIComponent(callId)}/branches`, {
