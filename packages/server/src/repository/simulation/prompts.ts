@@ -1,9 +1,8 @@
-import type { Call, Document, Message } from 'src/entities';
+import type { Document } from 'src/entities';
 import type { LlmRequest } from '../llm';
+import type { SimulationGenerationInput } from './SimulationGenerator';
 
-export interface SimulationPromptContext {
-  scenario: Pick<Call, 'customerName' | 'topic'>;
-  history: readonly Pick<Message, 'role' | 'content'>[];
+export interface SimulationPromptContext extends SimulationGenerationInput {
   documents: readonly Document[];
 }
 
