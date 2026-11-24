@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import Conversation from './components/Conversation';
 import NavBar from './components/NavBar';
+import PracticeBranches from './components/PracticeBranches';
 import type { Call, Message, MessageSentiment, SentimentScore } from '@recall/server/entities';
 import { api, ApiError } from './api';
 import { useMessageStream } from './useMessageStream';
@@ -150,6 +151,7 @@ function CallDetails({ callId }: { callId: string }) {
                 <time dateTime={call.createdAt}>{new Date(call.createdAt).toLocaleString()}</time>
               </p>
             </header>
+            <PracticeBranches callId={callId} />
             {streamError && (
               <p role="status" className="mb-3 text-secondary">
                 {streamError}
