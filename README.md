@@ -87,8 +87,22 @@ Run Chroma and populate the company-document collection before testing. Use the 
 Their defaults are `text-embedding-3-small`, `http://localhost:8000`, and `documents`.
 `CHROMA_URL` must be an HTTP(S) origin; simulation searches an existing collection.
 
-Create a practice branch and save the user's agent message to that branch first.
-Then send its saved message ID:
+Create a practice branch before the selected original response:
+
+```http
+POST /api/calls/:callId/branches
+Content-Type: application/json
+
+{ "branchIndex": 1, "position": "before" }
+```
+
+`branchIndex` is the selected message's zero-based index. `before` copies only earlier
+messages, so index `0` starts an empty practice conversation. Omitting `position` keeps
+the existing `after` behavior, which includes the selected message. The returned branch
+records `branchIndex` and `branchPosition`; older branches without `branchPosition`
+use `after` semantics.
+
+Save the user's agent message to the branch, then send its saved message ID:
 
 ```http
 POST /api/calls/:callId/branches/:branchId/simulate

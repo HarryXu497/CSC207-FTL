@@ -20,6 +20,7 @@ import {
 
 const createBranchSchema = z.object({
   branchIndex: z.number().int().min(0, 'Branch index must be non-negative'),
+  position: z.enum(['before', 'after']).optional(),
 });
 
 export class BranchController {
@@ -38,14 +39,17 @@ export class BranchController {
 
     const callId = req.params.callId;
 
-    if (!callId || typeof callId !== 'string') {
+    if (typeof callId !== 'string' || !callId.trim()) {
       presenter.presentBadRequest('callId is required');
       return;
     }
 
     const interactor = new CreateBranchInteractor(this.callRepo, this.branchRepo);
 
-    await interactor.handle({ callId: callId, branchIndex: parsed.data.branchIndex }, presenter);
+    await interactor.handle(
+      { callId, branchIndex: parsed.data.branchIndex, position: parsed.data.position },
+      presenter,
+    );
   }
 
   async getBranch(req: Request, presenter: GetBranchOutputBoundary) {
