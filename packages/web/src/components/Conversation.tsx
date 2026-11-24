@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef } from 'react';
 import Card from './Card';
 import Message from './Message';
 import type { Message as MessageData, SentimentScore } from '@recall/server/entities';
+import { messageAnchorId } from '../messageLinks';
 
 type ConversationProps = {
   messages: MessageData[];
@@ -65,6 +66,7 @@ export default function Conversation({
         {messages.map((message) => (
           <Message
             key={message.id}
+            id={messageAnchorId(message.id)}
             name={message.role}
             time={new Date(message.createdAt)}
             content={message.content}

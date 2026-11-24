@@ -3,6 +3,7 @@ import ProfileIcon from './ProfileIcon';
 import Score from './Score';
 
 type MessageProps = {
+  id?: string;
   className?: string;
   name: string;
   time: Date;
@@ -14,6 +15,7 @@ type MessageProps = {
 };
 
 export default function Message({
+  id,
   className = '',
   name,
   time,
@@ -24,7 +26,11 @@ export default function Message({
   branchDisabled = false,
 }: MessageProps) {
   return (
-    <div className={`message ${className} flex`}>
+    <div
+      id={id}
+      tabIndex={id ? -1 : undefined}
+      className={`message ${className} flex scroll-mt-28 target:bg-base target:ring-2 target:ring-accent-blue focus-visible:outline-2 focus-visible:outline-accent-blue`}
+    >
       <div className="score">{sentiment && <Score score={sentiment.score} sentimentScale />}</div>
       <div>
         <div className="messageHeader">

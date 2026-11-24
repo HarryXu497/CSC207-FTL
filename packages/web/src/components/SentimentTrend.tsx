@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import type { Message, MessageSentiment } from '@recall/server/entities';
+import { messageAnchorHref } from '../messageLinks';
 
 interface SentimentTrendProps {
   messages: Message[];
@@ -47,7 +48,7 @@ export default function SentimentTrend({ messages, results }: SentimentTrendProp
           </span>
         ))}
       </div>
-      <svg viewBox="0 0 360 168" role="img" aria-labelledby={titleId} className="mt-2 w-full">
+      <svg viewBox="0 0 360 168" role="group" aria-labelledby={titleId} className="mt-2 w-full">
         <desc>
           Sentiment scores from negative one to positive one, in transcript order. Unscored messages
           leave gaps.
@@ -88,11 +89,24 @@ export default function SentimentTrend({ messages, results }: SentimentTrendProp
                           strokeWidth="2"
                         />
                       )}
-                      <circle cx={point.x} cy={y(point.score)} r="4">
-                        <title>
-                          Message {point.number}, {role}: {point.score.toFixed(3)}
-                        </title>
-                      </circle>
+                      <a
+                        href={messageAnchorHref(point.message.id)}
+                        aria-label={`Go to message ${point.number}, ${role}, sentiment ${point.score.toFixed(3)}`}
+                        className="focus-visible:outline-2 focus-visible:outline-accent-blue"
+                      >
+                        <circle
+                          cx={point.x}
+                          cy={y(point.score)}
+                          r="12"
+                          fill="transparent"
+                          stroke="none"
+                        />
+                        <circle cx={point.x} cy={y(point.score)} r="4">
+                          <title>
+                            Message {point.number}, {role}: {point.score.toFixed(3)}
+                          </title>
+                        </circle>
+                      </a>
                     </g>
                   );
                 })}
@@ -113,7 +127,9 @@ export default function SentimentTrend({ messages, results }: SentimentTrendProp
           </text>
         )}
       </svg>
-      <p className="text-xs text-secondary">Unscored messages leave gaps.</p>
+      <p className="text-xs text-secondary">
+        Select a point to view its message. Unscored messages leave gaps.
+      </p>
       <details className="mt-2 text-sm">
         <summary className="cursor-pointer">View sentiment values</summary>
         <table className="mt-2 w-full text-left">
@@ -127,7 +143,15 @@ export default function SentimentTrend({ messages, results }: SentimentTrendProp
           <tbody>
             {scored.map((point) => (
               <tr key={point.message.id}>
-                <td>{point.number}</td>
+                <td>
+                  <a
+                    href={messageAnchorHref(point.message.id)}
+                    aria-label={`Go to message ${point.number}`}
+                    className="underline"
+                  >
+                    {point.number}
+                  </a>
+                </td>
                 <td>{point.message.role}</td>
                 <td>{point.score?.toFixed(3)}</td>
               </tr>
