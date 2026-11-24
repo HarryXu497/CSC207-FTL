@@ -133,11 +133,7 @@ function BranchDetails({ callId, branchId }: { callId: string; branchId: string 
             )}
             <div className="mb-4 grid items-start gap-4 md:grid-cols-2">
               <PracticeSentimentPanel messages={messages} analysis={sentiment} />
-              <PracticeAccuracyPanel
-                messageCount={messages.length}
-                revision={revision}
-                analysis={accuracy}
-              />
+              <PracticeAccuracyPanel messages={messages} revision={revision} analysis={accuracy} />
             </div>
             {messages.length === 0 ? (
               <p className="rounded-lg border border-tertiary bg-card p-6">

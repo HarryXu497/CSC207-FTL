@@ -1,6 +1,7 @@
-import type { AccuracyVerdict } from '@recall/server/entities';
+import type { AccuracyVerdict, Message } from '@recall/server/entities';
 import type { AccuracyResponse } from '../api';
 import type { StoredBranchAnalysis } from '../useStoredBranchAnalysis';
+import { messageAnchorHref } from '../messageLinks';
 
 const verdictLabels: Record<AccuracyVerdict, string> = {
   supported: 'Supported',
@@ -10,17 +11,18 @@ const verdictLabels: Record<AccuracyVerdict, string> = {
 };
 
 interface PracticeAccuracyPanelProps {
-  messageCount: number;
+  messages: Message[];
   revision: string;
   analysis: StoredBranchAnalysis<AccuracyResponse>;
 }
 
 export default function PracticeAccuracyPanel({
-  messageCount,
+  messages,
   revision,
   analysis,
 }: PracticeAccuracyPanelProps) {
   const accuracy = analysis.data?.accuracy;
+  const messageCount = messages.length;
 
   return (
     <section
@@ -81,28 +83,46 @@ export default function PracticeAccuracyPanel({
                 Claim feedback ({accuracy.claims.length})
               </summary>
               <ul className="mt-3 space-y-4">
-                {accuracy.claims.map((claim, index) => (
-                  <li
-                    key={`${claim.messageIndex}/${index}`}
-                    className="border-t border-tertiary pt-3"
-                  >
-                    <h3 className="text-sm font-semibold">
-                      Agent message {claim.messageIndex + 1} · {verdictLabels[claim.verdict]}
-                    </h3>
-                    <p className="mt-1 font-medium">{claim.text}</p>
-                    <p className="mt-1 text-sm">{claim.explanation}</p>
-                    {claim.evidence ? (
-                      <figure className="mt-2 border-l-2 border-tertiary pl-3 text-sm">
-                        <blockquote>{claim.evidence.quote}</blockquote>
-                        <figcaption className="mt-1 text-secondary">
-                          {claim.evidence.source}
-                        </figcaption>
-                      </figure>
-                    ) : (
-                      <p className="mt-2 text-sm text-secondary">No document evidence was cited.</p>
-                    )}
-                  </li>
-                ))}
+                {accuracy.claims.map((claim, index) => {
+                  const source = Number.isInteger(claim.messageIndex)
+                    ? messages[claim.messageIndex]
+                    : undefined;
+                  return (
+                    <li
+                      key={`${claim.messageIndex}/${index}`}
+                      className="border-t border-tertiary pt-3"
+                    >
+                      <h3 className="text-sm font-semibold">
+                        {source?.role === 'agent' ? (
+                          <a
+                            href={messageAnchorHref(source.id)}
+                            aria-label={`Go to agent message ${claim.messageIndex + 1}`}
+                            className="underline"
+                          >
+                            Agent message {claim.messageIndex + 1}
+                          </a>
+                        ) : (
+                          'Source message unavailable'
+                        )}{' '}
+                        · {verdictLabels[claim.verdict]}
+                      </h3>
+                      <p className="mt-1 font-medium">{claim.text}</p>
+                      <p className="mt-1 text-sm">{claim.explanation}</p>
+                      {claim.evidence ? (
+                        <figure className="mt-2 border-l-2 border-tertiary pl-3 text-sm">
+                          <blockquote>{claim.evidence.quote}</blockquote>
+                          <figcaption className="mt-1 text-secondary">
+                            {claim.evidence.source}
+                          </figcaption>
+                        </figure>
+                      ) : (
+                        <p className="mt-2 text-sm text-secondary">
+                          No document evidence was cited.
+                        </p>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </details>
           )}
