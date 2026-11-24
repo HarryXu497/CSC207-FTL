@@ -71,6 +71,37 @@ cp packages/server/.env.example packages/server/.env
 | GET    | `/api/calls`  | —                                | `{ calls: Call[] }`   |
 | POST   | `/api/calls`  | `{ customerName, topic, score }` | `201 { call }`        |
 
+## Customer simulation
+
+Simulation generates the next customer message in a practice branch. The user plays
+the agent. The server loads the saved branch history, retrieves relevant company
+documents, asks the LLM for a customer reply, and saves that reply to the branch.
+
+To enable it, copy `packages/server/.env.example` to `packages/server/.env`, set
+`SIMULATION_ENABLED=true`, and supply `OPENAI_API_KEY` and `SIMULATION_MODEL`.
+`SIMULATION_MODEL` is the chat model ID available to your OpenAI project.
+Restart the server after changing these settings.
+
+Run Chroma and populate the company-document collection before testing. Use the same
+`RAG_EMBEDDING_MODEL`, `CHROMA_URL`, and `CHROMA_COLLECTION` values as document ingestion.
+Their defaults are `text-embedding-3-small`, `http://localhost:8000`, and `documents`.
+`CHROMA_URL` must be an HTTP(S) origin; simulation searches an existing collection.
+
+Create a practice branch and save the user's agent message to that branch first.
+Then send its saved message ID:
+
+```http
+POST /api/calls/:callId/branches/:branchId/simulate
+Content-Type: application/json
+
+{ "expectedLastMessageId": "saved-agent-message-id" }
+```
+
+Success returns `201 { message }`, including the saved customer message's ID and
+timestamp. The original call transcript is unchanged. A stale expected message or a
+conversation changed during generation returns `409`. Disabled simulation returns
+`503`; no external API calls are made until a simulation request is processed.
+
 ## Sentiment Analysis
 
 We are evaluating two Hugging Face transformer models for emotion classification of call transcripts:
