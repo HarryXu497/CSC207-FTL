@@ -1,9 +1,21 @@
 import { once } from 'node:events';
-import express from 'express';
-import type { Message } from 'src/entities';
+import type { Branch, Call, Message } from 'src/entities';
+import {
+  createMessageRepositoryBuilder,
+  InMemoryBranchRepository,
+  InMemoryCallRepository,
+  type SimulationRepository,
+} from 'src/repository';
+import { createApp } from 'src/server';
 import { describe, expect, it, vi } from 'vitest';
-import type { SimulateMessageInputBoundary } from './SimulateMessage';
-import { SimulationController } from './controller';
+
+const call: Call = {
+  id: 'call-1',
+  customerName: 'Priya',
+  topic: 'Damaged delivery',
+  createdAt: '2026-11-23T12:00:00.000Z',
+};
+const branch: Branch = { ...call, id: 'branch-1', parentId: call.id, branchIndex: 0 };
 
 const message: Message = {
   id: 'customer-reply',
@@ -12,18 +24,25 @@ const message: Message = {
   createdAt: '2026-11-23T12:01:00.000Z',
 };
 
-function createInteractor() {
+function createSimulationRepository() {
   return {
-    handle: vi
-      .fn<SimulateMessageInputBoundary['handle']>()
-      .mockImplementation(async (_input, presenter) => presenter.present({ message })),
+    simulateCustomerReply: vi
+      .fn<SimulationRepository['simulateCustomerReply']>()
+      .mockResolvedValue(message),
   };
 }
 
-async function postSimulation(interactor: SimulateMessageInputBoundary | null, body: unknown) {
-  const app = express();
-  app.use(express.json());
-  app.use('/api', new SimulationController(interactor).router());
+async function postSimulation(simulationRepo: SimulationRepository | null, body: unknown) {
+  const calls = new InMemoryCallRepository([call]);
+  const messageRepoFactory = createMessageRepositoryBuilder('memory');
+  const branches = new InMemoryBranchRepository(calls, messageRepoFactory, [branch]);
+  const app = createApp(
+    calls,
+    branches,
+    messageRepoFactory,
+    'memory',
+    simulationRepo ? { simulationRepo } : undefined,
+  );
   const server = app.listen(0, '127.0.0.1');
   await once(server, 'listening');
 
@@ -50,33 +69,31 @@ async function postSimulation(interactor: SimulateMessageInputBoundary | null, b
 }
 
 describe('SimulationController', () => {
-  it('passes the selected target to the interactor and returns the saved message', async () => {
-    const interactor = createInteractor();
+  it('simulates the selected target through the app and returns the saved message', async () => {
+    const simulation = createSimulationRepository();
 
-    const response = await postSimulation(interactor, { expectedLastMessageId: 'agent-message' });
+    const response = await postSimulation(simulation, { expectedLastMessageId: 'agent-message' });
 
     expect(response).toEqual({ status: 201, body: { message } });
-    expect(interactor.handle).toHaveBeenCalledOnce();
-    expect(interactor.handle.mock.calls[0]?.[0]).toEqual({
-      callId: 'call-1',
-      branchId: 'branch-1',
-      expectedLastMessageId: 'agent-message',
-    });
+    expect(simulation.simulateCustomerReply).toHaveBeenCalledExactlyOnceWith(
+      { callId: call.id, branchId: branch.id },
+      'agent-message',
+    );
   });
 
-  it('rejects a blank expected message ID without invoking the interactor', async () => {
-    const interactor = createInteractor();
+  it('rejects a blank expected message ID without invoking simulation', async () => {
+    const simulation = createSimulationRepository();
 
-    const response = await postSimulation(interactor, { expectedLastMessageId: '   ' });
+    const response = await postSimulation(simulation, { expectedLastMessageId: '   ' });
 
     expect(response).toEqual({
       status: 400,
       body: { error: { message: expect.any(String) } },
     });
-    expect(interactor.handle).not.toHaveBeenCalled();
+    expect(simulation.simulateCustomerReply).not.toHaveBeenCalled();
   });
 
-  it('returns 503 when no simulation interactor is configured', async () => {
+  it('returns 503 when no simulation repository is configured', async () => {
     const response = await postSimulation(null, { expectedLastMessageId: 'agent-message' });
 
     expect(response).toEqual({

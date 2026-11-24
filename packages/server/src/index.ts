@@ -52,7 +52,9 @@ async function main(): Promise<void> {
   const messageRepoFactory = createMessageRepositoryBuilder(BACKEND);
   const branchRepo = buildBranchRepository(callRepo, messageRepoFactory);
   const sentiment = await buildSentimentDeps();
-  const app = createApp(callRepo, branchRepo, messageRepoFactory, BACKEND, sentiment);
+  const app = createApp(callRepo, branchRepo, messageRepoFactory, BACKEND, {
+    analyseMessages: sentiment,
+  });
 
   app.listen(PORT, () => {
     console.log('');
