@@ -1,4 +1,5 @@
 import type { Branch, Call, Message } from 'src/entities';
+import { SimulationConflictError } from 'src/errors';
 import {
   createMessageRepositoryBuilder,
   InMemoryBranchRepository,
@@ -85,6 +86,21 @@ describe('SimulateMessageInteractor', () => {
 
     expect(presenter.presentNotFound).toHaveBeenCalledOnce();
     expect(simulation.simulateCustomerReply).not.toHaveBeenCalled();
+    expect(presenter.present).not.toHaveBeenCalled();
+  });
+
+  it('presents a conflict when the conversation changes', async () => {
+    const error = new SimulationConflictError(
+      'The conversation changed while generating the reply.',
+    );
+    vi.mocked(simulation.simulateCustomerReply).mockRejectedValueOnce(error);
+
+    await interactor.handle(
+      { callId: call.id, branchId: branch.id, expectedLastMessageId },
+      presenter,
+    );
+
+    expect(presenter.presentConflict).toHaveBeenCalledExactlyOnceWith(error.message);
     expect(presenter.present).not.toHaveBeenCalled();
   });
 });
