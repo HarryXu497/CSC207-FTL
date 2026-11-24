@@ -4,6 +4,7 @@ import type { Branch, Message, SentimentScore } from '@recall/server/entities';
 import { api } from './api';
 import Conversation from './components/Conversation';
 import NavBar from './components/NavBar';
+import PracticeReplyForm from './components/PracticeReplyForm';
 import { useMessageStream } from './useMessageStream';
 
 const noSentiments = new Map<string, SentimentScore>();
@@ -21,6 +22,16 @@ function BranchDetails({ callId, branchId }: { callId: string; branchId: string 
   const [branch, setBranch] = useState<Branch | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [error, setError] = useState<string | null>(null);
+  function includeSavedMessage(message: Message) {
+    setMessages((current) =>
+      current.some((saved) => saved.id === message.id)
+        ? current
+        : [...current, message].sort(
+            (left, right) =>
+              left.createdAt.localeCompare(right.createdAt) || left.id.localeCompare(right.id),
+          ),
+    );
+  }
   const streamError = useMessageStream({
     callId,
     branchId,
@@ -94,8 +105,10 @@ function BranchDetails({ callId, branchId }: { callId: string; branchId: string 
                 messages={messages}
                 sentimentMap={noSentiments}
                 title="Practice conversation"
+                className="h-auto max-h-[60vh]"
               />
             )}
+            <PracticeReplyForm callId={callId} branchId={branchId} onSaved={includeSavedMessage} />
           </>
         )}
       </div>
