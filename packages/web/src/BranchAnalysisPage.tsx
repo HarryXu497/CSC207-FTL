@@ -7,6 +7,7 @@ import NavBar from './components/NavBar';
 import PracticeReplyForm from './components/PracticeReplyForm';
 import PracticeBranches from './components/PracticeBranches';
 import PracticeSentimentPanel from './components/PracticeSentimentPanel';
+import PracticeAccuracyPanel from './components/PracticeAccuracyPanel';
 import { useMessageStream } from './useMessageStream';
 import { useStoredBranchAnalysis } from './useStoredBranchAnalysis';
 
@@ -14,6 +15,12 @@ const sentimentClient = {
   label: 'Sentiment',
   read: api.getBranchSentiment,
   analyze: api.analyzeBranchSentiment,
+};
+
+const accuracyClient = {
+  label: 'Accuracy',
+  read: api.getBranchAccuracy,
+  analyze: api.analyzeBranchAccuracy,
 };
 
 export default function BranchAnalysisPage() {
@@ -30,6 +37,14 @@ function BranchDetails({ callId, branchId }: { callId: string; branchId: string 
   const [messages, setMessages] = useState<Message[]>([]);
   const [error, setError] = useState<string | null>(null);
   const sentiment = useStoredBranchAnalysis(callId, branchId, branch !== null, sentimentClient);
+  const revision = JSON.stringify(messages.map((message) => message.id));
+  const accuracy = useStoredBranchAnalysis(
+    callId,
+    branchId,
+    branch !== null,
+    accuracyClient,
+    revision,
+  );
   const sentimentMap = useMemo(() => {
     const currentIds = new Set(messages.map((message) => message.id));
     const scores = new Map<string, SentimentScore>();
@@ -116,8 +131,13 @@ function BranchDetails({ callId, branchId }: { callId: string; branchId: string 
                 {streamError}
               </p>
             )}
-            <div className="mb-4">
+            <div className="mb-4 grid items-start gap-4 md:grid-cols-2">
               <PracticeSentimentPanel messages={messages} analysis={sentiment} />
+              <PracticeAccuracyPanel
+                messageCount={messages.length}
+                revision={revision}
+                analysis={accuracy}
+              />
             </div>
             {messages.length === 0 ? (
               <p className="rounded-lg border border-tertiary bg-card p-6">

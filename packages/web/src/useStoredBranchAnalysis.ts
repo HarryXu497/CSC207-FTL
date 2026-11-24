@@ -12,6 +12,7 @@ export interface StoredBranchAnalysis<T> {
   loading: boolean;
   analyzing: boolean;
   error: string | null;
+  analyzedRevision: string | null;
   analyze: () => Promise<void>;
 }
 
@@ -20,6 +21,7 @@ export function useStoredBranchAnalysis<T>(
   branchId: string,
   enabled: boolean,
   client: StoredAnalysisClient<T>,
+  revision: string | null = null,
 ): StoredBranchAnalysis<T> {
   const scope = useRef<AbortController | null>(null);
   const busy = useRef(true);
@@ -28,6 +30,7 @@ export function useStoredBranchAnalysis<T>(
     loading: true,
     analyzing: false,
     error: null as string | null,
+    analyzedRevision: null as string | null,
   });
 
   function errorMessage(error: unknown) {
@@ -47,13 +50,14 @@ export function useStoredBranchAnalysis<T>(
       try {
         const data = await client.read(callId, branchId, controller.signal);
         if (controller.signal.aborted) return;
-        setState({ data, loading: false, analyzing: false, error: null });
+        setState({ data, loading: false, analyzing: false, error: null, analyzedRevision: null });
       } catch (error) {
         if (controller.signal.aborted) return;
         setState({
           data: null,
           loading: false,
           analyzing: false,
+          analyzedRevision: null,
           error:
             error instanceof ApiError && error.status === 404
               ? null
@@ -78,7 +82,7 @@ export function useStoredBranchAnalysis<T>(
     try {
       const data = await client.analyze(callId, branchId, controller.signal);
       if (controller.signal.aborted) return;
-      setState({ data, loading: false, analyzing: false, error: null });
+      setState({ data, loading: false, analyzing: false, error: null, analyzedRevision: revision });
     } catch (error) {
       if (controller.signal.aborted) return;
       setState((current) => ({ ...current, analyzing: false, error: errorMessage(error) }));
