@@ -115,6 +115,11 @@ Simulation generates the next customer message in a practice branch. The user pl
 the agent. The server loads the saved branch history, retrieves relevant company
 documents, asks the LLM for a customer reply, and saves that reply to the branch.
 
+Open **Simulate a branch** from Call Analysis to choose a point on the timeline and
+preview the messages that will be copied. **Start practice** takes you to the saved
+branch, where you can reply, reopen the conversation, and run accuracy and sentiment
+analysis. Accuracy uses the same Chroma collection and embeddings as simulation.
+
 To enable it, copy `packages/server/.env.example` to `packages/server/.env`, set
 `SIMULATION_ENABLED=true`, and supply `OPENAI_API_KEY` and `SIMULATION_MODEL`.
 `SIMULATION_MODEL` is the chat model ID available to your OpenAI project.
