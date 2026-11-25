@@ -1,11 +1,15 @@
 import { once } from 'node:events';
-import type { Call, Document, Message } from '@recall/server/entities';
+import { EMOTION_LABELS, type Call, type Document, type Message } from '@recall/server/entities';
 import {
+  AnalyseMessages,
   createMessageRepositoryBuilder,
+  InMemoryAccuracyRepository,
   InMemoryBranchRepository,
   InMemoryCallRepository,
+  InMemorySentimentRepository,
   RagSimulationGenerator,
   StoredSimulationRepository,
+  type AccuracyAnalyzer,
   type LlmClient,
   type Retriever,
 } from '@recall/server/repository';
@@ -54,10 +58,25 @@ describe('simulation through the web API client', () => {
       factory,
       new RagSimulationGenerator(retriever, { complete }),
     );
-    const server = createApp(calls, branches, factory, 'memory', { simulationRepo }).listen(
-      0,
-      '127.0.0.1',
-    );
+    const analyze = vi.fn<AccuracyAnalyzer['analyze']>().mockResolvedValue({
+      claims: [],
+      documents: { required: [], recommended: [] },
+      claimsTruncated: false,
+      promptVersion: 'test',
+    });
+    const server = createApp(calls, branches, factory, 'memory', {
+      simulationRepo,
+      accuracyAnalyzer: { analyze },
+      accuracyRepo: new InMemoryAccuracyRepository(),
+      analyseMessages: new AnalyseMessages(
+        {
+          classify: async () =>
+            EMOTION_LABELS.map((label) => ({ label, score: Number(label === 'neutral') })),
+        },
+        { estimate: async () => ({ valence: 0, arousal: 0.5, dominance: 0.5 }) },
+      ),
+      sentimentRepo: new InMemorySentimentRepository(),
+    }).listen(0, '127.0.0.1');
     await once(server, 'listening');
 
     try {
@@ -105,6 +124,18 @@ describe('simulation through the web API client', () => {
       expect(customer).toMatchObject({ role: 'customer', content: 'My order number is 123.' });
       const conversation = { messages: [...prefix, agent, customer] };
       expect(await api.getBranchMessages(call.id, branch.id)).toEqual(conversation);
+      const accuracy = await api.analyzeBranchAccuracy(call.id, branch.id);
+      expect(analyze).toHaveBeenCalledWith(
+        conversation.messages.map(({ role, content }) => ({ role, content })),
+        call.topic,
+      );
+      expect(await api.getBranchAccuracy(call.id, branch.id)).toEqual(accuracy);
+
+      const sentiment = await api.analyzeBranchSentiment(call.id, branch.id);
+      expect(sentiment.messageSentiments.map(({ messageId }) => messageId)).toEqual(
+        conversation.messages.map(({ id }) => id),
+      );
+      expect(await api.getBranchSentiment(call.id, branch.id)).toEqual(sentiment);
       expect(await api.getCallMessages(call.id)).toEqual({ messages: original });
       expect(retriever.search).toHaveBeenCalledTimes(2);
       expect(retriever.search).toHaveBeenCalledWith(expect.stringContaining(agent.content), 5);
