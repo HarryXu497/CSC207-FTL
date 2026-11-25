@@ -155,13 +155,23 @@ function CallDetails({ callId }: { callId: string }) {
         )}
         {call && (
           <>
-            <header className="my-5">
-              <p className="text-sm text-secondary">Original call</p>
-              <h1 className="mt-1 text-3xl font-semibold">{call.topic}</h1>
-              <p className="mt-2 text-secondary">
-                {call.customerName} ·{' '}
-                <time dateTime={call.createdAt}>{new Date(call.createdAt).toLocaleString()}</time>
-              </p>
+            <header className="my-5 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-sm text-secondary">Original call</p>
+                <h1 className="mt-1 text-3xl font-semibold">{call.topic}</h1>
+                <p className="mt-2 text-secondary">
+                  {call.customerName} ·{' '}
+                  <time dateTime={call.createdAt}>{new Date(call.createdAt).toLocaleString()}</time>
+                </p>
+              </div>
+              {messages.length > 0 && (
+                <Link
+                  to={`/calls/${encodeURIComponent(callId)}/branch/new`}
+                  className="rounded-md bg-[#6850dc] px-4 py-2 text-sm font-medium text-white hover:bg-[#5840ca]"
+                >
+                  Simulate a branch
+                </Link>
+              )}
             </header>
             <PracticeBranches callId={callId} />
             {streamError && (
