@@ -16,7 +16,7 @@ export class MessagesController {
   constructor(
     private readonly callsRepo: CallRepository,
     private readonly messageRepoFactory: MessageRepositoryBuilder,
-  ) { }
+  ) {}
 
   async listCallMessages(req: Request, presenter: ListMessagesOutputBoundary) {
     const callId = req.params.callId;
