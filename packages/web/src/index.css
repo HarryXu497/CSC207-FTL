@@ -74,6 +74,6 @@
     @apply text-primary font-bold text-lg;
   }
   .graph {
-    @apply ml-2 mr-6
+    @apply p-2 m-4;
   }
 }

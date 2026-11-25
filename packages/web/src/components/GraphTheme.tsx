@@ -1,4 +1,4 @@
-import type { LabelProps, RechartsTheme } from 'recharts';
+import type { RechartsTheme } from 'recharts';
 
 /*
  * A theme is a plain object. There is no `createTheme` helper and none is needed:

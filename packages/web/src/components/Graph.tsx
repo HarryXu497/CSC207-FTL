@@ -1,140 +1,16 @@
 import { Line, LineChart, CartesianGrid, Legend, XAxis, YAxis, Tooltip, type TooltipContentProps, RechartsThemeProvider} from 'recharts';
 import { graphTheme } from './GraphTheme'
-// #region Sample data
-const data = [
-  {
-    name: 'Page A',
-    uv: 400,
-    pv: 2400,
-    amt: 2400,
-  },
-  {
-    name: 'Page B',
-    uv: 300,
-    pv: 4567,
-    amt: 2400,
-  },
-  {
-    name: 'Page C',
-    uv: 320,
-    pv: 1398,
-    amt: 2400,
-  },
-  {
-    name: 'Page D',
-    uv: 200,
-    pv: 9800,
-    amt: 2400,
-  },
-  {
-    name: 'Page E',
-    uv: 278,
-    pv: 3908,
-    amt: 2400,
-  },
-  {
-    name: 'Page F',
-    uv: 189,
-    pv: 4800,
-    amt: 2400,
-  },
-  {
-    name: 'Page A',
-    uv: 400,
-    pv: 2400,
-    amt: 2400,
-  },
-  {
-    name: 'Page A',
-    uv: 400,
-    pv: 2400,
-    amt: 2400,
-  },
-  {
-    name: 'Page A',
-    uv: 400,
-    pv: 2400,
-    amt: 2400,
-  },
-  {
-    name: 'Page A',
-    uv: 400,
-    pv: 2400,
-    amt: 2400,
-  },
-  {
-    name: 'Page A',
-    uv: 400,
-    pv: 2400,
-    amt: 2400,
-  },
-  {
-    name: 'Page A',
-    uv: 400,
-    pv: 2400,
-    amt: 2400,
-  },
-  {
-    name: 'Page A',
-    uv: 400,
-    pv: 2400,
-    amt: 2400,
-  },
-  {
-    name: 'Page A',
-    uv: 400,
-    pv: 2400,
-    amt: 2400,
-  },
-  {
-    name: 'Page A',
-    uv: 400,
-    pv: 2400,
-    amt: 2400,
-  },
-  {
-    name: 'Page A',
-    uv: 400,
-    pv: 2400,
-    amt: 2400,
-  },
-  {
-    name: 'Page A',
-    uv: 400,
-    pv: 2400,
-    amt: 2400,
-  },
-  {
-    name: 'Page A',
-    uv: 400,
-    pv: 2400,
-    amt: 2400,
-  },
-  {
-    name: 'Page A',
-    uv: 400,
-    pv: 2400,
-    amt: 2400,
-  },
-  {
-    name: 'Page A',
-    uv: 400,
-    pv: 2400,
-    amt: 2400,
-  },
-  {
-    name: 'Page A',
-    uv: 400,
-    pv: 2400,
-    amt: 2400,
-  },
-  {
-    name: 'Page A',
-    uv: 400,
-    pv: 2400,
-    amt: 2400,
-  },
-];
+import Card from './Card'
+
+type GraphProps = {
+  data: GraphDataPoint[];
+  className?: string;
+};
+
+export interface GraphDataPoint {
+  id: string;
+  score: number;
+}
 
 function MessageToolTipContent({active, payload, label}: TooltipContentProps){
   if (!active || payload == null || payload.length === 0){
@@ -151,7 +27,7 @@ function MessageToolTipContent({active, payload, label}: TooltipContentProps){
 // const referenceLineLabel: LabelProps = { position: 'insideTopRight', value: 6000 };
 
 // #endregion
-export default function Graph() {
+export default function Graph({data}: GraphProps) {
   const chartWidth = Math.max(data.length * 60, 600);
 
   return (
@@ -160,9 +36,15 @@ export default function Graph() {
         <div style={{ width: `${chartWidth}px` }}>
           <LineChart style={{ width: '100%', aspectRatio: 1.618 }} responsive data={data}>
             <CartesianGrid />
-            <Line dataKey="uv" strokeWidth={2} />
-            <XAxis dataKey="name" />
-            <YAxis width="auto" label={{ value: 'UV', position: 'insideLeft', angle: -90 }} />
+            <Line dataKey="score" strokeWidth={2} />
+            <XAxis dataKey="id" />
+            <YAxis
+              type="number"
+              domain={[-1, 1]}
+              ticks={[-1, -0.5, 0, 0.5, 1]}
+              width="auto"
+              label={{ value: 'Score', position: 'insideLeft', angle: -90 }}
+            />
             <Legend />
             <Tooltip />
           </LineChart>

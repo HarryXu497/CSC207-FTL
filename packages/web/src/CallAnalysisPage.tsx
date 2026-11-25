@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Conversation from './components/Conversation';
 import NavBar from './components/NavBar';
-import Graph from './components/Graph';
+import Graph, { type GraphDataPoint } from './components/Graph';
 import Card from './components/Card';
 import type { Message, MessageSentiment, SentimentScore } from '@recall/server/entities';
 import { api } from './api';
@@ -19,6 +19,14 @@ export default function CallAnalysisPage() {
       if (result.ok) scores.set(messageId, result.sentiment);
     }
     return scores;
+  }, [sentiments]);
+
+  const messageSentimentData = useMemo(() => {
+    const data: GraphDataPoint[] = []
+    for (const {messageId, result} of sentiments) {
+      if (result.ok) data.push({ id: messageId, score: result.sentiment.score });
+    }
+    return data;
   }, [sentiments]);
 
   useEffect(() => {
@@ -70,10 +78,10 @@ export default function CallAnalysisPage() {
           />
         </div>
       </div>
-      <Card className = "graph">
-        <Graph />
+      <Card className="graph">
+        <h1 className = "mb-4 text-left text-2xl font-semibold p-4">Sentiment Score</h1>
+        <Graph data = { messageSentimentData } />
       </Card>
-      
     </main>
   );
 }
