@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@source inline("text-score-poor text-score-weak text-score-ok text-score-good text-score-great");
 
 @theme {
   /*--color-base: '#FFF8F0';*/

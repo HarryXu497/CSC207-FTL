@@ -24,7 +24,7 @@ export default function CallAnalysisPage() {
   const messageSentimentData = useMemo(() => {
     const data: GraphDataPoint[] = []
     for (const {messageId, result} of sentiments) {
-      if (result.ok) data.push({ id: messageId, score: result.sentiment.score });
+      if (result.ok) data.push({ id: messageId, score: ((result.sentiment.score + 1) * 50) });
     }
     return data;
   }, [sentiments]);

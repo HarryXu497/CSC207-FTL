@@ -46,12 +46,11 @@ export const graphTheme: RechartsTheme = {
   tooltip: {
     contentStyle: {
       margin: 0,
-      padding: 12,
-      backgroundColor: '#fff8f0',
+      padding: 4,
+      backgroundColor: '#ffffff',
       border: '2px solid #cdd2e0',
-      borderRadius: 2,
     },
-    labelStyle: { margin: 0, fontWeight: 'bold', color: '#1e1b4b' },
+    labelStyle: { margin: 0, fontWeight: 'bold', color: '#2e2e2e' },
     itemStyle: { display: 'block', paddingTop: 2, paddingBottom: 2 },
   },
   legend: {

@@ -1,6 +1,5 @@
-import { Line, LineChart, CartesianGrid, Legend, XAxis, YAxis, Tooltip, type TooltipContentProps, RechartsThemeProvider} from 'recharts';
+import { Line, LineChart, CartesianGrid, Legend, XAxis, YAxis, Tooltip, RechartsThemeProvider, type TooltipContentProps} from 'recharts';
 import { graphTheme } from './GraphTheme'
-import Card from './Card'
 
 type GraphProps = {
   data: GraphDataPoint[];
@@ -17,8 +16,13 @@ function MessageToolTipContent({active, payload, label}: TooltipContentProps){
     return null;
   }
 
+  const score = payload[0]?.value;
+
   return(
-    <div></div>
+    <div style={graphTheme.tooltip?.contentStyle}>
+      <p>{label}</p>
+      <p><strong>Score: </strong>{typeof score === 'number' ? score.toPrecision(2) : score}</p>
+    </div>
   )
 }
 
@@ -40,13 +44,13 @@ export default function Graph({data}: GraphProps) {
             <XAxis dataKey="id" />
             <YAxis
               type="number"
-              domain={[-1, 1]}
-              ticks={[-1, -0.5, 0, 0.5, 1]}
+              domain={[0, 100]}
+              ticks={[0, 20, 40, 60, 80, 100]}
               width="auto"
               label={{ value: 'Score', position: 'insideLeft', angle: -90 }}
             />
             <Legend />
-            <Tooltip />
+            <Tooltip content={MessageToolTipContent} contentStyle={graphTheme.tooltip?.contentStyle} />
           </LineChart>
         </div>
       </div>
