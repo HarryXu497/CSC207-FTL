@@ -73,4 +73,7 @@
   .feedback h1 {
     @apply text-primary font-bold text-lg;
   }
+  .graph {
+    @apply ml-2 mr-6
+  }
 }

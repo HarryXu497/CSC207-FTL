@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import Conversation from './components/Conversation';
 import NavBar from './components/NavBar';
+import Graph from './components/Graph';
+import Card from './components/Card';
 import type { Message, MessageSentiment, SentimentScore } from '@recall/server/entities';
 import { api } from './api';
 
@@ -68,6 +70,10 @@ export default function CallAnalysisPage() {
           />
         </div>
       </div>
+      <Card className = "graph">
+        <Graph />
+      </Card>
+      
     </main>
   );
 }
