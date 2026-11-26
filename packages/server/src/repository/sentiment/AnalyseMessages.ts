@@ -67,12 +67,16 @@ interface FragmentAnalysis {
   disagreement: number;
 }
 
+export interface SentimentAnalyzer {
+  handle(input: AnalyseMessagesInput): Promise<MessageResult[]>;
+}
+
 /**
  * Use case that analyses the sentiment of a list of chat messages.
  * Short messages are scored as a single fragment; long messages are split into
  * multiple fragments, scored individually, and aggregated.
  */
-export class AnalyseMessages {
+export class AnalyseMessages implements SentimentAnalyzer {
   // Model that classifies text into emotion labels with scores
   private readonly emotionClassifier: EmotionClassifier;
   // Model that estimates valence and arousal (VAD) of text
