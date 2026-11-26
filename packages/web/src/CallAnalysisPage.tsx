@@ -35,6 +35,7 @@ function CallDetails({ callId }: { callId: string }) {
     };
   }, []);
 
+  // Resolve the selected message ID to a branch index, then open its separate practice history.
   async function startBranch(messageId: string) {
     if (branchingMessageId !== null) return;
     const branchIndex = messages.findIndex((message) => message.id === messageId);
@@ -65,6 +66,7 @@ function CallDetails({ callId }: { callId: string }) {
     }
   }
 
+  // Conversation matches scores by message ID; failed results leave messages unscored.
   const sentimentMap = useMemo(() => {
     const scores = new Map<string, SentimentScore>();
     for (const { messageId, result } of sentiments) {
@@ -73,6 +75,7 @@ function CallDetails({ callId }: { callId: string }) {
     return scores;
   }, [sentiments]);
 
+  // Load the original call and transcript before enabling live message updates.
   useEffect(() => {
     const controller = new AbortController();
     async function load() {
@@ -94,6 +97,7 @@ function CallDetails({ callId }: { callId: string }) {
     return () => controller.abort();
   }, [callId]);
 
+  // Load sentiment separately so an unavailable analysis does not hide the transcript.
   useEffect(() => {
     if (messages.length === 0) return;
 

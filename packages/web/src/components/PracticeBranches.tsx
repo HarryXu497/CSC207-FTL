@@ -14,6 +14,7 @@ export default function PracticeBranches({ callId, currentBranchId }: PracticeBr
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
 
+  // Reload this call's saved branches on entry or refresh, showing the newest first.
   useEffect(() => {
     const controller = new AbortController();
     async function load() {
