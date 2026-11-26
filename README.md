@@ -158,8 +158,8 @@ JS
 ```
 
 From the repo root, run `npm run dev`. Import a transcript, choose **Simulate a
-branch** from Call Analysis, and start practice before the agent's reply. Send a
-new reply containing a statement covered by a policy document. After the customer
+branch** from Call Analysis, and select the agent reply to replace. Send a new
+reply containing a statement covered by a policy document. After the customer
 replies, select **Analyze sentiment** and **Analyze accuracy**. Expand **Claim
 feedback** to see supporting evidence. Reopen the branch to see the saved results.
 
