@@ -61,8 +61,12 @@ export class FirestoreMessageRepository implements MessageRepository {
     const docRef = collectionRef.doc();
 
     return db.runTransaction(async (transaction) => {
+      // Generation happens before this transaction and may take several seconds.
+      // Check its source turn again while saving, so a late reply cannot answer an older turn.
       const snapshot = await transaction.get(collectionRef.orderBy('createdAt', 'desc').limit(1));
-      if (snapshot.docs[0]?.id !== expectedLastMessageId) return null;
+      if (snapshot.docs[0]?.id !== expectedLastMessageId) {
+        return null;
+      }
 
       transaction.create(docRef, message);
       return docRef.id;
