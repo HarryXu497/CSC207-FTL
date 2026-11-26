@@ -84,6 +84,12 @@ Set `RAG_ENABLED=true` and `OPENAI_API_KEY` in `packages/server/.env` and start
 Chroma (`CHROMA_URL` defaults to `http://localhost:8000`). Successful uploads are
 ingested before `201` is returned; `document.chunksStored` reports the chunk count.
 
+Multer receives and saves the file. `DocumentsController` maps the upload to
+plain input data for `UploadDocumentInteractor`, which uses an output boundary
+to pass the result to `UploadDocumentPresenter`. The presenter sends the HTTP
+response. The use case's input, output, interactor, and presenter are in
+`packages/server/src/service/documents/UploadDocument/`.
+
 ### Upload errors
 
 | Status | Meaning                                                           |

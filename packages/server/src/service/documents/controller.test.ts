@@ -1,4 +1,4 @@
-import type { Request } from 'express';
+import type { ErrorRequestHandler, Request, RequestHandler } from 'express';
 import { describe, expect, it, vi } from 'vitest';
 import type { UploadDocumentInputBoundary, UploadDocumentOutputBoundary } from './UploadDocument';
 import { DocumentsController } from './controller';
@@ -13,7 +13,11 @@ describe('DocumentsController', () => {
       presentBadRequest: vi.fn<UploadDocumentOutputBoundary['presentBadRequest']>(),
       presentServiceUnavailable: vi.fn<UploadDocumentOutputBoundary['presentServiceUnavailable']>(),
     };
-    const controller = new DocumentsController(interactor);
+    const controller = new DocumentsController(
+      interactor,
+      vi.fn<RequestHandler>(),
+      vi.fn<ErrorRequestHandler>(),
+    );
 
     await controller.uploadDocument({} as Request, presenter);
 

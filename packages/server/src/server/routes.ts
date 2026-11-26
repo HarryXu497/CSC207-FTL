@@ -16,6 +16,7 @@ import {
   SentimentController,
   UploadDocumentInteractor,
 } from 'src/service';
+import { documentUpload, handleUploadErrors } from './middleware';
 import { createHealthRouter, createMessagesRouter } from './routers';
 
 export function createRouter(
@@ -31,6 +32,8 @@ export function createRouter(
   const branchController = new BranchController(callRepo, branchRepo);
   const documentsController = new DocumentsController(
     ingestor ? new UploadDocumentInteractor(ingestor) : null,
+    documentUpload.single('file'),
+    handleUploadErrors,
   );
   const sentimentController = new SentimentController(
     callRepo,
