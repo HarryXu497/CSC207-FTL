@@ -1,5 +1,10 @@
 import { Router, type Request } from 'express';
-import type { AccuracyRepository, BranchRepository, CallRepository } from 'src/repository';
+import type {
+  AccuracyRepository,
+  BranchRepository,
+  CallRepository,
+  SentimentRepository,
+} from 'src/repository';
 import z from 'zod';
 import {
   CreateBranchInteractor,
@@ -27,6 +32,7 @@ export class BranchController {
     private readonly callRepo: CallRepository,
     private readonly branchRepo: BranchRepository,
     private readonly accuracyRepo: AccuracyRepository | null = null,
+    private readonly sentimentRepo: SentimentRepository | null = null,
   ) {}
 
   async createBranch(req: Request, presenter: CreateBranchOutputBoundary) {
@@ -83,7 +89,11 @@ export class BranchController {
       return;
     }
 
-    const interactor = new DeleteBranchInteractor(this.branchRepo, this.accuracyRepo);
+    const interactor = new DeleteBranchInteractor(
+      this.branchRepo,
+      this.accuracyRepo,
+      this.sentimentRepo,
+    );
 
     await interactor.handle({ branchId }, presenter);
   }

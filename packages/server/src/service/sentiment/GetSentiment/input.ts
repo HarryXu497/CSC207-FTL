@@ -1,3 +1,4 @@
+import type { SentimentTarget } from '../target';
 import type { GetSentimentOutputBoundary } from './output';
 
 export interface GetSentimentInputBoundary {
@@ -5,5 +6,7 @@ export interface GetSentimentInputBoundary {
 }
 
 export interface GetSentimentInputData {
-  callId: string;
+  /** The id of the call or branch whose saved result is read. */
+  id: string;
+  target: SentimentTarget;
 }

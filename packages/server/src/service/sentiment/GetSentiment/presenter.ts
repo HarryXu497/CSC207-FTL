@@ -12,4 +12,12 @@ export class GetSentimentPresenter implements GetSentimentOutputBoundary {
   presentNotFound(message: string): void {
     this.res.status(404).json({ error: { message } });
   }
+
+  presentServiceUnavailable(): void {
+    this.res.status(503).json({
+      error: {
+        message: 'Saving sentiment results is not configured on this server.',
+      },
+    });
+  }
 }

@@ -46,8 +46,13 @@ export function createRouter(
   const router = Router();
   const accuracyRepo = services.accuracyRepo ?? null;
   const sentimentRepo = services.sentimentRepo ?? null;
-  const callController = new CallController(callRepo, messageRepoFactory, accuracyRepo, sentimentRepo);
-  const branchController = new BranchController(callRepo, branchRepo, accuracyRepo);
+  const callController = new CallController(
+    callRepo,
+    messageRepoFactory,
+    accuracyRepo,
+    sentimentRepo,
+  );
+  const branchController = new BranchController(callRepo, branchRepo, accuracyRepo, sentimentRepo);
   const ingestor = services.ingestor ?? null;
   const documentsController = new DocumentsController(
     ingestor ? new UploadDocumentInteractor(ingestor) : null,

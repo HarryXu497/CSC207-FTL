@@ -1,5 +1,7 @@
-import type { Accuracy, ApiErrorBody } from '@recall/server/entities';
+import type { Accuracy, ApiErrorBody, WithError } from '@recall/server/entities';
 import type {
+  AnalyzeAccuracyInputData,
+  AnalyzeAccuracyOutputData,
   GetSentimentOutputData,
   ListCallSentimentsOutputData,
   CreateCallInputData,
@@ -16,9 +18,6 @@ import type {
   SimulateMessageInputData,
   SimulateMessageOutputData,
 } from '@recall/server/service';
-import type { WithError } from '@recall/server/entities';
-import type { AnalyzeAccuracyInputData } from '@recall/server/service/accuracy/AnalyzeAccuracy/input';
-import type { AnalyzeAccuracyOutputData } from '@recall/server/service/accuracy/AnalyzeAccuracy/output';
 
 const BASE_URL = '/api';
 

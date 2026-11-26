@@ -1,3 +1,4 @@
+import type { SentimentTarget } from '../target';
 import type { ListCallSentimentsOutputBoundary } from './output';
 
 export interface ListCallSentimentsInputBoundary {
@@ -8,5 +9,7 @@ export interface ListCallSentimentsInputBoundary {
 }
 
 export interface ListCallSentimentsInputData {
-  callId: string;
+  /** The id of the call or branch whose stored transcript is analyzed. */
+  id: string;
+  target: SentimentTarget;
 }
