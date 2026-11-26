@@ -120,15 +120,48 @@ preview the messages that will be copied. **Start practice** takes you to the sa
 branch, where you can reply, reopen the conversation, and run accuracy and sentiment
 analysis. Accuracy uses the same Chroma collection and embeddings as simulation.
 
-To enable it, copy `packages/server/.env.example` to `packages/server/.env`, set
-`SIMULATION_ENABLED=true`, and supply `OPENAI_API_KEY` and `SIMULATION_MODEL`.
-`SIMULATION_MODEL` is the chat model ID available to your OpenAI project.
-Restart the server after changing these settings.
+### Run practice with both analyses
 
-Run Chroma and populate the company-document collection before testing. Use the same
-`RAG_EMBEDDING_MODEL`, `CHROMA_URL`, and `CHROMA_COLLECTION` values as document ingestion.
-Their defaults are `text-embedding-3-small`, `http://localhost:8000`, and `documents`.
-`CHROMA_URL` must be an HTTP(S) origin; simulation searches an existing collection.
+Use Node 24 for the full flow. From the repo root, run `npm ci`. Copy
+`packages/server/.env.example` to `packages/server/.env` if you don't already have it.
+Set `OPENAI_API_KEY`, `SIMULATION_ENABLED=true`, and `SIMULATION_MODEL` to a chat
+model available to your OpenAI project. With the Hugging Face `hf` CLI installed,
+run `npm run models:download` and set `MODEL_DIR=models` in the server's `.env`.
+
+With the Chroma CLI installed, start it in a separate terminal from the repo root.
+Set `CHROMA_URL=http://127.0.0.1:8000` in the server's `.env` for this local instance.
+
+```sh
+chroma run --path ./chroma-data --host 127.0.0.1 --port 8000
+```
+
+From the repo root, replace the sample path below with a directory containing
+your `.txt`, `.md`, or `.pdf` company policy documents. The command uses the same
+collection and embedding settings as the server.
+
+```sh
+cd packages/server
+node --env-file=.env --import tsx --input-type=module - "/path/to/policies" <<'JS'
+import { OpenAIEmbeddings } from '@langchain/openai';
+import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
+import { ChromaIngestor } from './src/repository/rag/ingestor/ChromaIngestor.ts';
+
+const { CHROMA_COLLECTION, CHROMA_URL, RAG_EMBEDDING_MODEL } = process.env;
+const ingestor = new ChromaIngestor(
+  new OpenAIEmbeddings({ model: RAG_EMBEDDING_MODEL?.trim() || 'text-embedding-3-small' }),
+  new RecursiveCharacterTextSplitter({ chunkSize: 500, chunkOverlap: 50 }),
+  CHROMA_URL?.trim() || 'http://127.0.0.1:8000',
+  CHROMA_COLLECTION?.trim() || 'documents',
+);
+console.log('Indexed', await ingestor.ingest(process.argv[2]), 'chunks');
+JS
+```
+
+From the repo root, run `npm run dev`. Import a transcript, choose **Simulate a
+branch** from Call Analysis, and start practice before the agent's reply. Send a
+new reply containing a statement covered by a policy document. After the customer
+replies, select **Analyze sentiment** and **Analyze accuracy**. Expand **Claim
+feedback** to see supporting evidence. Reopen the branch to see the saved results.
 
 Create a practice branch before the selected original response:
 
@@ -164,13 +197,9 @@ multiple server instances; the database guard still prevents duplicate customer 
 
 ## Sentiment Analysis
 
-We are evaluating two Hugging Face transformer models for emotion classification of call transcripts:
-
-- [thomasrenault/emotion](https://huggingface.co/thomasrenault/emotion)
-- [djonuzi/goemotions-emotion-model](https://huggingface.co/djonuzi/goemotions-emotion-model)
-
-Both models are candidates for identifying emotions expressed during calls. The final model will be selected based on classification quality and accuracy.
-The selected model will be integrated into the backend to analyze call transcripts and make emotion predictions available to the application.
+ReCall runs GoEmotions and VAD-BERT locally on transcript text. GoEmotions
+classifies emotion cues, and VAD-BERT estimates valence and arousal. The app
+plots the resulting sentiment score per message from −1 to +1 for each speaker.
 
 `POST /api/calls/:callId/sentiment` analyzes a stored call and saves the result (Firestore `sentiment/{callId}`, or memory), and `GET` on the same path reads it back; deleting a call deletes its result. Set `MODEL_DIR` to enable analysis; without it the `POST` answers `503`. The Call Analysis page reads the saved result and re-analyzes only when it is missing messages.
 
