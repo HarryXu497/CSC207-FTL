@@ -23,6 +23,9 @@ export default function PracticeAccuracyPanel({
 }: PracticeAccuracyPanelProps) {
   const accuracy = analysis.data?.accuracy;
   const messageCount = messages.length;
+  const messagesById = new Map(
+    messages.map((message, index) => [message.id, { message, number: index + 1 }]),
+  );
 
   return (
     <section
@@ -84,22 +87,20 @@ export default function PracticeAccuracyPanel({
               </summary>
               <ul className="mt-3 space-y-4">
                 {accuracy.claims.map((claim, index) => {
-                  const source = Number.isInteger(claim.messageIndex)
-                    ? messages[claim.messageIndex]
-                    : undefined;
+                  const source = claim.messageId ? messagesById.get(claim.messageId) : undefined;
                   return (
                     <li
-                      key={`${claim.messageIndex}/${index}`}
+                      key={`${claim.messageId ?? 'unavailable'}/${index}`}
                       className="border-t border-tertiary pt-3"
                     >
                       <h3 className="text-sm font-semibold">
-                        {source?.role === 'agent' ? (
+                        {source?.message.role === 'agent' ? (
                           <a
-                            href={messageAnchorHref(source.id)}
-                            aria-label={`Go to agent message ${claim.messageIndex + 1}`}
+                            href={messageAnchorHref(source.message.id)}
+                            aria-label={`Go to agent message ${source.number}`}
                             className="underline"
                           >
-                            Agent message {claim.messageIndex + 1}
+                            Agent message {source.number}
                           </a>
                         ) : (
                           'Source message unavailable'
