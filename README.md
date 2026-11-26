@@ -65,11 +65,42 @@ cp packages/server/.env.example packages/server/.env
 
 ## API
 
-| Method | Path          | Body                             | Returns               |
-| ------ | ------------- | -------------------------------- | --------------------- |
-| GET    | `/api/health` | —                                | `{ status, backend }` |
-| GET    | `/api/calls`  | —                                | `{ calls: Call[] }`   |
-| POST   | `/api/calls`  | `{ customerName, topic, score }` | `201 { call }`        |
+| Method | Path             | Body                             | Returns               |
+| ------ | ---------------- | -------------------------------- | --------------------- |
+| GET    | `/api/health`    | —                                | `{ status, backend }` |
+| GET    | `/api/calls`     | —                                | `{ calls: Call[] }`   |
+| POST   | `/api/calls`     | `{ customerName, topic, score }` | `201 { call }`        |
+| POST   | `/api/documents` | Multipart form data: `file`      | `201 { document }`    |
+
+## Document uploads
+
+`POST /api/documents` accepts one file as `multipart/form-data`, using the field
+name `file`.
+
+Allowed filename extensions are `.txt`, `.md`, and `.pdf` (case-insensitive).
+The maximum file size is **10 MiB (10,485,760 bytes)**.
+
+Set `RAG_ENABLED=true` and `OPENAI_API_KEY` in `packages/server/.env` and start
+Chroma (`CHROMA_URL` defaults to `http://localhost:8000`). Successful uploads are
+ingested before `201` is returned; `document.chunksStored` reports the chunk count.
+
+Multer receives and saves the file. `DocumentsController` maps the upload to
+plain input data for `UploadDocumentInteractor`, which uses an output boundary
+to pass the result to `UploadDocumentPresenter`. The presenter sends the HTTP
+response. The use case's input, output, interactor, and presenter are in
+`packages/server/src/service/documents/UploadDocument/`.
+
+### Upload errors
+
+| Status | Meaning                                                           |
+| ------ | ----------------------------------------------------------------- |
+| 400    | Missing or invalid upload, or a document with no ingestible text. |
+| 413    | File exceeds the 10 MiB size limit.                               |
+| 415    | Unsupported filename extension.                                   |
+| 503    | Document ingestion is disabled.                                   |
+| 500    | Unexpected server or storage failure.                             |
+
+Errors use the shape `{ "error": { "message": "..." } }`.
 
 ## Customer simulation
 

@@ -5,13 +5,18 @@ import type { StreamMessagesOutputBoundary, StreamMessagesOutputData } from './o
 export class StreamMessagesPresenter implements StreamMessagesOutputBoundary {
   constructor(private readonly res: Response<WithError<StreamMessagesOutputData>>) {}
 
+  start(): void {
+    if (this.res.destroyed || this.res.writableEnded || this.res.headersSent) {
+      return;
+    }
+    this.res.setHeader('Content-Type', 'text/event-stream');
+    this.res.setHeader('Cache-Control', 'no-cache');
+    this.res.setHeader('Connection', 'keep-alive');
+  }
+
   present({ messages }: StreamMessagesOutputData): void {
     if (this.res.destroyed || this.res.writableEnded) return;
-    if (!this.res.headersSent) {
-      this.res.setHeader('Content-Type', 'text/event-stream');
-      this.res.setHeader('Cache-Control', 'no-cache');
-      this.res.setHeader('Connection', 'keep-alive');
-    }
+    this.start();
     this.res.write(`data: ${JSON.stringify(messages)}\n\n`);
   }
 

@@ -28,6 +28,7 @@ export class StreamMessagesInteractor implements StreamMessagesInputBoundary {
         branchId === undefined
           ? this.messageRepoFactory('calls', callId)
           : this.messageRepoFactory('branches', branchId);
+      presenter.start();
       return messages.subscribe((snapshot) => presenter.present({ messages: snapshot }));
     } catch (error) {
       if (error instanceof NotFoundError) {
