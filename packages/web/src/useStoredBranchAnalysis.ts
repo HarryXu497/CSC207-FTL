@@ -5,6 +5,7 @@ export interface StoredAnalysisClient<T> {
   label: string;
   read: (callId: string, branchId: string, signal: AbortSignal) => Promise<T>;
   analyze: (callId: string, branchId: string, signal: AbortSignal) => Promise<T>;
+  getRevision?: (data: T) => string | null;
 }
 
 export interface StoredBranchAnalysis<T> {
@@ -41,6 +42,7 @@ export function useStoredBranchAnalysis<T>(
     return `Could not complete ${client.label.toLowerCase()} analysis. Try again.`;
   }
 
+  // Load the saved result and its analyzed transcript, without starting new analysis.
   useEffect(() => {
     if (!enabled) return;
     const controller = new AbortController();
@@ -50,7 +52,13 @@ export function useStoredBranchAnalysis<T>(
       try {
         const data = await client.read(callId, branchId, controller.signal);
         if (controller.signal.aborted) return;
-        setState({ data, loading: false, analyzing: false, error: null, analyzedRevision: null });
+        setState({
+          data,
+          loading: false,
+          analyzing: false,
+          error: null,
+          analyzedRevision: client.getRevision?.(data) ?? null,
+        });
       } catch (error) {
         if (controller.signal.aborted) return;
         setState({
@@ -74,6 +82,7 @@ export function useStoredBranchAnalysis<T>(
     };
   }, [callId, branchId, enabled, client]);
 
+  // Analyze the stored transcript once; ignore results after this scope is aborted.
   async function analyze() {
     const controller = scope.current;
     if (!enabled || !controller || controller.signal.aborted || busy.current) return;
@@ -82,7 +91,13 @@ export function useStoredBranchAnalysis<T>(
     try {
       const data = await client.analyze(callId, branchId, controller.signal);
       if (controller.signal.aborted) return;
-      setState({ data, loading: false, analyzing: false, error: null, analyzedRevision: revision });
+      setState({
+        data,
+        loading: false,
+        analyzing: false,
+        error: null,
+        analyzedRevision: client.getRevision?.(data) ?? revision,
+      });
     } catch (error) {
       if (controller.signal.aborted) return;
       setState((current) => ({ ...current, analyzing: false, error: errorMessage(error) }));

@@ -64,7 +64,7 @@ export default function PracticeAccuracyPanel({
             </time>
           </p>
           {analysis.analyzedRevision === null ? (
-            <p className="mt-2 text-sm">Analyze again to check the current conversation.</p>
+            <p className="mt-2 text-sm">Saved result; newer messages may not be included.</p>
           ) : analysis.analyzedRevision !== revision ? (
             <p role="status" className="mt-2 text-sm">
               New messages need accuracy analysis.

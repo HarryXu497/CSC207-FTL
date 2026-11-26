@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import type { Branch, Message, SentimentScore } from '@recall/server/entities';
-import { api } from './api';
+import { api, type AccuracyResponse } from './api';
 import Conversation from './components/Conversation';
 import NavBar from './components/NavBar';
 import PracticeReplyForm from './components/PracticeReplyForm';
@@ -21,6 +21,8 @@ const accuracyClient = {
   label: 'Accuracy',
   read: api.getBranchAccuracy,
   analyze: api.analyzeBranchAccuracy,
+  getRevision: ({ accuracy }: AccuracyResponse) =>
+    accuracy.messageIds ? JSON.stringify(accuracy.messageIds) : null,
 };
 
 export default function BranchAnalysisPage() {

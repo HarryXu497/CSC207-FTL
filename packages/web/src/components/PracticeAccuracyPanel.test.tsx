@@ -50,6 +50,21 @@ function renderPanel(source: ClaimResult, analyzedRevision: string | null = null
 }
 
 describe('practice accuracy feedback', () => {
+  it('distinguishes current, outdated, and legacy saved results without demanding reanalysis', () => {
+    const current = renderPanel(claim, JSON.stringify(messages.map(({ id }) => id)));
+    expect(current.querySelector('[role="status"]')).toBeNull();
+    expect(current.textContent).not.toContain('newer messages may not be included');
+
+    const outdated = renderPanel(claim, JSON.stringify(['analyzed-agent']));
+    expect(outdated.querySelector('[role="status"]')?.textContent).toContain(
+      'New messages need accuracy analysis.',
+    );
+
+    const legacy = renderPanel(claim);
+    expect(legacy.textContent).toContain('Saved result; newer messages may not be included.');
+    expect(legacy.textContent).not.toContain('Analyze again');
+  });
+
   it('links to the saved message ID after transcript positions change', () => {
     const container = renderPanel(claim);
     const link = container.querySelector('a');
