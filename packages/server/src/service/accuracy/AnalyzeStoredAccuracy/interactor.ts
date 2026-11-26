@@ -69,8 +69,17 @@ export class AnalyzeStoredAccuracyInteractor implements AnalyzeStoredAccuracyInp
       throw e;
     }
 
-    await this.accuracyRepo.setAccuracy(id, accuracy);
+    const messageIds = messages.map((message) => message.id);
+    const savedAccuracy: Accuracy = {
+      ...accuracy,
+      messageIds,
+      claims: accuracy.claims.map((claim) => {
+        const messageId = messageIds[claim.messageIndex];
+        return messageId ? { ...claim, messageId } : claim;
+      }),
+    };
 
-    presenter.present({ accuracy });
+    await this.accuracyRepo.setAccuracy(id, savedAccuracy);
+    presenter.present({ accuracy: savedAccuracy });
   }
 }
