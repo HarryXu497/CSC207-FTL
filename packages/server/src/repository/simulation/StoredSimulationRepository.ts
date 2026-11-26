@@ -6,7 +6,9 @@ import type { SimulationRepository, SimulationTarget } from './SimulationReposit
 
 /** Generates and saves replies using the selected branch's persisted conversation. */
 export class StoredSimulationRepository implements SimulationRepository {
-  // Share work for identical agent turns within this server instance.
+  // Adapter-level optimization: share duplicate provider calls within this instance.
+  // The interactor validates the target; addMessageIfLastMatches still guards the
+  // saved turn across server instances, independently of this in-flight cache.
   private readonly pendingReplies = new Map<string, Promise<Message>>();
 
   constructor(

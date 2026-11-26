@@ -15,6 +15,7 @@ const series = [
 export default function SentimentTrend({ messages, results }: SentimentTrendProps) {
   const titleId = useId();
   const byId = new Map(results.map((item) => [item.messageId, item.result]));
+  // Keep missing or failed scores as gaps in the transcript's message order.
   const points = messages.map((message, index) => {
     const result = byId.get(message.id);
     const score = result?.ok ? result.sentiment.score : undefined;
@@ -69,6 +70,7 @@ export default function SentimentTrend({ messages, results }: SentimentTrendProp
           </g>
         ))}
         {series.map(({ role, color }) => {
+          // Track each speaker separately; an unscored point breaks that speaker's line.
           let previous: (typeof points)[number] | null = null;
           return (
             <g key={role} stroke={color} fill={color}>
