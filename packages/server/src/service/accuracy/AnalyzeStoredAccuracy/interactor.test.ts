@@ -7,7 +7,7 @@ import {
   InMemoryMessageRepository,
   type AccuracyAnalyzer,
 } from 'src/repository';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   MAX_MESSAGE_CHARS,
   type AnalyzeAccuracyOutputBoundary,
@@ -158,14 +158,20 @@ describe('AnalyzeStoredAccuracyInteractor', () => {
   });
 
   it('analyzes a branch through the same use case', async () => {
-    const { interactor, accuracyRepo, branches, callId } = await setup({
-      analyze: async () => findings,
-    });
-    const branchId = await branches.createBranchFromCall(callId, 0);
+    const analyze = vi.fn<AccuracyAnalyzer['analyze']>().mockResolvedValue(findings);
+    const { interactor, accuracyRepo, branches, callId } = await setup({ analyze }, [
+      'Saved context',
+      'Original reply',
+    ]);
+    const branchId = await branches.createBranchFromCall(callId, 1);
     const presenter = new RecordingPresenter();
 
     await interactor.handle({ id: branchId, target: 'branch' }, presenter);
 
+    expect(analyze).toHaveBeenCalledWith(
+      [{ role: 'agent', content: 'Saved context' }],
+      expect.any(String),
+    );
     expect(presenter.output).not.toBeNull();
     expect(await accuracyRepo.getAccuracyForCall(branchId)).toEqual(presenter.output?.accuracy);
   });
