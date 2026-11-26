@@ -1,13 +1,11 @@
 import type { Accuracy, Call } from 'src/entities';
 import { LlmOutputError, NotFoundError } from 'src/errors';
-import {
-  FirestoreBranchRepository,
-  FirestoreCallRepository,
-  type AccuracyAnalyzer,
-  type AccuracyRepository,
-  type BranchRepository,
-  type CallRepository,
-  type MessageRepositoryBuilder,
+import type {
+  AccuracyAnalyzer,
+  AccuracyRepository,
+  BranchRepository,
+  CallRepository,
+  MessageRepositoryBuilder,
 } from 'src/repository';
 import { analyzeTranscript, type AnalyzeAccuracyOutputBoundary } from '../AnalyzeAccuracy';
 import { TARGET_LABELS } from '../target';
@@ -47,8 +45,7 @@ export class AnalyzeStoredAccuracyInteractor implements AnalyzeStoredAccuracyInp
       throw e;
     }
 
-    const collection =
-      target === 'call' ? FirestoreCallRepository.COLLECTION : FirestoreBranchRepository.COLLECTION;
+    const collection = target === 'call' ? 'calls' : 'branches';
     const messages = await this.messageRepoFactory(collection, id).getAllMessages();
     const transcript = messages.map(({ role, content }) => ({ role, content }));
 
