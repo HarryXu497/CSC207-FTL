@@ -1,7 +1,5 @@
 import { resolve } from 'node:path';
-import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
-import { buildRagDependencies } from '../config/rag';
-import { ChromaIngestor } from '../repository/rag/ingestor';
+import { createRagIngestor } from '../config/rag';
 
 async function main() {
   const path = process.argv[2];
@@ -10,17 +8,11 @@ async function main() {
   const apiKey = process.env.OPENAI_API_KEY?.trim();
   if (!apiKey) throw new Error('Set OPENAI_API_KEY in packages/server/.env before indexing.');
 
-  const { url, collectionName, embeddings } = buildRagDependencies(apiKey);
-  const ingestor = new ChromaIngestor(
-    embeddings,
-    new RecursiveCharacterTextSplitter({ chunkSize: 500, chunkOverlap: 50 }),
-    url.origin,
-    collectionName,
-  );
+  const ingestor = createRagIngestor(apiKey);
 
   const chunks = await ingestor.ingest(resolve(process.env.INIT_CWD || process.cwd(), path));
   if (chunks === 0) throw new Error('No policy text found. Add a .txt, .md, or .pdf file.');
-  console.log(`Indexed ${chunks} policy chunks into ${collectionName}.`);
+  console.log(`Indexed ${chunks} policy chunks.`);
 }
 
 main().catch((error: unknown) => {

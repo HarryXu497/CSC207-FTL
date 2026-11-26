@@ -65,19 +65,21 @@ cp packages/server/.env.example packages/server/.env
 
 ## API
 
-| Method | Path                                             | Body                                         | Returns                                                                                      |
-| ------ | ------------------------------------------------ | -------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| GET    | `/api/health`                                    | —                                            | `{ status, backend }`                                                                        |
-| GET    | `/api/calls`                                     | —                                            | `{ calls: Call[] }`                                                                          |
-| POST   | `/api/calls`                                     | `{ customerName, topic, score }`             | `201 { call }`                                                                               |
-| POST   | `/api/accuracy/analyze`                          | `{ messages, topic? }`                       | `200 { accuracy }` (`503` if not configured, `502` on unusable model output)                 |
-| POST   | `/api/documents`                                 | Multipart form data: `file`                  | `201 { document }`                                                                           |
-| POST   | `/api/calls/:callId/accuracy`                    | none (analyzes the stored transcript)        | `200 { accuracy }`, saved under the call (`404` unknown call, `503`, `502` as above)         |
-| GET    | `/api/calls/:callId/accuracy`                    | none                                         | `200 { accuracy }`, or `404` if the call has not been analyzed                               |
-| POST   | `/api/calls/:callId/sentiment`                   | none (analyzes the stored transcript)        | `200 { messageSentiments }`, saved under the call (`404` unknown call, `503` without models) |
-| GET    | `/api/calls/:callId/sentiment`                   | none                                         | `200 { messageSentiments }`, or `404` if the call has not been analyzed                      |
-| POST   | `/api/calls/:callId/branches/:branchId/accuracy` | none (analyzes the stored branch transcript) | `200 { accuracy }`, saved under the branch (`404` unknown branch, `503`, `502` as above)     |
-| GET    | `/api/calls/:callId/branches/:branchId/accuracy` | none                                         | `200 { accuracy }`, or `404` if the branch has not been analyzed                             |
+| Method | Path                                              | Body                                         | Returns                                                                                      |
+| ------ | ------------------------------------------------- | -------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| GET    | `/api/health`                                     | —                                            | `{ status, backend }`                                                                        |
+| GET    | `/api/calls`                                      | —                                            | `{ calls: Call[] }`                                                                          |
+| POST   | `/api/calls`                                      | `{ callData, messageData }`                  | `201 { call }`                                                                               |
+| POST   | `/api/accuracy/analyze`                           | `{ messages, topic? }`                       | `200 { accuracy }` (`503` if not configured, `502` on unusable model output)                 |
+| POST   | `/api/documents`                                  | Multipart form data: `file`                  | `201 { document }`                                                                           |
+| POST   | `/api/calls/:callId/accuracy`                     | none (analyzes the stored transcript)        | `200 { accuracy }`, saved under the call (`404` unknown call, `503`, `502` as above)         |
+| GET    | `/api/calls/:callId/accuracy`                     | none                                         | `200 { accuracy }`, or `404` if the call has not been analyzed                               |
+| POST   | `/api/calls/:callId/sentiment`                    | none (analyzes the stored transcript)        | `200 { messageSentiments }`, saved under the call (`404` unknown call, `503` without models) |
+| GET    | `/api/calls/:callId/sentiment`                    | none                                         | `200 { messageSentiments }`, or `404` if the call has not been analyzed                      |
+| POST   | `/api/calls/:callId/branches/:branchId/accuracy`  | none (analyzes the stored branch transcript) | `200 { accuracy }`, saved under the branch (`404` unknown branch, `503`, `502` as above)     |
+| GET    | `/api/calls/:callId/branches/:branchId/accuracy`  | none                                         | `200 { accuracy }`, or `404` if the branch has not been analyzed                             |
+| POST   | `/api/calls/:callId/branches/:branchId/sentiment` | none (analyzes the stored branch transcript) | `200 { messageSentiments }`, saved under the branch                                          |
+| GET    | `/api/calls/:callId/branches/:branchId/sentiment` | none                                         | `200 { messageSentiments }`, or `404` if the branch has not been analyzed                    |
 
 ## Document uploads
 
@@ -193,7 +195,11 @@ ReCall runs GoEmotions and VAD-BERT locally on transcript text. GoEmotions
 classifies emotion cues, and VAD-BERT estimates valence and arousal. The app
 plots the resulting sentiment score per message from −1 to +1 for each speaker.
 
-`POST /api/calls/:callId/sentiment` analyzes a stored call and saves the result (Firestore `sentiment/{callId}`, or memory), and `GET` on the same path reads it back; deleting a call deletes its result. Set `MODEL_DIR` to enable analysis; without it the `POST` answers `503`. The Call Analysis page reads the saved result and re-analyzes only when it is missing messages.
+`POST /api/calls/:callId/sentiment` analyzes a stored call and saves the result.
+`GET` on the same path reads it back. The branch routes use the branch transcript
+and save the result under its branch ID. Deleting the call or branch deletes its
+saved result. If the models are missing, analysis returns `503`. Install them
+with `npm run models:download`, or set `MODEL_DIR` to an existing installation.
 
 ## Server Architecture
 

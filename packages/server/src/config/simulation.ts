@@ -6,7 +6,6 @@ import {
   StoredSimulationRepository,
   type SimulationRepository,
 } from '../repository/simulation';
-
 import { buildRagRetriever } from './rag';
 
 export function buildSimulationRepository(

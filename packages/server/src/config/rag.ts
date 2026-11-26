@@ -1,10 +1,10 @@
 import { OpenAIEmbeddings } from '@langchain/openai';
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
-import { ChromaIngestor, type Ingestor } from '../repository/rag/ingestor';
 import { ChromaClient } from 'chromadb';
+import { ChromaIngestor, type Ingestor } from '../repository/rag/ingestor';
 import { ChromaRetriever } from '../repository/rag/retriever';
 
-export function buildRagDependencies(apiKey: string, env: NodeJS.ProcessEnv = process.env) {
+function buildRagDependencies(apiKey: string, env: NodeJS.ProcessEnv) {
   const host = env.CHROMA_HOST?.trim() || 'localhost';
   const port = env.CHROMA_PORT?.trim() || '8000';
   const url = new URL(env.CHROMA_URL?.trim() || `http://${host}:${port}`);
