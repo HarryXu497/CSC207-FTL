@@ -1,4 +1,3 @@
-import type { BranchPosition } from 'src/entities';
 import type { CreateBranchOutputBoundary } from './output';
 
 export interface CreateBranchInputBoundary {
@@ -8,5 +7,4 @@ export interface CreateBranchInputBoundary {
 export interface CreateBranchInputData {
   callId: string;
   branchIndex: number;
-  position?: BranchPosition;
 }

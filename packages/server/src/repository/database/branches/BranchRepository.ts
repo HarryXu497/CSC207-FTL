@@ -1,4 +1,4 @@
-import type { Branch, BranchPosition } from 'src/entities';
+import type { Branch } from 'src/entities';
 
 /**
  * Represents a repository object that operates with branches.
@@ -20,15 +20,10 @@ export interface BranchRepository {
   /**
    * Creates a branch from a given call and branch index
    * @param callId - The id of the call to branch from
-   * @param branchIndex - The messages index from which to branch off from
-   * @param position - Copy before or after the selected message (defaults to 'after')
+   * @param branchIndex - The original message to replace; only earlier messages are copied
    * @returns the id of the created branch
    */
-  createBranchFromCall(
-    callId: string,
-    branchIndex: number,
-    position?: BranchPosition,
-  ): Promise<string>;
+  createBranchFromCall(callId: string, branchIndex: number): Promise<string>;
 
   /**
    * Inserts a branch object, overwriting if a branch with the same ID already exists.
