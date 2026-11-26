@@ -1,4 +1,5 @@
 import { Router, type ErrorRequestHandler, type Request, type RequestHandler } from 'express';
+import type {} from 'multer';
 import {
   UploadDocumentPresenter,
   type UploadDocumentInputBoundary,
