@@ -1,14 +1,29 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import type { Branch, Message, SentimentScore } from '@recall/server/entities';
-import { api } from './api';
+import { api, type AccuracyResponse } from './api';
 import Conversation from './components/Conversation';
 import NavBar from './components/NavBar';
 import PracticeReplyForm from './components/PracticeReplyForm';
 import PracticeBranches from './components/PracticeBranches';
+import PracticeSentimentPanel from './components/PracticeSentimentPanel';
+import PracticeAccuracyPanel from './components/PracticeAccuracyPanel';
 import { useMessageStream } from './useMessageStream';
+import { useStoredBranchAnalysis } from './useStoredBranchAnalysis';
 
-const noSentiments = new Map<string, SentimentScore>();
+const sentimentClient = {
+  label: 'Sentiment',
+  read: api.getBranchSentiment,
+  analyze: api.analyzeBranchSentiment,
+};
+
+const accuracyClient = {
+  label: 'Accuracy',
+  read: api.getBranchAccuracy,
+  analyze: api.analyzeBranchAccuracy,
+  getRevision: ({ accuracy }: AccuracyResponse) =>
+    accuracy.messageIds ? JSON.stringify(accuracy.messageIds) : null,
+};
 
 export default function BranchAnalysisPage() {
   const { callId, branchId } = useParams();
@@ -23,6 +38,23 @@ function BranchDetails({ callId, branchId }: { callId: string; branchId: string 
   const [branch, setBranch] = useState<Branch | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const sentiment = useStoredBranchAnalysis(callId, branchId, branch !== null, sentimentClient);
+  const revision = JSON.stringify(messages.map((message) => message.id));
+  const accuracy = useStoredBranchAnalysis(
+    callId,
+    branchId,
+    branch !== null,
+    accuracyClient,
+    revision,
+  );
+  const sentimentMap = useMemo(() => {
+    const currentIds = new Set(messages.map((message) => message.id));
+    const scores = new Map<string, SentimentScore>();
+    for (const { messageId, result } of sentiment.data?.messageSentiments ?? []) {
+      if (currentIds.has(messageId) && result.ok) scores.set(messageId, result.sentiment);
+    }
+    return scores;
+  }, [messages, sentiment.data]);
   // HTTP responses and the stream may deliver the same message; merge them by saved ID.
   function includeSavedMessages(saved: Message[]) {
     setMessages((current) => {
@@ -103,19 +135,18 @@ function BranchDetails({ callId, branchId }: { callId: string; branchId: string 
                 {streamError}
               </p>
             )}
-            {messages.length === 0 ? (
-              <p className="rounded-lg border border-tertiary bg-card p-6">
-                This practice branch has no messages yet.
-              </p>
-            ) : (
-              <Conversation
-                messages={messages}
-                sentimentMap={noSentiments}
-                title="Practice conversation"
-                className="h-auto max-h-[60vh]"
-                followLatest
-              />
-            )}
+            <div className="mb-4 grid items-start gap-4 md:grid-cols-2">
+              <PracticeSentimentPanel messages={messages} analysis={sentiment} />
+              <PracticeAccuracyPanel messages={messages} revision={revision} analysis={accuracy} />
+            </div>
+            <Conversation
+              messages={messages}
+              sentimentMap={sentimentMap}
+              title="Practice conversation"
+              className="h-auto max-h-[60vh]"
+              followLatest
+              contextMessageCount={branch.branchIndex}
+            />
             <PracticeReplyForm
               callId={callId}
               branchId={branchId}
