@@ -2,31 +2,51 @@
  * Creates the router and handles route configuration
  */
 import { Router } from 'express';
-import type {
-  AnalyseMessages,
-  BranchRepository,
-  CallRepository,
-  MessageRepositoryBuilder,
+import {
+  type AccuracyAnalyzer,
+  type AccuracyRepository,
+  type AnalyseMessages,
+  type BranchRepository,
+  type CallRepository,
+  type MessageRepositoryBuilder,
 } from 'src/repository';
-import { CallController } from 'src/service';
-import { BranchController } from 'src/service';
-import { SentimentController } from 'src/service';
+import {
+  AccuracyController,
+  BranchController,
+  CallController,
+  SentimentController,
+} from 'src/service';
 import { createHealthRouter, createMessagesRouter } from './routers';
+
+/** Optional services. A missing service makes the corresponding routes respond with 503 */
+export interface ServerServices {
+  analyseMessages?: AnalyseMessages | null;
+  accuracyAnalyzer?: AccuracyAnalyzer | null;
+  accuracyRepo?: AccuracyRepository | null;
+}
 
 export function createRouter(
   callRepo: CallRepository,
   branchRepo: BranchRepository,
   messageRepoFactory: MessageRepositoryBuilder,
   backend: 'memory' | 'firestore',
-  analyseMessages: AnalyseMessages | null,
+  services: ServerServices = {},
 ): Router {
   const router = Router();
-  const callController = new CallController(callRepo, messageRepoFactory);
-  const branchController = new BranchController(callRepo, branchRepo);
+  const accuracyRepo = services.accuracyRepo ?? null;
+  const callController = new CallController(callRepo, messageRepoFactory, accuracyRepo);
+  const branchController = new BranchController(callRepo, branchRepo, accuracyRepo);
   const sentimentController = new SentimentController(
     callRepo,
     messageRepoFactory,
-    analyseMessages,
+    services.analyseMessages ?? null,
+  );
+  const accuracyController = new AccuracyController(
+    services.accuracyAnalyzer ?? null,
+    accuracyRepo,
+    callRepo,
+    branchRepo,
+    messageRepoFactory,
   );
 
   router.use(createHealthRouter(backend));
@@ -34,6 +54,7 @@ export function createRouter(
   router.use(createMessagesRouter(callRepo, messageRepoFactory));
   router.use(branchController.router());
   router.use(sentimentController.router());
+  router.use(accuracyController.router());
 
   return router;
 }

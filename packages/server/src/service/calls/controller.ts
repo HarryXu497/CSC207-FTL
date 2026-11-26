@@ -1,5 +1,5 @@
 import { Router, type Request } from 'express';
-import type { CallRepository, MessageRepositoryBuilder } from 'src/repository';
+import type { AccuracyRepository, CallRepository, MessageRepositoryBuilder } from 'src/repository';
 import type { Call, Message } from 'src/entities';
 import z from 'zod';
 import {
@@ -33,6 +33,7 @@ export class CallController {
   constructor(
     private readonly callRepo: CallRepository,
     private readonly messageRepoFactory: MessageRepositoryBuilder,
+    private readonly accuracyRepo: AccuracyRepository | null = null,
   ) {}
 
   async createCall(req: Request, presenter: CreateCallOutputBoundary) {
@@ -81,7 +82,7 @@ export class CallController {
       return;
     }
 
-    const interactor = new DeleteCallInteractor(this.callRepo);
+    const interactor = new DeleteCallInteractor(this.callRepo, this.accuracyRepo);
 
     await interactor.handle({ callId }, presenter);
   }
@@ -91,11 +92,11 @@ export class CallController {
 
     router.post('/calls', async (req, res) => this.createCall(req, new CreateCallPresenter(res)));
 
-    router.get('/calls/:id', async (req, res) => this.getCall(req, new GetCallPresenter(res)));
+    router.get('/calls/:callId', async (req, res) => this.getCall(req, new GetCallPresenter(res)));
 
     router.get('/calls', async (_req, res) => this.listCalls(new ListCallsPresenter(res)));
 
-    router.delete('/calls/:id', async (req, res) =>
+    router.delete('/calls/:callId', async (req, res) =>
       this.deleteCall(req, new DeleteCallPresenter(res)),
     );
 
