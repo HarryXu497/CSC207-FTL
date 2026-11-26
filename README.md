@@ -118,46 +118,38 @@ documents, asks the LLM for a customer reply, and saves that reply to the branch
 Open **Simulate a branch** from Call Analysis to choose a point on the timeline and
 preview the messages that will be copied. **Start practice** takes you to the saved
 branch, where you can reply, reopen the conversation, and run accuracy and sentiment
-analysis. Accuracy uses the same Chroma collection and embeddings as simulation.
+analysis. Both features use the same Chroma collection and embedding model for
+policy retrieval. If retrieval is unavailable, simulation can continue from the
+practice transcript. Accuracy requires indexed policy evidence.
 
 ### Run practice with both analyses
 
-Use Node 24 for the full flow. From the repo root, run `npm ci`. Copy
-`packages/server/.env.example` to `packages/server/.env` if you don't already have it.
-Set `OPENAI_API_KEY`, `SIMULATION_ENABLED=true`, and `SIMULATION_MODEL` to a chat
-model available to your OpenAI project. With the Hugging Face `hf` CLI installed,
-run `npm run models:download` and set `MODEL_DIR=models` in the server's `.env`.
+Use Node 24. From the repo root, run `npm ci`. Copy
+`packages/server/.env.example` to `packages/server/.env` if needed, then set your
+server's `OPENAI_API_KEY`. Customer simulation uses `gpt-4o-mini` by default.
+`SIMULATION_MODEL` can override the chat model, and `SIMULATION_ENABLED=false`
+turns customer simulation off. Remove that line from older local configurations
+if you want customer replies enabled.
 
-With the Chroma CLI installed, start it in a separate terminal from the repo root.
+With the Hugging Face `hf` CLI installed, run `npm run models:download` once.
+The server loads the models installed in `packages/server/models` on startup.
+Set `MODEL_DIR` only if you keep the models in a different directory.
+
+For policy-backed accuracy, start Chroma in a separate terminal from the repo root.
 Set `CHROMA_URL=http://127.0.0.1:8000` in the server's `.env` for this local instance.
 
 ```sh
 chroma run --path ./chroma-data --host 127.0.0.1 --port 8000
 ```
 
-From the repo root, replace the sample path below with a directory containing
-your `.txt`, `.md`, or `.pdf` company policy documents. The command uses the same
-collection and embedding settings as the server.
+From the repo root, index a directory of `.txt`, `.md`, or `.pdf` policy files.
+Indexing uses the same Chroma collection and embedding model as the server.
 
 ```sh
-cd packages/server
-node --env-file=.env --import tsx --input-type=module - "/path/to/policies" <<'JS'
-import { OpenAIEmbeddings } from '@langchain/openai';
-import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
-import { ChromaIngestor } from './src/repository/rag/ingestor/ChromaIngestor.ts';
-
-const { CHROMA_COLLECTION, CHROMA_URL, RAG_EMBEDDING_MODEL } = process.env;
-const ingestor = new ChromaIngestor(
-  new OpenAIEmbeddings({ model: RAG_EMBEDDING_MODEL?.trim() || 'text-embedding-3-small' }),
-  new RecursiveCharacterTextSplitter({ chunkSize: 500, chunkOverlap: 50 }),
-  CHROMA_URL?.trim() || 'http://127.0.0.1:8000',
-  CHROMA_COLLECTION?.trim() || 'documents',
-);
-console.log('Indexed', await ingestor.ingest(process.argv[2]), 'chunks');
-JS
+npm run rag:ingest -- /path/to/policies
 ```
 
-From the repo root, run `npm run dev`. Import a transcript, choose **Simulate a
+Run `npm run dev` from the repo root. Import a transcript, choose **Simulate a
 branch** from Call Analysis, and select the agent reply to replace. Send a new
 reply containing a statement covered by a policy document. After the customer
 replies, select **Analyze sentiment** and **Analyze accuracy**. Expand **Claim
