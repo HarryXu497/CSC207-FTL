@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { Message } from '@recall/server/entities';
+import { messageStreamUrl } from './api';
 
 interface MessageStreamOptions {
   callId: string;
@@ -13,11 +14,7 @@ export function useMessageStream({ callId, branchId, enabled, onMessages }: Mess
 
   useEffect(() => {
     if (!enabled) return;
-    const path =
-      branchId === undefined
-        ? `/api/calls/${encodeURIComponent(callId)}`
-        : `/api/calls/${encodeURIComponent(callId)}/branches/${encodeURIComponent(branchId)}`;
-    const source = new EventSource(`${path}/messages/stream`);
+    const source = new EventSource(messageStreamUrl(callId, branchId));
     source.onmessage = (event) => {
       try {
         const messages: unknown = JSON.parse(event.data);

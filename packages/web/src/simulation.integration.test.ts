@@ -78,7 +78,7 @@ describe('simulation through the web API client', () => {
         status: 404,
         message: 'Call not found: missing-call',
       });
-      const { branch } = await api.createBranch(call.id, { branchIndex: 1, position: 'before' });
+      const { branch } = await api.createBranch(call.id, { branchIndex: 1 });
       expect((await api.listBranches(call.id)).branches).toEqual([branch]);
       expect((await api.getBranch(call.id, branch.id)).branch).toEqual(branch);
       const { messages: prefix } = await api.getBranchMessages(call.id, branch.id);

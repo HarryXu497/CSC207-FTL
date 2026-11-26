@@ -119,7 +119,7 @@ function BranchDetails({ callId, branchId }: { callId: string; branchId: string 
                 </time>
               </p>
               <p className="mt-1 text-sm text-secondary">
-                Started {branch.branchPosition ?? 'after'} message {branch.branchIndex + 1}
+                Started at message {branch.branchIndex + 1}
               </p>
             </header>
             <details className="my-4 rounded-lg border border-tertiary bg-card p-4">
@@ -141,9 +141,7 @@ function BranchDetails({ callId, branchId }: { callId: string; branchId: string 
               title="Practice conversation"
               className="h-auto max-h-[60vh]"
               followLatest
-              contextMessageCount={
-                branch.branchIndex + (branch.branchPosition === 'before' ? 0 : 1)
-              }
+              contextMessageCount={branch.branchIndex}
             />
             <PracticeReplyForm
               callId={callId}

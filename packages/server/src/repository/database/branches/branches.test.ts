@@ -55,46 +55,39 @@ describe('createBranchFromCall', () => {
     ]);
   });
 
-  it('keeps the selected turn by default and excludes it when branching before', async () => {
+  it('copies only the messages before the selected reply and leaves the original unchanged', async () => {
     const original = await factory('calls', 'call-1002').getAllMessages();
-    const afterId = await branchRepo.createBranchFromCall('call-1002', 1);
-    const beforeId = await branchRepo.createBranchFromCall('call-1002', 1, 'before');
-    const after = await factory('branches', afterId).getAllMessages();
-    const before = await factory('branches', beforeId).getAllMessages();
+    const id = await branchRepo.createBranchFromCall('call-1002', 1);
+    const copied = await factory('branches', id).getAllMessages();
 
-    expect(after.map((message) => message.content)).toEqual([
-      'Customer opening',
-      'Original agent reply',
-    ]);
-    expect(before).toEqual([{ ...original[0], id: expect.any(String) }]);
-    expect(before[0]!.id).not.toBe(original[0]!.id);
-    expect(await branchRepo.getBranch(beforeId)).toMatchObject({
+    expect(copied).toEqual([{ ...original[0], id: expect.any(String) }]);
+    expect(copied[0]!.id).not.toBe(original[0]!.id);
+    expect(await branchRepo.getBranch(id)).toEqual({
+      ...(await callRepo.getCall('call-1002')),
+      id,
+      createdAt: expect.any(String),
       parentId: 'call-1002',
       branchIndex: 1,
-      branchPosition: 'before',
     });
-    expect((await branchRepo.getBranch(afterId)).branchPosition).toBe('after');
 
-    await factory('branches', beforeId).addMessage({
+    await factory('branches', id).addMessage({
       role: 'agent',
       content: 'Practice reply',
       createdAt: '2026-01-01T12:03:00.000Z',
     });
     expect(await factory('calls', 'call-1002').getAllMessages()).toEqual(original);
-    expect(await factory('branches', afterId).getAllMessages()).toEqual(after);
   });
 
   it('creates an empty practice history before the first message', async () => {
-    const id = await branchRepo.createBranchFromCall('call-1002', 0, 'before');
+    const id = await branchRepo.createBranchFromCall('call-1002', 0);
     expect(await factory('branches', id).getAllMessages()).toEqual([]);
     expect(await branchRepo.getBranch(id)).toMatchObject({
       branchIndex: 0,
-      branchPosition: 'before',
     });
   });
 
   it('rejects an out-of-range point without creating a branch', async () => {
-    await expect(branchRepo.createBranchFromCall('call-1002', 3, 'before')).rejects.toBeInstanceOf(
+    await expect(branchRepo.createBranchFromCall('call-1002', 3)).rejects.toBeInstanceOf(
       InvalidBranchPointError,
     );
     expect(await branchRepo.getAllBranchesOfCall('call-1002')).toEqual([]);

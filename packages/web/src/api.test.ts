@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { api, ApiError } from './api';
+import { api, ApiError, messageStreamUrl } from './api';
 
 function reply(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -13,6 +13,13 @@ afterEach(() => {
 });
 
 describe('simulation API reads', () => {
+  it('builds call and branch stream URLs with escaped IDs', () => {
+    expect(messageStreamUrl('call /?')).toBe('/api/calls/call%20%2F%3F/messages/stream');
+    expect(messageStreamUrl('call /?', 'branch#1')).toBe(
+      '/api/calls/call%20%2F%3F/branches/branch%231/messages/stream',
+    );
+  });
+
   it('loads call and branch context with escaped IDs and cancellation', async () => {
     const branch = { id: 'branch#1', parentId: 'call /?' };
     const messages = [{ id: 'message-1', role: 'agent', content: 'Hello.' }];
