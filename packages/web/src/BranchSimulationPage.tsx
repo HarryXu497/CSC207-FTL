@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import type { BranchPosition, Call, Message, SentimentScore } from '@recall/server/entities';
+import type { Call, Message, SentimentScore } from '@recall/server/entities';
 import { api } from './api';
 import Conversation from './components/Conversation';
 
@@ -22,13 +22,12 @@ function elapsedTime(start: string, current: string): string {
 }
 
 type BranchTimelineProps = {
-  position: BranchPosition;
   messages: Message[];
   branchIndex: number;
   timelineStart: string;
 };
 
-function BranchTimeline({ messages, branchIndex, position, timelineStart }: BranchTimelineProps) {
+function BranchTimeline({ messages, branchIndex, timelineStart }: BranchTimelineProps) {
   const startX = 100;
   const gap = 105;
   const endX = startX + (messages.length - 1) * gap;
@@ -44,7 +43,7 @@ function BranchTimeline({ messages, branchIndex, position, timelineStart }: Bran
         height="150"
         className="max-w-none"
         role="img"
-        aria-label={`The main call timeline branches ${position} message ${branchIndex + 1}`}
+        aria-label={`The main call timeline branches before message ${branchIndex + 1}`}
       >
         <rect x="10" y="36" width="55" height="28" rx="6" fill="#f0f2fa" />
         <text x="20" y="54" fill="#667085" fontSize="12" fontFamily="monospace">
@@ -83,7 +82,7 @@ function BranchTimeline({ messages, branchIndex, position, timelineStart }: Bran
               <text
                 x={x}
                 y="20"
-                fill={index < branchIndex + Number(position === 'after') ? '#4b5563' : '#8b8d92'}
+                fill={index < branchIndex ? '#4b5563' : '#8b8d92'}
                 fontSize="12"
                 textAnchor="middle"
               >
@@ -185,15 +184,12 @@ function BranchPointForm({
   const active = useRef(false);
   const requestPending = useRef(false);
   const [branchIndex, setBranchIndex] = useState(() => {
-    const lastCustomer = messages.findLastIndex((message) => message.role === 'customer');
-    return lastCustomer >= 0 ? lastCustomer : 0;
+    const lastAgent = messages.findLastIndex((message) => message.role === 'agent');
+    return lastAgent >= 0 ? lastAgent : 0;
   });
-  const [position, setPosition] = useState<BranchPosition>(
-    messages[branchIndex]?.role === 'customer' ? 'after' : 'before',
-  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const prefix = messages.slice(0, branchIndex + Number(position === 'after'));
+  const prefix = messages.slice(0, branchIndex);
 
   useEffect(() => {
     active.current = true;
@@ -209,7 +205,7 @@ function BranchPointForm({
     setSaving(true);
     setError(null);
     try {
-      const { branch } = await api.createBranch(callId, { branchIndex, position });
+      const { branch } = await api.createBranch(callId, { branchIndex });
       if (active.current) {
         await navigate(
           `/calls/${encodeURIComponent(callId)}/branch/${encodeURIComponent(branch.id)}`,
@@ -230,30 +226,11 @@ function BranchPointForm({
       <h2 id="branch-point-heading" className="mb-1 text-2xl font-medium">
         Call Branch
       </h2>
-      <BranchTimeline
-        messages={messages}
-        branchIndex={branchIndex}
-        position={position}
-        timelineStart={timelineStart}
-      />
+      <BranchTimeline messages={messages} branchIndex={branchIndex} timelineStart={timelineStart} />
       <form onSubmit={(event) => void startBranch(event)} className="my-4">
         <div className="flex flex-wrap items-end gap-3">
           <label className="flex flex-col gap-1 text-sm font-medium">
-            Position
-            <select
-              value={position}
-              onChange={(event) =>
-                setPosition(event.target.value === 'before' ? 'before' : 'after')
-              }
-              disabled={saving}
-              className="rounded-md border border-tertiary bg-white px-3 py-2"
-            >
-              <option value="before">Before</option>
-              <option value="after">After</option>
-            </select>
-          </label>
-          <label className="flex flex-col gap-1 text-sm font-medium">
-            Message
+            Message to replace
             <select
               value={branchIndex}
               onChange={(event) => setBranchIndex(Number(event.target.value))}
