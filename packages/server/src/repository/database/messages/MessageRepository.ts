@@ -20,6 +20,7 @@ export interface MessageRepository {
   /**
    * Atomically appends only if the latest saved message has the expected ID.
    * Returns the new message ID, or null if the expected message is no longer last.
+   * This keeps a generated reply from being saved after a different turn arrives.
    */
   addMessageIfLastMatches(
     message: Omit<Message, 'id'>,
