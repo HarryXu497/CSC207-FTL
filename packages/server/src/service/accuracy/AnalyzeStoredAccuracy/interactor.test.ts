@@ -87,7 +87,7 @@ async function setup(analyzer: AccuracyAnalyzer, content: string[] = ['Hello']) 
     () => NOW,
   );
 
-  return { interactor, accuracyRepo, branches, callId: call.id };
+  return { interactor, accuracyRepo, branches, messageRepoFactory, callId: call.id };
 }
 
 describe('AnalyzeStoredAccuracyInteractor', () => {
@@ -157,13 +157,26 @@ describe('AnalyzeStoredAccuracyInteractor', () => {
     expect(await accuracyRepo.getAccuracyForCall(callId)).toBeNull();
   });
 
-  it('analyzes a branch through the same use case', async () => {
-    const analyze = vi.fn<AccuracyAnalyzer['analyze']>().mockResolvedValue(findings);
-    const { interactor, accuracyRepo, branches, callId } = await setup({ analyze }, [
-      'Saved context',
-      'Original reply',
-    ]);
+  it('saves branch accuracy with the analyzed message IDs', async () => {
+    const analyze = vi.fn<AccuracyAnalyzer['analyze']>().mockResolvedValue({
+      ...findings,
+      claims: [
+        {
+          messageIndex: 0,
+          text: 'Saved context',
+          verdict: 'unsupported',
+          confidence: 1,
+          explanation: 'No matching policy.',
+          evidence: null,
+        },
+      ],
+    });
+    const { interactor, accuracyRepo, branches, messageRepoFactory, callId } = await setup(
+      { analyze },
+      ['Saved context', 'Original reply'],
+    );
     const branchId = await branches.createBranchFromCall(callId, 1);
+    const [message] = await messageRepoFactory('branches', branchId).getAllMessages();
     const presenter = new RecordingPresenter();
 
     await interactor.handle({ id: branchId, target: 'branch' }, presenter);
@@ -172,7 +185,10 @@ describe('AnalyzeStoredAccuracyInteractor', () => {
       [{ role: 'agent', content: 'Saved context' }],
       expect.any(String),
     );
-    expect(presenter.output).not.toBeNull();
+    expect(presenter.output?.accuracy).toMatchObject({
+      messageIds: [message!.id],
+      claims: [{ messageId: message!.id }],
+    });
     expect(await accuracyRepo.getAccuracyForCall(branchId)).toEqual(presenter.output?.accuracy);
   });
 });
