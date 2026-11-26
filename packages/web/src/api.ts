@@ -61,6 +61,12 @@ function branchPath(callId: string, branchId: string): string {
   return `/calls/${encodeURIComponent(callId)}/branches/${encodeURIComponent(branchId)}`;
 }
 
+export function messageStreamUrl(callId: string, branchId?: string): string {
+  const path =
+    branchId === undefined ? `/calls/${encodeURIComponent(callId)}` : branchPath(callId, branchId);
+  return `${BASE_URL}${path}/messages/stream`;
+}
+
 // Singleton object for making requests
 export const api = {
   listCalls: (signal?: AbortSignal) =>
