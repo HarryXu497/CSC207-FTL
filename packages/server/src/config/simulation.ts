@@ -14,12 +14,18 @@ export function buildSimulationRepository(
   messageRepoFactory: MessageRepositoryBuilder,
   env: NodeJS.ProcessEnv = process.env,
 ): SimulationRepository | null {
-  if (env.SIMULATION_ENABLED !== 'true') return null;
+  if (env.SIMULATION_ENABLED !== 'true') {
+    return null;
+  }
 
   const apiKey = env.OPENAI_API_KEY?.trim();
-  if (!apiKey) throw new Error('OPENAI_API_KEY is required when SIMULATION_ENABLED=true.');
+  if (!apiKey) {
+    throw new Error('OPENAI_API_KEY is required when SIMULATION_ENABLED=true.');
+  }
   const model = env.SIMULATION_MODEL?.trim();
-  if (!model) throw new Error('SIMULATION_MODEL is required when SIMULATION_ENABLED=true.');
+  if (!model) {
+    throw new Error('SIMULATION_MODEL is required when SIMULATION_ENABLED=true.');
+  }
 
   const url = new URL(env.CHROMA_URL?.trim() || 'http://localhost:8000');
   if (
@@ -33,9 +39,18 @@ export function buildSimulationRepository(
     throw new Error('CHROMA_URL must be an HTTP(S) origin without a path or credentials.');
   }
 
+  let port: number;
+  if (url.port) {
+    port = Number(url.port);
+  } else if (url.protocol === 'https:') {
+    port = 443;
+  } else {
+    port = 80;
+  }
+
   const client = new ChromaClient({
     host: url.hostname,
-    port: Number(url.port || (url.protocol === 'https:' ? 443 : 80)),
+    port,
     ssl: url.protocol === 'https:',
   });
   const embeddings = new OpenAIEmbeddings({
