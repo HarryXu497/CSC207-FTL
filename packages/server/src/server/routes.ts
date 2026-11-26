@@ -8,9 +8,14 @@ import type {
   CallRepository,
   MessageRepositoryBuilder,
 } from 'src/repository';
-import { CallController } from 'src/service';
-import { BranchController } from 'src/service';
-import { SentimentController } from 'src/service';
+import {
+  BranchController,
+  CallController,
+  DocumentsController,
+  SentimentController,
+  UploadDocumentInteractor,
+} from 'src/service';
+import { documentUpload, handleUploadErrors } from './middleware';
 import { createHealthRouter, createMessagesRouter } from './routers';
 
 export function createRouter(
@@ -23,6 +28,11 @@ export function createRouter(
   const router = Router();
   const callController = new CallController(callRepo, messageRepoFactory);
   const branchController = new BranchController(callRepo, branchRepo);
+  const documentsController = new DocumentsController(
+    new UploadDocumentInteractor(),
+    documentUpload.single('file'),
+    handleUploadErrors,
+  );
   const sentimentController = new SentimentController(
     callRepo,
     messageRepoFactory,
@@ -31,6 +41,7 @@ export function createRouter(
 
   router.use(createHealthRouter(backend));
   router.use(callController.router());
+  router.use(documentsController.router());
   router.use(createMessagesRouter(callRepo, messageRepoFactory));
   router.use(branchController.router());
   router.use(sentimentController.router());
