@@ -4,6 +4,7 @@
 import { Router } from 'express';
 import type { AnalyseMessages, BranchRepository, CallRepository } from 'src/repository';
 import { DocumentsController, SentimentController, UploadDocumentInteractor } from 'src/service';
+import { documentUpload, handleUploadErrors } from './middleware';
 import {
   createCallsRouter,
   createHealthRouter,
@@ -20,7 +21,11 @@ export function createRouter(
   analyseMessages: AnalyseMessages | null,
 ): Router {
   const router = Router();
-  const documentsController = new DocumentsController(new UploadDocumentInteractor());
+  const documentsController = new DocumentsController(
+    new UploadDocumentInteractor(),
+    documentUpload.single('file'),
+    handleUploadErrors,
+  );
   const sentimentController = new SentimentController(
     callRepo,
     messageRepoFactory,

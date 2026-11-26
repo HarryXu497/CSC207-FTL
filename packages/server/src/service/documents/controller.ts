@@ -1,5 +1,4 @@
-import { Router, type Request } from 'express';
-import { documentUpload, handleUploadErrors } from 'src/server/middleware';
+import { Router, type ErrorRequestHandler, type Request, type RequestHandler } from 'express';
 import {
   UploadDocumentPresenter,
   type UploadDocumentInputBoundary,
@@ -7,7 +6,11 @@ import {
 } from './UploadDocument';
 
 export class DocumentsController {
-  constructor(private readonly interactor: UploadDocumentInputBoundary) {}
+  constructor(
+    private readonly interactor: UploadDocumentInputBoundary,
+    private readonly upload: RequestHandler,
+    private readonly uploadErrorHandler: ErrorRequestHandler,
+  ) {}
 
   async uploadDocument(req: Request, presenter: UploadDocumentOutputBoundary): Promise<void> {
     const file = req.file;
@@ -28,10 +31,10 @@ export class DocumentsController {
   router(): Router {
     const router = Router();
 
-    router.post('/documents', documentUpload.single('file'), async (req, res) =>
+    router.post('/documents', this.upload, async (req, res) =>
       this.uploadDocument(req, new UploadDocumentPresenter(res)),
     );
-    router.use(handleUploadErrors);
+    router.use(this.uploadErrorHandler);
 
     return router;
   }
