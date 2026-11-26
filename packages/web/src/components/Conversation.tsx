@@ -36,11 +36,13 @@ export default function Conversation({
       ? contextMessageCount
       : null;
 
+  // Let a reader who scrolled up explicitly resume following the latest messages.
   function showLatest() {
     following.current = true;
     if (viewport.current) viewport.current.scrollTop = viewport.current.scrollHeight;
   }
 
+  // Follow new messages only while the reader is already at the bottom of the transcript.
   useLayoutEffect(() => {
     if (followLatest && following.current && viewport.current) {
       viewport.current.scrollTop = viewport.current.scrollHeight;

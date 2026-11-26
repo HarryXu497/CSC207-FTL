@@ -10,6 +10,7 @@ export default function CallsPage() {
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
 
+  // Fetch saved calls on entry or explicit retry, and cancel the request on navigation.
   useEffect(() => {
     const controller = new AbortController();
     async function load() {

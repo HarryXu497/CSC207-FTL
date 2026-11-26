@@ -6,7 +6,9 @@ interface PracticeReplyFormProps {
   callId: string;
   branchId: string;
   lastMessage?: Message;
+  /** Add a message only once the server confirms it was saved. */
   onSaved: (message: Message) => void;
+  /** Replace the displayed history with a fresh server snapshot after a conflict or retry. */
   onRefreshed: (messages: Message[]) => void;
 }
 
@@ -18,6 +20,7 @@ export default function PracticeReplyForm({
   onRefreshed,
 }: PracticeReplyFormProps) {
   const active = useRef(false);
+  // Guard double submissions immediately, before React updates the disabled buttons.
   const submitting = useRef(false);
   const [draft, setDraft] = useState('');
   const [saving, setSaving] = useState(false);
@@ -26,13 +29,16 @@ export default function PracticeReplyForm({
   const [needsRefresh, setNeedsRefresh] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<{ message: string; agentId?: string } | null>(null);
+  // A saved agent turn still needs a customer reply, including when reopening a branch.
   const pendingAgentId = lastMessage?.role === 'agent' ? lastMessage.id : null;
   const busy = saving || generating || refreshing;
+  // Hide errors from an older turn once live updates move the conversation forward.
   const visibleError =
     error && (!error.agentId || error.agentId === pendingAgentId || needsRefresh)
       ? error.message
       : null;
 
+  // Ignore late request results after navigating away from this form.
   useEffect(() => {
     active.current = true;
     return () => {
@@ -40,6 +46,7 @@ export default function PracticeReplyForm({
     };
   }, []);
 
+  // Reconcile with saved history before retrying; a lost response may already be persisted.
   async function refreshHistory() {
     setRefreshing(true);
     try {
@@ -61,6 +68,7 @@ export default function PracticeReplyForm({
     }
   }
 
+  // Generate only the customer response. Retrying this step never posts the agent turn again.
   async function generateReply(agentId: string) {
     setGenerating(true);
     try {
@@ -88,6 +96,7 @@ export default function PracticeReplyForm({
     }
   }
 
+  // Retry generation only if the refreshed transcript still ends with the same agent turn.
   async function retryReply(reloadOnly = false) {
     if (submitting.current) return;
     submitting.current = true;
@@ -107,6 +116,7 @@ export default function PracticeReplyForm({
     }
   }
 
+  // Save the agent turn first, so a generation failure can be retried independently.
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const content = draft.trim();
@@ -128,6 +138,7 @@ export default function PracticeReplyForm({
     } catch (error) {
       if (!active.current) return;
       if (!(error instanceof ApiError)) {
+        // A network failure does not tell us whether the write succeeded; check before resending.
         const history = await refreshHistory();
         if (!history) return;
         const latest = history.at(-1);
@@ -189,6 +200,7 @@ export default function PracticeReplyForm({
           {visibleError}
         </p>
       )}
+      {/* Recover uncertain saves first; otherwise retry the customer reply or send a new turn. */}
       {needsRefresh ? (
         <button
           type="button"

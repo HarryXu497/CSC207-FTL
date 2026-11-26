@@ -55,6 +55,7 @@ function BranchDetails({ callId, branchId }: { callId: string; branchId: string 
     }
     return scores;
   }, [messages, sentiment.data]);
+  // HTTP responses and the stream may deliver the same message; merge them by saved ID.
   function includeSavedMessages(saved: Message[]) {
     setMessages((current) => {
       const combined = new Map(current.map((message) => [message.id, message]));
@@ -72,6 +73,7 @@ function BranchDetails({ callId, branchId }: { callId: string; branchId: string 
     onMessages: setMessages,
   });
 
+  // Load branch metadata and its transcript together before enabling the message stream.
   useEffect(() => {
     const controller = new AbortController();
     async function load() {
