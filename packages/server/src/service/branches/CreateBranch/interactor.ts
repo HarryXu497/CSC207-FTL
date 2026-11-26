@@ -10,12 +10,12 @@ export class CreateBranchInteractor implements CreateBranchInputBoundary {
   ) {}
 
   async handle(
-    { callId, branchIndex, position = 'after' }: CreateBranchInputData,
+    { callId, branchIndex }: CreateBranchInputData,
     presenter: CreateBranchOutputBoundary,
   ): Promise<void> {
     try {
       await this.callRepo.getCall(callId);
-      const branchId = await this.branchRepo.createBranchFromCall(callId, branchIndex, position);
+      const branchId = await this.branchRepo.createBranchFromCall(callId, branchIndex);
       const branch = await this.branchRepo.getBranch(branchId);
 
       presenter.present({ branch });
