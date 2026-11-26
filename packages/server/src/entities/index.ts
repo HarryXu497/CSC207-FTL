@@ -1,3 +1,4 @@
+export * from './accuracy';
 export * from './api';
 export * from './database';
 export * from './documents';
