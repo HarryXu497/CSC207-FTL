@@ -19,6 +19,8 @@ export interface ClaimEvidence {
 }
 
 export interface ClaimResult extends Claim {
+  /** Persisted source message ID; absent on legacy or unstored transcript results. */
+  messageId?: string;
   verdict: AccuracyVerdict;
   /** 0 to 1. */
   confidence: number;
@@ -46,6 +48,8 @@ export interface AccuracyFindings {
 }
 
 export interface Accuracy extends AccuracyFindings {
+  /** IDs of the analyzed stored transcript, in order; absent on legacy results. */
+  messageIds?: string[];
   /** 0 to 100, or null when no claim was checkable. */
   score: number | null;
   counts: Record<AccuracyVerdict, number>;

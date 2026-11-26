@@ -114,6 +114,11 @@ timestamp. The original call transcript is unchanged. A stale expected message o
 conversation changed during generation returns `409`. Disabled simulation returns
 `503`; no external API calls are made until a simulation request is processed.
 
+Overlapping requests for the same saved agent message share one pending generation
+within a server instance. Success and failure both release that pending request, so
+a failed generation can be retried. This does not coordinate model calls across
+multiple server instances; the database guard still prevents duplicate customer saves.
+
 ## Sentiment Analysis
 
 We are evaluating two Hugging Face transformer models for emotion classification of call transcripts:
