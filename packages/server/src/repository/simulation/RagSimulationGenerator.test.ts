@@ -51,6 +51,24 @@ describe('RagSimulationGenerator', () => {
     });
   });
 
+  it('generates a reply from the transcript when policy retrieval fails', async () => {
+    const search = vi.fn<Retriever['search']>().mockRejectedValue(new Error('Chroma is down.'));
+    const complete = vi.fn<LlmClient['complete']>().mockResolvedValue('Yesterday afternoon.');
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      const generator = new RagSimulationGenerator({ search }, { complete });
+
+      await expect(generator.generate({ scenario, history })).resolves.toBe('Yesterday afternoon.');
+      expect(JSON.parse(complete.mock.calls[0]![0].user)).toEqual({
+        scenario,
+        history,
+        companyDocuments: [],
+      });
+    } finally {
+      warning.mockRestore();
+    }
+  });
+
   it('rejects a blank reply, including when no company documents match', async () => {
     const retriever: Retriever = { search: async () => [] };
     const llm: LlmClient = { complete: async () => ' \n\t' };

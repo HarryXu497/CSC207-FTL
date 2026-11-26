@@ -65,12 +65,21 @@ cp packages/server/.env.example packages/server/.env
 
 ## API
 
-| Method | Path             | Body                             | Returns               |
-| ------ | ---------------- | -------------------------------- | --------------------- |
-| GET    | `/api/health`    | —                                | `{ status, backend }` |
-| GET    | `/api/calls`     | —                                | `{ calls: Call[] }`   |
-| POST   | `/api/calls`     | `{ customerName, topic, score }` | `201 { call }`        |
-| POST   | `/api/documents` | Multipart form data: `file`      | `201 { document }`    |
+| Method | Path                                              | Body                                         | Returns                                                                                      |
+| ------ | ------------------------------------------------- | -------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| GET    | `/api/health`                                     | —                                            | `{ status, backend }`                                                                        |
+| GET    | `/api/calls`                                      | —                                            | `{ calls: Call[] }`                                                                          |
+| POST   | `/api/calls`                                      | `{ callData, messageData }`                  | `201 { call }`                                                                               |
+| POST   | `/api/accuracy/analyze`                           | `{ messages, topic? }`                       | `200 { accuracy }` (`503` if not configured, `502` on unusable model output)                 |
+| POST   | `/api/documents`                                  | Multipart form data: `file`                  | `201 { document }`                                                                           |
+| POST   | `/api/calls/:callId/accuracy`                     | none (analyzes the stored transcript)        | `200 { accuracy }`, saved under the call (`404` unknown call, `503`, `502` as above)         |
+| GET    | `/api/calls/:callId/accuracy`                     | none                                         | `200 { accuracy }`, or `404` if the call has not been analyzed                               |
+| POST   | `/api/calls/:callId/sentiment`                    | none (analyzes the stored transcript)        | `200 { messageSentiments }`, saved under the call (`404` unknown call, `503` without models) |
+| GET    | `/api/calls/:callId/sentiment`                    | none                                         | `200 { messageSentiments }`, or `404` if the call has not been analyzed                      |
+| POST   | `/api/calls/:callId/branches/:branchId/accuracy`  | none (analyzes the stored branch transcript) | `200 { accuracy }`, saved under the branch (`404` unknown branch, `503`, `502` as above)     |
+| GET    | `/api/calls/:callId/branches/:branchId/accuracy`  | none                                         | `200 { accuracy }`, or `404` if the branch has not been analyzed                             |
+| POST   | `/api/calls/:callId/branches/:branchId/sentiment` | none (analyzes the stored branch transcript) | `200 { messageSentiments }`, saved under the branch                                          |
+| GET    | `/api/calls/:callId/branches/:branchId/sentiment` | none                                         | `200 { messageSentiments }`, or `404` if the branch has not been analyzed                    |
 
 ## Document uploads
 
@@ -108,15 +117,45 @@ Simulation generates the next customer message in a practice branch. The user pl
 the agent. The server loads the saved branch history, retrieves relevant company
 documents, asks the LLM for a customer reply, and saves that reply to the branch.
 
-To enable it, copy `packages/server/.env.example` to `packages/server/.env`, set
-`SIMULATION_ENABLED=true`, and supply `OPENAI_API_KEY` and `SIMULATION_MODEL`.
-`SIMULATION_MODEL` is the chat model ID available to your OpenAI project.
-Restart the server after changing these settings.
+Open **Simulate a branch** from Call Analysis to choose a point on the timeline and
+preview the messages that will be copied. **Start practice** takes you to the saved
+branch, where you can reply, reopen the conversation, and run accuracy and sentiment
+analysis. Both features use the same Chroma collection and embedding model for
+policy retrieval. If retrieval is unavailable, simulation can continue from the
+practice transcript. Accuracy requires indexed policy evidence.
 
-Run Chroma and populate the company-document collection before testing. Use the same
-`RAG_EMBEDDING_MODEL`, `CHROMA_URL`, and `CHROMA_COLLECTION` values as document ingestion.
-Their defaults are `text-embedding-3-small`, `http://localhost:8000`, and `documents`.
-`CHROMA_URL` must be an HTTP(S) origin; simulation searches an existing collection.
+### Run practice with both analyses
+
+Use Node 24. From the repo root, run `npm ci`. Copy
+`packages/server/.env.example` to `packages/server/.env` if needed, then set your
+server's `OPENAI_API_KEY`. Customer simulation uses `gpt-4o-mini` by default.
+`SIMULATION_MODEL` can override the chat model, and `SIMULATION_ENABLED=false`
+turns customer simulation off. Remove that line from older local configurations
+if you want customer replies enabled.
+
+With the Hugging Face `hf` CLI installed, run `npm run models:download` once.
+The server loads the models installed in `packages/server/models` on startup.
+Set `MODEL_DIR` only if you keep the models in a different directory.
+
+For policy-backed accuracy, start Chroma in a separate terminal from the repo root.
+Set `CHROMA_URL=http://127.0.0.1:8000` in the server's `.env` for this local instance.
+
+```sh
+chroma run --path ./chroma-data --host 127.0.0.1 --port 8000
+```
+
+From the repo root, index a directory of `.txt`, `.md`, or `.pdf` policy files.
+Indexing uses the same Chroma collection and embedding model as the server.
+
+```sh
+npm run rag:ingest -- /path/to/policies
+```
+
+Run `npm run dev` from the repo root. Import a transcript, choose **Simulate a
+branch** from Call Analysis, and select the agent reply to replace. Send a new
+reply containing a statement covered by a policy document. After the customer
+replies, select **Analyze sentiment** and **Analyze accuracy**. Expand **Claim
+feedback** to see supporting evidence. Reopen the branch to see the saved results.
 
 Create a practice branch before the selected original response:
 
@@ -152,13 +191,15 @@ multiple server instances; the database guard still prevents duplicate customer 
 
 ## Sentiment Analysis
 
-We are evaluating two Hugging Face transformer models for emotion classification of call transcripts:
+ReCall runs GoEmotions and VAD-BERT locally on transcript text. GoEmotions
+classifies emotion cues, and VAD-BERT estimates valence and arousal. The app
+plots the resulting sentiment score per message from −1 to +1 for each speaker.
 
-- [thomasrenault/emotion](https://huggingface.co/thomasrenault/emotion)
-- [djonuzi/goemotions-emotion-model](https://huggingface.co/djonuzi/goemotions-emotion-model)
-
-Both models are candidates for identifying emotions expressed during calls. The final model will be selected based on classification quality and accuracy.
-The selected model will be integrated into the backend to analyze call transcripts and make emotion predictions available to the application.
+`POST /api/calls/:callId/sentiment` analyzes a stored call and saves the result.
+`GET` on the same path reads it back. The branch routes use the branch transcript
+and save the result under its branch ID. Deleting the call or branch deletes its
+saved result. If the models are missing, analysis returns `503`. Install them
+with `npm run models:download`, or set `MODEL_DIR` to an existing installation.
 
 ## Server Architecture
 
@@ -237,6 +278,86 @@ The routers are in `routers` and are once again grouped into routers by relatedn
 
 The `app.ts` and `routes.ts` are responsible for merging all the routers into one and creating all the appropriate repository objects, etc.
 
+## Accuracy
+
+The accuracy metric answers: **did the agent say things that agree with our knowledge base?** It checks what the agent said against the RAG documents. It does not check whether those documents are true in the real world, so it is only as good as the knowledge base behind it.
+
+### Flow
+
+```
+transcript ──► 1. Extract   LLM lists the checkable claims the agent made
+                    │
+                    ▼
+               2. Retrieve  RAG returns knowledge-base chunks for each claim
+                    │       (and for each customer question, to find documents the agent should have used)
+                    ▼
+               3. Judge     LLM rules on each claim using ONLY those chunks.
+                    │       supported / contradicted / unsupported / not_verifiable, with a quote.
+                    │       Code checks the quote really appears in the chunk, otherwise the
+                    │       verdict is downgraded to unsupported.
+                    ▼
+               4. Classify  LLM sorts the retrieved documents into required / recommended
+                    │
+                    ▼
+               5. Score     plain code, no LLM: a 0-100 weighted average of the verdicts
+```
+
+- **Input:** the call's `messages` (each a `{ role, content }` with role `agent` or `customer`) and an optional `topic`.
+- **Output:** an `Accuracy` object (see [Database Structure](#accuracy-1)).
+- **RAG interaction:** read-only. It calls `search(query, limit)` on a `Retriever` and never writes to the knowledge base, so `ChromaRetriever` or `InMemoryRetriever` both work.
+- **Endpoint:** `POST /api/accuracy/analyze` takes a transcript and returns the result without storing it. `POST /api/calls/:callId/accuracy` analyzes a stored call and saves the result (Firestore `accuracy/{callId}`, or memory), and `GET` on the same path reads it back; deleting a call deletes its result. Branches work the same way under `/api/calls/:callId/branches/:branchId/accuracy` (stored under `accuracy/{branchId}`), using the same use case with the branch's message collection. If no accuracy repository is configured, the saved-result routes answer `503`. Set `OPENAI_API_KEY` (and the `CHROMA_*` settings) in `packages/server/.env` to enable it; without a key it answers `503`.
+- **Limits:** at most 200 messages and 30,000 characters of message text per request (`400` otherwise). JSON bodies over 100 KB get `413`, and unreadable JSON gets `400`.
+
+### Code
+
+The metric follows the same layers as the rest of the server:
+
+| Layer        | Where                                     | What                                                                                        |
+| ------------ | ----------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `entities`   | `entities/accuracy/`                      | Claim and result types, and `scoring.ts` (the scoring rules)                                |
+| `repository` | `repository/llm/`                         | `LlmClient` port, its LangChain adapter, and `completeJson` (validated JSON)                |
+| `repository` | `repository/accuracy/`                    | `AccuracyAnalyzer` port and `LlmAccuracyAnalyzer`: prompts, schemas, RAG lookups            |
+| `service`    | `service/accuracy/AnalyzeAccuracy/`       | The use case: input/output boundaries, the interactor (scoring) and the presenter           |
+| `service`    | `service/accuracy/AnalyzeStoredAccuracy/` | The use case for a stored call or branch: loads it, checks the transcript, saves the result |
+| `service`    | `service/accuracy/controller.ts`          | Request parsing and routing                                                                 |
+| `server`     | `routes.ts`, `index.ts`                   | Mounts the controller; builds the OpenAI and Chroma adapters from the environment           |
+
+All prompts are in `repository/accuracy/prompts.ts` and carry a `PROMPT_VERSION`.
+
+### Scoring
+
+| Verdict          | Credit | Meaning                                                    |
+| ---------------- | ------ | ---------------------------------------------------------- |
+| `supported`      | 1      | The documents clearly confirm the claim                    |
+| `unsupported`    | 0.5    | The documents neither confirm nor contradict it            |
+| `contradicted`   | 0      | The documents say something different                      |
+| `not_verifiable` | -      | Not a checkable fact (or could not be judged); not counted |
+
+`score` is the weighted average of the credits, scaled to 0-100. A claim backed by a **required** document counts double. If the agent made no checkable claims, `score` is `null` (nothing to score), not 0.
+
+### Required and recommended documents
+
+For every call, the documents the knowledge base returns are sorted by how much the agent needed them. This is judged from what the **customer asked for**, not from what the agent happened to say.
+
+| Role           | Meaning                                                                                                                                   | Effect                                                    |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `required`     | The agent must state this document's content correctly to resolve the customer's issue (the governing policy, price, rule, or procedure). | Claims backed by it weigh double in the score             |
+| `recommended`  | Relevant and useful (background, related options, tips), but the issue can be resolved without it.                                        | Reported as coaching suggestions; never changes the score |
+| _(irrelevant)_ | Not useful for this customer's issue.                                                                                                     | Dropped from the result                                   |
+
+Each listed document also has `usedByAgent`: whether at least one of the agent's claims was supported or contradicted by it. A **required document with `usedByAgent: false`** means the agent never touched something they needed to, which is the clearest signal for coaching.
+
+#### What a company should put in the knowledge base
+
+The analysis can only find documents that were ingested, so coverage matters.
+
+| Priority    | Document types                                                                                                                                                                                 | Why                                                           |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Required    | Policies (returns, refunds, cancellations, privacy), pricing and fees, eligibility rules, procedures and SOPs, product or service specifications, compliance scripts and mandatory disclosures | Facts the agent must get right; errors cause real harm        |
+| Recommended | FAQs, troubleshooting guides, escalation paths, tone and style guides, promotions, past resolved cases                                                                                         | Improve answers and coaching, but are not the source of truth |
+
+Prefer one topic per file and descriptive file names, because the file path is what is shown as the evidence source.
+
 ## Database Structure
 
 ### Calls (Firestore / in-memory)
@@ -272,11 +393,29 @@ The `app.ts` and `routes.ts` are responsible for merging all the routers into on
 
 #### Sentiment
 
-_TBD_
+Defined in `packages/server/src/entities/sentiment`. Saved in Firestore as `sentiment/{callId}` with one field, `messageSentiments`.
+
+`MessageSentiment`: `messageId` (string) and `result`, which is either `{ ok: true, sentiment: SentimentScore }` or `{ ok: false, reason }` (`empty` \| `not_a_string` \| `too_long`).
 
 #### Accuracy
 
-_TBD_
+Defined in `packages/server/src/entities/accuracy`. `score` can be `null`.
+
+| Field             | Type                 | Description                                                                  |
+| ----------------- | -------------------- | ---------------------------------------------------------------------------- |
+| `score`           | number \| null       | 0-100, or `null` when the agent made no checkable claims                     |
+| `counts`          | `Record<Verdict, n>` | How many claims got each verdict                                             |
+| `claims`          | `ClaimResult[]`      | One entry per checked agent claim                                            |
+| `documents`       | `AccuracyDocuments`  | `{ required: DocumentFinding[], recommended: DocumentFinding[] }`            |
+| `claimsTruncated` | boolean              | `true` if the call had more claims than the limit (20), so some were skipped |
+| `promptVersion`   | string               | Version of the prompts that produced this result                             |
+| `analyzedAt`      | string               | ISO 8601 timestamp                                                           |
+
+`ClaimResult`: `messageIndex` (number), `text` (string), `verdict` (`supported` \| `contradicted` \| `unsupported` \| `not_verifiable`), `confidence` (0-1), `explanation` (string), `evidence` (`{ source, quote }` or `null`; present only when the quote was verified in the retrieved document).
+
+`DocumentFinding`: `source` (file path), `reason` (string), `usedByAgent` (boolean).
+
+The analysed transcript is a list of `TranscriptMessage`: the `role` and `content` of a `Message`.
 
 #### Branch
 

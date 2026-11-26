@@ -104,11 +104,19 @@ function CallDetails({ callId }: { callId: string }) {
     const controller = new AbortController();
     async function load() {
       try {
-        const response = await api.getCallSentiment(callId, controller.signal);
-        if ('error' in response) {
-          throw new Error(response.error.message);
+        const saved = await api.getCallSentiment(callId, controller.signal).catch(() => null);
+        const savedSentiments = saved && !('error' in saved) ? saved.messageSentiments : [];
+        // A live call keeps adding messages, so re-analyze when the saved result is missing any.
+        const isCurrent = messages.every((m) => savedSentiments.some((s) => s.messageId === m.id));
+
+        let sentiments = savedSentiments;
+        if (!isCurrent) {
+          const response = await api.analyzeCallSentiment(callId, controller.signal);
+          if ('error' in response) {
+            throw new Error(response.error.message);
+          }
+          sentiments = response.messageSentiments;
         }
-        const sentiments = response.messageSentiments;
 
         if (controller.signal.aborted) return;
         setSentiments(sentiments);
@@ -147,13 +155,23 @@ function CallDetails({ callId }: { callId: string }) {
         )}
         {call && (
           <>
-            <header className="my-5">
-              <p className="text-sm text-secondary">Original call</p>
-              <h1 className="mt-1 text-3xl font-semibold">{call.topic}</h1>
-              <p className="mt-2 text-secondary">
-                {call.customerName} ·{' '}
-                <time dateTime={call.createdAt}>{new Date(call.createdAt).toLocaleString()}</time>
-              </p>
+            <header className="my-5 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-sm text-secondary">Original call</p>
+                <h1 className="mt-1 text-3xl font-semibold">{call.topic}</h1>
+                <p className="mt-2 text-secondary">
+                  {call.customerName} ·{' '}
+                  <time dateTime={call.createdAt}>{new Date(call.createdAt).toLocaleString()}</time>
+                </p>
+              </div>
+              {messages.length > 0 && (
+                <Link
+                  to={`/calls/${encodeURIComponent(callId)}/branch/new`}
+                  className="rounded-md bg-[#6850dc] px-4 py-2 text-sm font-medium text-white hover:bg-[#5840ca]"
+                >
+                  Simulate a branch
+                </Link>
+              )}
             </header>
             <PracticeBranches callId={callId} />
             {streamError && (

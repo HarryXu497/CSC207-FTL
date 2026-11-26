@@ -16,9 +16,22 @@ describe('buildSimulationRepository', () => {
     expect(buildSimulationRepository(calls, factory, {})).toBeNull();
   });
 
-  it.each(['OPENAI_API_KEY', 'SIMULATION_MODEL'])('rejects an enabled setup without %s', (key) => {
-    const env = { ...enabled, [key]: ' ' };
-    expect(() => buildSimulationRepository(calls, factory, env)).toThrow(`${key} is required`);
+  it('uses the server key and default model without a simulation flag', () => {
+    expect(
+      buildSimulationRepository(calls, factory, { OPENAI_API_KEY: 'test-key' }),
+    ).toBeInstanceOf(StoredSimulationRepository);
+  });
+
+  it('preserves an explicit opt-out', () => {
+    expect(
+      buildSimulationRepository(calls, factory, { ...enabled, SIMULATION_ENABLED: 'false' }),
+    ).toBeNull();
+  });
+
+  it('requires a server key if explicitly enabled', () => {
+    expect(() => buildSimulationRepository(calls, factory, { SIMULATION_ENABLED: 'true' })).toThrow(
+      'OPENAI_API_KEY is required',
+    );
   });
 
   it('constructs the configured service without calling external APIs at startup', () => {

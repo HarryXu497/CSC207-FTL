@@ -1,16 +1,24 @@
 /**
  * Server entry point
  */
-import { resolve } from 'node:path';
-import type { CallRepository } from 'src/repository';
+import { ChatOpenAI } from '@langchain/openai';
+import type { AccuracyRepository, CallRepository, SentimentRepository } from 'src/repository';
 import {
+  ChatModelLlmClient,
   createMessageRepositoryBuilder,
+  FirestoreAccuracyRepository,
   FirestoreCallRepository,
+  FirestoreSentimentRepository,
+  InMemoryAccuracyRepository,
   InMemoryCallRepository,
+  InMemorySentimentRepository,
+  LlmAccuracyAnalyzer,
+  type AccuracyAnalyzer,
   type MessageRepositoryBuilder,
 } from 'src/repository';
 import { createApp } from 'src/server';
-import { buildRagIngestor } from './config/rag';
+import { buildRagIngestor, buildRagRetriever } from './config/rag';
+import { resolveSentimentModelPath } from './config/sentiment';
 import { buildSimulationRepository } from './config/simulation';
 import {
   FirestoreBranchRepository,
@@ -27,6 +35,18 @@ function buildCallRepository(): CallRepository {
   return BACKEND === 'firestore' ? new FirestoreCallRepository() : new InMemoryCallRepository();
 }
 
+function buildAccuracyRepository(): AccuracyRepository {
+  return BACKEND === 'firestore'
+    ? new FirestoreAccuracyRepository()
+    : new InMemoryAccuracyRepository();
+}
+
+function buildSentimentRepository(): SentimentRepository {
+  return BACKEND === 'firestore'
+    ? new FirestoreSentimentRepository()
+    : new InMemorySentimentRepository();
+}
+
 function buildBranchRepository(
   callRepo: CallRepository,
   messageRepoBuilder: MessageRepositoryBuilder,
@@ -37,29 +57,49 @@ function buildBranchRepository(
 }
 
 async function buildSentimentDeps(): Promise<AnalyseMessages | null> {
-  const modelDir = process.env.MODEL_DIR;
+  const modelPath = resolveSentimentModelPath();
+  if (!modelPath) return null;
 
-  if (!modelDir) {
-    return null;
-  }
-
-  const modelPath = resolve(modelDir);
   const classifier = await GoEmotionsClassifier.create(modelPath);
   const vadEstimator = await VadBertEstimator.create(modelPath);
   return new AnalyseMessages(classifier, vadEstimator);
+}
+
+function buildAccuracyAnalyzer(): AccuracyAnalyzer | null {
+  const apiKey = process.env.OPENAI_API_KEY?.trim();
+
+  if (!apiKey) {
+    return null;
+  }
+
+  const model = new ChatOpenAI({
+    model: process.env.ACCURACY_MODEL ?? 'gpt-4o-mini',
+    temperature: 0,
+    apiKey,
+    timeout: 30_000,
+    maxRetries: 1,
+  });
+
+  return new LlmAccuracyAnalyzer(new ChatModelLlmClient(model), buildRagRetriever(apiKey));
 }
 
 async function main(): Promise<void> {
   const callRepo = buildCallRepository();
   const messageRepoFactory = createMessageRepositoryBuilder(BACKEND);
   const branchRepo = buildBranchRepository(callRepo, messageRepoFactory);
-  const sentiment = await buildSentimentDeps();
+  const analyseMessages = await buildSentimentDeps();
+  const accuracyAnalyzer = buildAccuracyAnalyzer();
+  const accuracyRepo = buildAccuracyRepository();
   const simulationRepo = buildSimulationRepository(callRepo, messageRepoFactory);
   const ingestor = buildRagIngestor();
+  const sentimentRepo = buildSentimentRepository();
   const app = createApp(callRepo, branchRepo, messageRepoFactory, BACKEND, {
-    analyseMessages: sentiment,
+    analyseMessages,
+    accuracyAnalyzer,
+    accuracyRepo,
     simulationRepo,
     ingestor,
+    sentimentRepo,
   });
 
   app.listen(PORT, () => {
@@ -68,6 +108,10 @@ async function main(): Promise<void> {
     console.log(`  -> http://localhost:${PORT}/api/health`);
     console.log(`  storage: ${BACKEND}${BACKEND === 'memory' ? ' (resets on restart)' : ''}`);
     console.log(`  simulation: ${simulationRepo ? 'enabled' : 'disabled'}`);
+    console.log(
+      `  sentiment: ${analyseMessages ? 'enabled' : 'disabled (run npm run models:download and restart)'}`,
+    );
+    console.log(`  accuracy: ${accuracyAnalyzer ? 'enabled' : 'disabled (no OPENAI_API_KEY)'}`);
     console.log('');
   });
 }

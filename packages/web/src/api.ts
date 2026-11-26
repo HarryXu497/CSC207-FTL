@@ -1,5 +1,8 @@
-import type { Accuracy, ApiErrorBody } from '@recall/server/entities';
+import type { Accuracy, ApiErrorBody, WithError } from '@recall/server/entities';
 import type {
+  AnalyzeAccuracyInputData,
+  AnalyzeAccuracyOutputData,
+  GetSentimentOutputData,
   ListCallSentimentsOutputData,
   CreateCallInputData,
   CreateCallOutputData,
@@ -15,7 +18,6 @@ import type {
   SimulateMessageInputData,
   SimulateMessageOutputData,
 } from '@recall/server/service';
-import type { WithError } from '@recall/server/entities';
 
 const BASE_URL = '/api';
 
@@ -120,9 +122,14 @@ export const api = {
     }),
 
   getCallSentiment: (callId: string, signal: AbortSignal) =>
+    request<WithError<GetSentimentOutputData>>(`/calls/${encodeURIComponent(callId)}/sentiment`, {
+      signal,
+    }),
+
+  analyzeCallSentiment: (callId: string, signal: AbortSignal) =>
     request<WithError<ListCallSentimentsOutputData>>(
       `/calls/${encodeURIComponent(callId)}/sentiment`,
-      { signal },
+      { method: 'POST', signal },
     ),
 
   getBranchSentiment: (callId: string, branchId: string, signal?: AbortSignal) =>
@@ -145,6 +152,12 @@ export const api = {
 
   createCall: (body: CreateCallRequestBody) =>
     request<WithError<CreateCallOutputData>>('/calls', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  analyzeAccuracy: (body: AnalyzeAccuracyInputData) =>
+    request<AnalyzeAccuracyOutputData>('/accuracy/analyze', {
       method: 'POST',
       body: JSON.stringify(body),
     }),

@@ -1,3 +1,4 @@
+import type { Document } from 'src/entities';
 import { LlmOutputError } from 'src/errors';
 import type { LlmClient } from '../llm';
 import type { Retriever } from '../rag/retriever';
@@ -14,7 +15,12 @@ export class RagSimulationGenerator implements SimulationGenerator {
 
   async generate({ scenario, history }: SimulationGenerationInput): Promise<string> {
     const query = buildSimulationRetrievalQuery(scenario.topic, history);
-    const documents = await this.retriever.search(query, 5);
+    let documents: Document[] = [];
+    try {
+      documents = await this.retriever.search(query, 5);
+    } catch {
+      console.warn('Simulation policy retrieval failed. Using the practice transcript.');
+    }
     const prompt = buildSimulationPrompt({ scenario, history, documents });
     const reply = (await this.llm.complete(prompt)).trim();
 

@@ -8,6 +8,7 @@ import CallAnalysisPage from './CallAnalysisPage';
 import './index.css';
 import CallsPage from './CallsPage';
 import BranchAnalysisPage from './BranchAnalysisPage';
+import BranchSimulationPage from './BranchSimulationPage';
 import NewCallPage from './NewCallPage';
 
 const container = document.getElementById('root');
@@ -24,6 +25,7 @@ createRoot(container).render(
         <Route path="/calls" element={<CallsPage />} />
         <Route path="/calls/new" element={<NewCallPage />} />
         <Route path="/calls/:callId" element={<CallAnalysisPage />} />
+        <Route path="/calls/:callId/branch/new" element={<BranchSimulationPage />} />
         <Route path="/calls/:callId/branch/:branchId" element={<BranchAnalysisPage />} />
       </Routes>
     </BrowserRouter>

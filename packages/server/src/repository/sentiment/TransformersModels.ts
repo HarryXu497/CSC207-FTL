@@ -2,6 +2,8 @@
  * Hugging Face (transformers.js) implementations of the sentiment model interfaces.
  * Only this file may import @huggingface/transformers.
  */
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { EMOTION_LABELS, isEmotionLabel, type Emotion } from 'src/entities';
 import type { EmotionClassifier, Vad, VadEstimator } from './SentimentModels';
 
@@ -13,6 +15,18 @@ type VadModel = (inputs: unknown) => Promise<{ logits: { data: ArrayLike<number>
 // Model folder names inside MODEL_DIR
 const GOEMOTIONS_MODEL = 'goemotions-roberta';
 const VAD_MODEL = 'vad';
+
+export function hasLocalSentimentModels(modelDir: string): boolean {
+  const models = [
+    { folder: GOEMOTIONS_MODEL, weights: 'onnx/model_quantized.onnx' },
+    { folder: VAD_MODEL, weights: 'onnx/model.onnx' },
+  ];
+  return models.every(({ folder, weights }) =>
+    ['config.json', 'tokenizer.json', weights].every((file) =>
+      existsSync(resolve(modelDir, folder, file)),
+    ),
+  );
+}
 
 /**
  * Loads the Hugging Face transformers library and points it at local model files.
