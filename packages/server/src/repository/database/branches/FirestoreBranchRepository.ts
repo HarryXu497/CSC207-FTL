@@ -1,4 +1,4 @@
-import type { Branch, Call, Message } from 'src/entities';
+import { getBranchPrefixLength, type Branch, type Call, type Message } from 'src/entities';
 import { NotFoundError } from 'src/errors';
 import { FirestoreCallRepository } from '../calls';
 import { FirestoreMessageRepository } from '../messages';
@@ -46,18 +46,15 @@ export class FirestoreBranchRepository implements BranchRepository {
   /**
    * Creates a branch from a given call and branch index
    * @param callId The id of the call to branch from
-   * @param branchIndex The messages index from which to branch off from
+   * @param branchIndex The original message to replace; only earlier messages are copied
    */
   async createBranchFromCall(callId: string, branchIndex: number): Promise<string> {
-    if (branchIndex < 0) {
-      throw Error(`Branch index must be non-negative, got ${branchIndex}`);
-    }
     const db = Firebase.getInstance();
     const collectionRef = db.collection(FirestoreBranchRepository.COLLECTION);
 
     const callSnapshot = await db.collection(FirestoreCallRepository.COLLECTION).doc(callId).get();
     if (!callSnapshot.exists) {
-      throw Error(`Call document with id does not exist, got ${callId}`);
+      throw new NotFoundError('Call', callId);
     }
 
     const messagesSnapshot = await db
@@ -67,14 +64,10 @@ export class FirestoreBranchRepository implements BranchRepository {
       .orderBy('createdAt', 'asc')
       .get();
 
-    if (branchIndex >= messagesSnapshot.size) {
-      throw Error(
-        `Branch index out of range: got ${branchIndex}, call has ${messagesSnapshot.size} messages`,
-      );
-    }
+    const prefixLength = getBranchPrefixLength(branchIndex, messagesSnapshot.size);
 
     const messagesToCopy = messagesSnapshot.docs
-      .slice(0, branchIndex + 1)
+      .slice(0, prefixLength)
       .map((doc) => doc.data() as Omit<Message, 'id'>);
 
     const callData = callSnapshot.data() as Omit<Call, 'id'>;

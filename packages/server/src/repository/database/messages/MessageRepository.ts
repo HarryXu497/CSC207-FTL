@@ -35,8 +35,8 @@ export interface MessageRepository {
   addMessages(messages: Omit<Message, 'id'>[]): Promise<void>;
 
   /**
-   * Subscribes to message updates.
-   * @param callback - Called with all messages whenever a message is appended
+   * Delivers the current snapshot, then updates, ordered by creation time ascending.
+   * @param callback - Receives the full message list, including an empty initial snapshot
    * @returns an unsubscribe function
    */
   subscribe(callback: (messages: Message[]) => void): () => void;

@@ -1,10 +1,11 @@
-import type { ReactNode } from 'react';
+import type { ComponentPropsWithRef } from 'react';
 
-type CardProps = {
-  children: ReactNode;
-  className?: string;
-};
+type CardProps = ComponentPropsWithRef<'div'>;
 
-export default function Card({ children, className = '' }: CardProps) {
-  return <div className={`card ${className}`}>{children}</div>;
+export default function Card({ children, className = '', ...props }: CardProps) {
+  return (
+    <div {...props} className={`card ${className}`}>
+      {children}
+    </div>
+  );
 }

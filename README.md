@@ -87,8 +87,20 @@ Run Chroma and populate the company-document collection before testing. Use the 
 Their defaults are `text-embedding-3-small`, `http://localhost:8000`, and `documents`.
 `CHROMA_URL` must be an HTTP(S) origin; simulation searches an existing collection.
 
-Create a practice branch and save the user's agent message to that branch first.
-Then send its saved message ID:
+Create a practice branch before the selected original response:
+
+```http
+POST /api/calls/:callId/branches
+Content-Type: application/json
+
+{ "branchIndex": 1 }
+```
+
+`branchIndex` is the selected message's zero-based index. Only earlier messages are
+copied, so index `0` starts an empty practice conversation. Write a new agent reply
+to replace the selected response and continue the practice conversation.
+
+Save the user's agent message to the branch, then send its saved message ID:
 
 ```http
 POST /api/calls/:callId/branches/:branchId/simulate
@@ -101,6 +113,11 @@ Success returns `201 { message }`, including the saved customer message's ID and
 timestamp. The original call transcript is unchanged. A stale expected message or a
 conversation changed during generation returns `409`. Disabled simulation returns
 `503`; no external API calls are made until a simulation request is processed.
+
+Overlapping requests for the same saved agent message share one pending generation
+within a server instance. Success and failure both release that pending request, so
+a failed generation can be retried. This does not coordinate model calls across
+multiple server instances; the database guard still prevents duplicate customer saves.
 
 ## Sentiment Analysis
 

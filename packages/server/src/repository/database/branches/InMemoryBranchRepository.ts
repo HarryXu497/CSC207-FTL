@@ -1,7 +1,7 @@
 /**
  * In memory implementation of the data layer
  */
-import type { Branch } from 'src/entities';
+import { getBranchPrefixLength, type Branch } from 'src/entities';
 import { NotFoundError } from 'src/errors';
 import type { CallRepository } from '../calls/CallRepository';
 import type { MessageRepositoryBuilder } from '../messages/MessageRepositoryFactory';
@@ -55,17 +55,10 @@ export class InMemoryBranchRepository implements BranchRepository {
   }
 
   async createBranchFromCall(callId: string, branchIndex: number): Promise<string> {
-    if (branchIndex < 0) {
-      throw Error(`Branch index must be non-negative, got ${branchIndex}`);
-    }
     const call = await this.callRepo.getCall(callId);
 
     const callMessages = await this.messageRepoBuilder('calls', callId).getAllMessages();
-    if (branchIndex >= callMessages.length) {
-      throw Error(
-        `Branch index out of range: got ${branchIndex}, call has ${callMessages.length} messages`,
-      );
-    }
+    const prefixLength = getBranchPrefixLength(branchIndex, callMessages.length);
 
     const id = crypto.randomUUID();
     this.branches.set(id, {
@@ -76,7 +69,7 @@ export class InMemoryBranchRepository implements BranchRepository {
       branchIndex,
     });
 
-    const messagesToCopy = callMessages.slice(0, branchIndex + 1);
+    const messagesToCopy = callMessages.slice(0, prefixLength);
     await this.messageRepoBuilder('branches', id).addMessages(
       messagesToCopy.map(({ id: _, ...msg }) => msg),
     );

@@ -12,7 +12,7 @@ export class GetCallInteractor implements GetCallInputBoundary {
       presenter.present({ call });
     } catch (e) {
       if (e instanceof NotFoundError) {
-        presenter.presentNotFound('Call with id ${callId} not found');
+        presenter.presentNotFound(e.message);
         return;
       }
 
