@@ -1,13 +1,10 @@
 /**
  * Server entry point
  */
-import { resolve } from 'node:path';
-import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
-import { ChromaClient } from 'chromadb';
+import { ChatOpenAI } from '@langchain/openai';
 import type { AccuracyRepository, CallRepository, SentimentRepository } from 'src/repository';
 import {
   ChatModelLlmClient,
-  ChromaRetriever,
   createMessageRepositoryBuilder,
   FirestoreAccuracyRepository,
   FirestoreCallRepository,
@@ -20,7 +17,8 @@ import {
   type MessageRepositoryBuilder,
 } from 'src/repository';
 import { createApp } from 'src/server';
-import { buildRagIngestor } from './config/rag';
+import { buildRagIngestor, buildRagRetriever } from './config/rag';
+import { resolveSentimentModelPath } from './config/sentiment';
 import { buildSimulationRepository } from './config/simulation';
 import {
   FirestoreBranchRepository,
@@ -59,20 +57,16 @@ function buildBranchRepository(
 }
 
 async function buildSentimentDeps(): Promise<AnalyseMessages | null> {
-  const modelDir = process.env.MODEL_DIR;
+  const modelPath = resolveSentimentModelPath();
+  if (!modelPath) return null;
 
-  if (!modelDir) {
-    return null;
-  }
-
-  const modelPath = resolve(modelDir);
   const classifier = await GoEmotionsClassifier.create(modelPath);
   const vadEstimator = await VadBertEstimator.create(modelPath);
   return new AnalyseMessages(classifier, vadEstimator);
 }
 
 function buildAccuracyAnalyzer(): AccuracyAnalyzer | null {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY?.trim();
 
   if (!apiKey) {
     return null;
@@ -82,21 +76,11 @@ function buildAccuracyAnalyzer(): AccuracyAnalyzer | null {
     model: process.env.ACCURACY_MODEL ?? 'gpt-4o-mini',
     temperature: 0,
     apiKey,
+    timeout: 30_000,
+    maxRetries: 1,
   });
 
-  const chroma = new ChromaClient({
-    host: process.env.CHROMA_HOST ?? 'localhost',
-    port: Number(process.env.CHROMA_PORT ?? '8000'),
-  });
-
-  return new LlmAccuracyAnalyzer(
-    new ChatModelLlmClient(model),
-    new ChromaRetriever(
-      chroma,
-      new OpenAIEmbeddings({ apiKey, model: process.env.RAG_EMBEDDING_MODEL ?? 'text-embedding-3-small' }),
-      process.env.CHROMA_COLLECTION ?? 'documents',
-    ),
-  );
+  return new LlmAccuracyAnalyzer(new ChatModelLlmClient(model), buildRagRetriever(apiKey));
 }
 
 async function main(): Promise<void> {
@@ -124,6 +108,9 @@ async function main(): Promise<void> {
     console.log(`  -> http://localhost:${PORT}/api/health`);
     console.log(`  storage: ${BACKEND}${BACKEND === 'memory' ? ' (resets on restart)' : ''}`);
     console.log(`  simulation: ${simulationRepo ? 'enabled' : 'disabled'}`);
+    console.log(
+      `  sentiment: ${analyseMessages ? 'enabled' : 'disabled (run npm run models:download and restart)'}`,
+    );
     console.log(`  accuracy: ${accuracyAnalyzer ? 'enabled' : 'disabled (no OPENAI_API_KEY)'}`);
     console.log('');
   });
