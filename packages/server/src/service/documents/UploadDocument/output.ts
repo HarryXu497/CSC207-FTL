@@ -1,10 +1,11 @@
-import type { UploadedDocument } from 'src/entities';
+import type { IngestedDocument } from 'src/entities';
 
 export interface UploadDocumentOutputBoundary {
   present(output: UploadDocumentOutputData): void;
   presentBadRequest(message: string): void;
+  presentServiceUnavailable(): void;
 }
 
 export interface UploadDocumentOutputData {
-  document: UploadedDocument;
+  document: IngestedDocument;
 }

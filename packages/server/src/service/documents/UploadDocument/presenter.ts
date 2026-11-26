@@ -12,4 +12,8 @@ export class UploadDocumentPresenter implements UploadDocumentOutputBoundary {
   presentBadRequest(message: string): void {
     this.res.status(400).json({ error: { message } });
   }
+
+  presentServiceUnavailable(): void {
+    this.res.status(503).json({ error: { message: 'Document ingestion is not available.' } });
+  }
 }

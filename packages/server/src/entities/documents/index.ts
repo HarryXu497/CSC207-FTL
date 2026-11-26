@@ -4,3 +4,12 @@ export interface UploadedDocument {
   originalName: string;
   size: number;
 }
+
+export interface UploadedDocumentFile extends UploadedDocument {
+  /** Server-side path assigned by the upload middleware. */
+  path: string;
+}
+
+export interface IngestedDocument extends UploadedDocument {
+  chunksStored: number;
+}

@@ -8,12 +8,17 @@ import {
 
 export class DocumentsController {
   constructor(
-    private readonly interactor: UploadDocumentInputBoundary,
+    private readonly interactor: UploadDocumentInputBoundary | null,
     private readonly upload: RequestHandler,
     private readonly uploadErrorHandler: ErrorRequestHandler,
   ) {}
 
   async uploadDocument(req: Request, presenter: UploadDocumentOutputBoundary): Promise<void> {
+    if (!this.interactor) {
+      presenter.presentServiceUnavailable();
+      return;
+    }
+
     const file = req.file;
 
     if (!file) {
@@ -23,7 +28,12 @@ export class DocumentsController {
 
     await this.interactor.handle(
       {
-        file: { filename: file.filename, originalName: file.originalname, size: file.size },
+        file: {
+          path: file.path,
+          filename: file.filename,
+          originalName: file.originalname,
+          size: file.size,
+        },
       },
       presenter,
     );
@@ -31,6 +41,13 @@ export class DocumentsController {
 
   router(): Router {
     const router = Router();
+
+    if (!this.interactor) {
+      router.post('/documents', async (req, res) =>
+        this.uploadDocument(req, new UploadDocumentPresenter(res)),
+      );
+      return router;
+    }
 
     router.post('/documents', this.upload, async (req, res) =>
       this.uploadDocument(req, new UploadDocumentPresenter(res)),

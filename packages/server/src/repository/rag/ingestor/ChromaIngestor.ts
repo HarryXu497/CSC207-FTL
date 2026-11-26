@@ -7,6 +7,13 @@ import type { TextSplitter } from '@langchain/textsplitters';
 import { Chroma } from '@langchain/community/vectorstores/chroma';
 import type { Ingestor } from './Ingestor';
 import type { Document } from 'langchain';
+import { extname } from 'node:path';
+
+const documentLoaders: Record<string, (path: string) => TextLoader | PDFLoader> = {
+  '.txt': (path) => new TextLoader(path),
+  '.md': (path) => new TextLoader(path),
+  '.pdf': (path) => new PDFLoader(path),
+};
 
 export function buildChunkIds(chunks: Document[]): string[] {
   const perSource = new Map<string, number>();
@@ -27,13 +34,22 @@ export class ChromaIngestor implements Ingestor {
   ) {}
 
   async ingest(directory: string): Promise<number> {
-    const loader = new DirectoryLoader(directory, {
-      '.txt': (path) => new TextLoader(path),
-      '.md': (path) => new TextLoader(path),
-      '.pdf': (path) => new PDFLoader(path),
-    });
+    const loader = new DirectoryLoader(directory, documentLoaders);
+    return this.storeDocuments(await loader.load());
+  }
 
-    const docs = await loader.load();
+  async ingestFile(filePath: string): Promise<number> {
+    const extension = extname(filePath).toLowerCase();
+    const createLoader = documentLoaders[extension];
+
+    if (!createLoader) {
+      throw new Error(`Unsupported document extension: ${extension}`);
+    }
+
+    return this.storeDocuments(await createLoader(filePath).load());
+  }
+
+  private async storeDocuments(docs: Document[]): Promise<number> {
     const chunks = await this.splitter.splitDocuments(docs);
 
     if (chunks.length === 0) {

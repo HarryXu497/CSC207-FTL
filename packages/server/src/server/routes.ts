@@ -6,6 +6,7 @@ import type {
   AnalyseMessages,
   BranchRepository,
   CallRepository,
+  Ingestor,
   MessageRepositoryBuilder,
 } from 'src/repository';
 import {
@@ -24,12 +25,13 @@ export function createRouter(
   messageRepoFactory: MessageRepositoryBuilder,
   backend: 'memory' | 'firestore',
   analyseMessages: AnalyseMessages | null,
+  ingestor: Ingestor | null = null,
 ): Router {
   const router = Router();
   const callController = new CallController(callRepo, messageRepoFactory);
   const branchController = new BranchController(callRepo, branchRepo);
   const documentsController = new DocumentsController(
-    new UploadDocumentInteractor(),
+    ingestor ? new UploadDocumentInteractor(ingestor) : null,
     documentUpload.single('file'),
     handleUploadErrors,
   );

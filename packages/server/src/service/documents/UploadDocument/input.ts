@@ -1,4 +1,4 @@
-import type { UploadedDocument } from 'src/entities';
+import type { UploadedDocumentFile } from 'src/entities';
 import type { UploadDocumentOutputBoundary } from './output';
 
 export interface UploadDocumentInputBoundary {
@@ -6,5 +6,5 @@ export interface UploadDocumentInputBoundary {
 }
 
 export interface UploadDocumentInputData {
-  file: UploadedDocument;
+  file: UploadedDocumentFile;
 }
