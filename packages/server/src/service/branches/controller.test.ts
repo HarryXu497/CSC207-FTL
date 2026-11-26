@@ -61,23 +61,19 @@ async function request(path: string, body?: unknown) {
 }
 
 describe('branch creation', () => {
-  it.each([
-    [undefined, ['Customer opening', 'Original agent reply']],
-    ['before', ['Customer opening']],
-  ] as const)('copies the requested history for position %s', async (position, contents) => {
-    const response = await request('/calls/call-1/branches', { branchIndex: 1, position });
+  it('copies only the history before the selected reply', async () => {
+    const response = await request('/calls/call-1/branches', { branchIndex: 1 });
     expect(response.status).toBe(201);
     const { branch } = response.body as CreateBranchOutputData;
     expect(branch).toMatchObject({
       parentId: call.id,
       branchIndex: 1,
-      branchPosition: position ?? 'after',
     });
     const history = await request(`/calls/call-1/branches/${branch.id}/messages`);
     expect(history.status).toBe(200);
     expect(
       (history.body as { messages: Message[] }).messages.map((message) => message.content),
-    ).toEqual(contents);
+    ).toEqual(['Customer opening']);
     expect(await request('/calls/call-1/messages')).toEqual({
       status: 200,
       body: { messages: original },
@@ -87,7 +83,6 @@ describe('branch creation', () => {
   it('starts empty before the first message and accepts a new agent turn', async () => {
     const response = await request('/calls/call-1/branches', {
       branchIndex: 0,
-      position: 'before',
     });
     expect(response.status).toBe(201);
     const { branch } = response.body as CreateBranchOutputData;
@@ -104,12 +99,9 @@ describe('branch creation', () => {
     });
   });
 
-  it('rejects invalid positions and cuts without creating a branch', async () => {
+  it('rejects invalid indices without creating a branch', async () => {
     const before = await request('/calls/call-1/branches');
-    for (const body of [
-      { branchIndex: 3, position: 'before' },
-      { branchIndex: 0, position: 'sideways' },
-    ]) {
+    for (const body of [{ branchIndex: 3 }, { branchIndex: -1 }, { branchIndex: 0.5 }]) {
       expect(await request('/calls/call-1/branches', body)).toEqual({
         status: 400,
         body: { error: { message: expect.any(String) } },

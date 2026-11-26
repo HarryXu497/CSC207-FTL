@@ -89,7 +89,7 @@ function BranchDetails({ callId, branchId }: { callId: string; branchId: string 
                 </time>
               </p>
               <p className="mt-1 text-sm text-secondary">
-                Started {branch.branchPosition ?? 'after'} message {branch.branchIndex + 1}
+                Started at message {branch.branchIndex + 1}
               </p>
             </header>
             <details className="my-4 rounded-lg border border-tertiary bg-card p-4">

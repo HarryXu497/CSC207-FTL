@@ -56,32 +56,31 @@ afterEach(() => {
 
 describe('FirestoreBranchRepository', () => {
   it.each([
-    ['before', 1, [opening]],
-    [undefined, 1, [opening, agentReply]],
-    ['before', 0, []],
-  ] as const)(
-    'copies the correct prefix for position %s at index %i',
-    async (position, index, prefix) => {
-      const { writes } = mockFirestore();
-      const repository = new FirestoreBranchRepository();
+    [1, [opening]],
+    [2, [opening, agentReply]],
+    [0, []],
+  ] as const)('copies only the messages before index %i', async (index, prefix) => {
+    const { writes } = mockFirestore();
+    const repository = new FirestoreBranchRepository();
 
-      expect(await repository.createBranchFromCall('call-1', index, position)).toBe('new-branch');
-      expect(writes).toEqual([
-        expect.objectContaining({
-          parentId: 'call-1',
-          branchIndex: index,
-          branchPosition: position ?? 'after',
-        }),
-        ...prefix,
-      ]);
-    },
-  );
+    expect(await repository.createBranchFromCall('call-1', index)).toBe('new-branch');
+    expect(writes).toEqual([
+      {
+        customerName: 'Priya',
+        topic: 'Damaged delivery',
+        createdAt: expect.any(String),
+        parentId: 'call-1',
+        branchIndex: index,
+      },
+      ...prefix,
+    ]);
+  });
 
   it('rejects an invalid cut before starting a write batch', async () => {
     const { writes, batch } = mockFirestore();
     const repository = new FirestoreBranchRepository();
 
-    await expect(repository.createBranchFromCall('call-1', 3, 'before')).rejects.toBeInstanceOf(
+    await expect(repository.createBranchFromCall('call-1', 3)).rejects.toBeInstanceOf(
       InvalidBranchPointError,
     );
     expect(batch).not.toHaveBeenCalled();

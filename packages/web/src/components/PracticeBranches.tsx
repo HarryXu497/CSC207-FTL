@@ -74,9 +74,7 @@ export default function PracticeBranches({ callId, currentBranchId }: PracticeBr
                 aria-current={branch.id === currentBranchId ? 'page' : undefined}
                 className={`block rounded-lg border bg-card p-4 hover:border-accent-blue focus-visible:outline-2 focus-visible:outline-accent-blue ${branch.id === currentBranchId ? 'border-accent-blue' : 'border-tertiary'}`}
               >
-                <span className="font-medium">
-                  Practice {branch.branchPosition ?? 'after'} message {branch.branchIndex + 1}
-                </span>
+                <span className="font-medium">Practice from message {branch.branchIndex + 1}</span>
                 <time dateTime={branch.createdAt} className="mt-1 block text-sm text-secondary">
                   {new Date(branch.createdAt).toLocaleString()}
                 </time>

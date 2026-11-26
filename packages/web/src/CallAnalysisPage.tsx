@@ -45,7 +45,7 @@ function CallDetails({ callId }: { callId: string }) {
     setBranchingMessageId(messageId);
     setBranchError(null);
     try {
-      const { branch } = await api.createBranch(callId, { branchIndex, position: 'before' });
+      const { branch } = await api.createBranch(callId, { branchIndex });
       if (active.current) {
         await navigate(
           `/calls/${encodeURIComponent(callId)}/branch/${encodeURIComponent(branch.id)}`,

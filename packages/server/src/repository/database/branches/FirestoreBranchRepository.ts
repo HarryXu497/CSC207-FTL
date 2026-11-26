@@ -1,10 +1,4 @@
-import {
-  getBranchPrefixLength,
-  type Branch,
-  type BranchPosition,
-  type Call,
-  type Message,
-} from 'src/entities';
+import { getBranchPrefixLength, type Branch, type Call, type Message } from 'src/entities';
 import { NotFoundError } from 'src/errors';
 import { FirestoreCallRepository } from '../calls';
 import { FirestoreMessageRepository } from '../messages';
@@ -52,14 +46,9 @@ export class FirestoreBranchRepository implements BranchRepository {
   /**
    * Creates a branch from a given call and branch index
    * @param callId The id of the call to branch from
-   * @param branchIndex The messages index from which to branch off from
-   * @param position Copy before or after the selected message (defaults to 'after')
+   * @param branchIndex The original message to replace; only earlier messages are copied
    */
-  async createBranchFromCall(
-    callId: string,
-    branchIndex: number,
-    position: BranchPosition = 'after',
-  ): Promise<string> {
+  async createBranchFromCall(callId: string, branchIndex: number): Promise<string> {
     const db = Firebase.getInstance();
     const collectionRef = db.collection(FirestoreBranchRepository.COLLECTION);
 
@@ -75,7 +64,7 @@ export class FirestoreBranchRepository implements BranchRepository {
       .orderBy('createdAt', 'asc')
       .get();
 
-    const prefixLength = getBranchPrefixLength(branchIndex, position, messagesSnapshot.size);
+    const prefixLength = getBranchPrefixLength(branchIndex, messagesSnapshot.size);
 
     const messagesToCopy = messagesSnapshot.docs
       .slice(0, prefixLength)
@@ -92,7 +81,6 @@ export class FirestoreBranchRepository implements BranchRepository {
       createdAt: new Date().toISOString(),
       parentId: callId,
       branchIndex,
-      branchPosition: position,
     });
     for (const message of messagesToCopy.slice(0, 499)) {
       firstBatch.set(branchMessagesRef.doc(), message);
