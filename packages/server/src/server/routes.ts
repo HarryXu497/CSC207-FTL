@@ -2,17 +2,16 @@
  * Creates the router and handles route configuration
  */
 import { Router } from 'express';
-import {
-  InMemorySentimentRepository,
-  type AccuracyAnalyzer,
-  type AccuracyRepository,
-  type AnalyseMessages,
-  type BranchRepository,
-  type CallRepository,
-  type Ingestor,
-  type MessageRepositoryBuilder,
-  type SimulationRepository,
-  type SentimentRepository,
+import type {
+  AccuracyAnalyzer,
+  AccuracyRepository,
+  BranchRepository,
+  CallRepository,
+  Ingestor,
+  MessageRepositoryBuilder,
+  SentimentAnalyzer,
+  SentimentRepository,
+  SimulationRepository,
 } from 'src/repository';
 import {
   AccuracyController,
@@ -29,10 +28,10 @@ import { createHealthRouter, createMessagesRouter } from './routers';
 
 /** Optional services. A missing service makes its routes respond with 503. */
 export interface ServerServices {
-  analyseMessages?: AnalyseMessages | null;
+  analyseMessages?: SentimentAnalyzer | null;
   accuracyAnalyzer?: AccuracyAnalyzer | null;
   accuracyRepo?: AccuracyRepository | null;
-  sentimentRepo?: SentimentRepository;
+  sentimentRepo?: SentimentRepository | null;
   simulationRepo?: SimulationRepository | null;
   ingestor?: Ingestor | null;
 }
@@ -46,7 +45,7 @@ export function createRouter(
 ): Router {
   const router = Router();
   const accuracyRepo = services.accuracyRepo ?? null;
-  const sentimentRepo = services.sentimentRepo ?? new InMemorySentimentRepository();
+  const sentimentRepo = services.sentimentRepo ?? null;
   const callController = new CallController(callRepo, messageRepoFactory, accuracyRepo, sentimentRepo);
   const branchController = new BranchController(callRepo, branchRepo, accuracyRepo);
   const ingestor = services.ingestor ?? null;
@@ -57,6 +56,7 @@ export function createRouter(
   );
   const sentimentController = new SentimentController(
     callRepo,
+    branchRepo,
     messageRepoFactory,
     services.analyseMessages ?? null,
     sentimentRepo,
