@@ -91,11 +91,11 @@ export class CallController {
 
     router.post('/calls', async (req, res) => this.createCall(req, new CreateCallPresenter(res)));
 
-    router.get('/calls/:id', async (req, res) => this.getCall(req, new GetCallPresenter(res)));
+    router.get('/calls/:callId', async (req, res) => this.getCall(req, new GetCallPresenter(res)));
 
     router.get('/calls', async (_req, res) => this.listCalls(new ListCallsPresenter(res)));
 
-    router.delete('/calls/:id', async (req, res) =>
+    router.delete('/calls/:callId', async (req, res) =>
       this.deleteCall(req, new DeleteCallPresenter(res)),
     );
 

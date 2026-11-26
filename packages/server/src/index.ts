@@ -11,6 +11,7 @@ import {
 } from 'src/repository';
 import { createApp } from 'src/server';
 import { buildRagIngestor } from './config/rag';
+import { buildSimulationRepository } from './config/simulation';
 import {
   FirestoreBranchRepository,
   InMemoryBranchRepository,
@@ -53,14 +54,20 @@ async function main(): Promise<void> {
   const messageRepoFactory = createMessageRepositoryBuilder(BACKEND);
   const branchRepo = buildBranchRepository(callRepo, messageRepoFactory);
   const sentiment = await buildSentimentDeps();
+  const simulationRepo = buildSimulationRepository(callRepo, messageRepoFactory);
   const ingestor = buildRagIngestor();
-  const app = createApp(callRepo, branchRepo, messageRepoFactory, BACKEND, sentiment, ingestor);
+  const app = createApp(callRepo, branchRepo, messageRepoFactory, BACKEND, {
+    analyseMessages: sentiment,
+    simulationRepo,
+    ingestor,
+  });
 
   app.listen(PORT, () => {
     console.log('');
     console.log('  ReCall API running');
     console.log(`  -> http://localhost:${PORT}/api/health`);
     console.log(`  storage: ${BACKEND}${BACKEND === 'memory' ? ' (resets on restart)' : ''}`);
+    console.log(`  simulation: ${simulationRepo ? 'enabled' : 'disabled'}`);
     console.log('');
   });
 }

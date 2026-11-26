@@ -1,31 +1,23 @@
+import type { EmbeddingsInterface } from '@langchain/core/embeddings';
 import type { ChromaClient, QueryResult } from 'chromadb';
 import type { Retriever } from './Retriever';
 import type { Document } from 'src/entities';
-
-/**
- * Type definition for clients/mocks that support direct querying without
- * requiring a separate collection lookup.
- */
-type DirectQueryClient = {
-  query: (params: { queryTexts: string[]; nResults: number }) => Promise<QueryResult>;
-};
 
 /**
  * ChromaDB implementation of the Retriever interface.
  * Connects to a Chroma collection to perform vector similarity search.
  */
 export class ChromaRetriever implements Retriever {
-  private readonly client: ChromaClient;
-  private readonly collectionName: string;
-
   /**
    * @param client ChromaDB client instance
+   * @param embeddings Must use the same model as document ingestion
    * @param collectionName Name of the collection to search (defaults to 'documents')
    */
-  constructor(client: ChromaClient, collectionName = 'documents') {
-    this.client = client;
-    this.collectionName = collectionName;
-  }
+  constructor(
+    private readonly client: ChromaClient,
+    private readonly embeddings: Pick<EmbeddingsInterface, 'embedQuery'>,
+    private readonly collectionName = 'documents',
+  ) {}
 
   /**
    * Searches the Chroma collection for documents matching the query.
@@ -34,19 +26,10 @@ export class ChromaRetriever implements Retriever {
    * @return Array of matched document objects
    */
   async search(query: string, limit = 5): Promise<Document[]> {
-    // If the client provides a direct query method (e.g. in test mocks or custom wrappers),
-    // use it directly. Otherwise, fall back to standard collection retrieval.
-    if (typeof (this.client as unknown as DirectQueryClient).query === 'function') {
-      const results = await (this.client as unknown as DirectQueryClient).query({
-        queryTexts: [query],
-        nResults: limit,
-      });
-      return this.formatResults(results);
-    }
-
-    const collection = await this.client.getOrCreateCollection({ name: this.collectionName });
+    const collection = await this.client.getCollection({ name: this.collectionName });
+    const embedding = await this.embeddings.embedQuery(query);
     const results = await collection.query({
-      queryTexts: [query],
+      queryEmbeddings: [embedding],
       nResults: limit,
     });
 

@@ -49,6 +49,30 @@ export class FirestoreMessageRepository implements MessageRepository {
     return docRef.id;
   }
 
+  async addMessageIfLastMatches(
+    message: Omit<Message, 'id'>,
+    expectedLastMessageId: string,
+  ): Promise<string | null> {
+    const db = Firebase.getInstance();
+    const collectionRef = db
+      .collection(this.parentCollection)
+      .doc(this.parentId)
+      .collection(FirestoreMessageRepository.COLLECTION);
+    const docRef = collectionRef.doc();
+
+    return db.runTransaction(async (transaction) => {
+      // Generation happens before this transaction and may take several seconds.
+      // Check its source turn again while saving, so a late reply cannot answer an older turn.
+      const snapshot = await transaction.get(collectionRef.orderBy('createdAt', 'desc').limit(1));
+      if (snapshot.docs[0]?.id !== expectedLastMessageId) {
+        return null;
+      }
+
+      transaction.create(docRef, message);
+      return docRef.id;
+    });
+  }
+
   /**
    * Appends multiple messages in one batch, automatically
    * generating the ids.
@@ -76,8 +100,8 @@ export class FirestoreMessageRepository implements MessageRepository {
   }
 
   /**
-   * Subscribes to message updates.
-   * @param callback - Called with all messages whenever a message is appended
+   * Delivers the current snapshot, then updates, ordered by creation time ascending.
+   * @param callback - Receives the full message list, including an empty initial snapshot
    * @returns an unsubscribe function
    */
   subscribe(callback: (messages: Message[]) => void): () => void {
@@ -87,7 +111,7 @@ export class FirestoreMessageRepository implements MessageRepository {
       .doc(this.parentId)
       .collection(FirestoreMessageRepository.COLLECTION);
 
-    return collectionRef.onSnapshot((snapshot) => {
+    return collectionRef.orderBy('createdAt', 'asc').onSnapshot((snapshot) => {
       callback(snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }) as Message));
     });
   }

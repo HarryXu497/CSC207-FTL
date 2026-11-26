@@ -21,7 +21,9 @@ async function startServer(documentIngestor: Ingestor | null): Promise<string> {
   const calls = new InMemoryCallRepository([]);
   const messageRepoFactory = createMessageRepositoryBuilder('memory');
   const branches = new InMemoryBranchRepository(calls, messageRepoFactory, []);
-  const app = createApp(calls, branches, messageRepoFactory, 'memory', null, documentIngestor);
+  const app = createApp(calls, branches, messageRepoFactory, 'memory', {
+    ingestor: documentIngestor,
+  });
   const server = createServer(app);
   servers.push(server);
 

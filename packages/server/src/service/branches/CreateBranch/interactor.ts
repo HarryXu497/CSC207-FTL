@@ -1,4 +1,4 @@
-import { NotFoundError } from 'src/errors';
+import { InvalidBranchPointError, NotFoundError } from 'src/errors';
 import type { BranchRepository, CallRepository } from 'src/repository';
 import type { CreateBranchInputBoundary, CreateBranchInputData } from './input';
 import type { CreateBranchOutputBoundary } from './output';
@@ -15,18 +15,22 @@ export class CreateBranchInteractor implements CreateBranchInputBoundary {
   ): Promise<void> {
     try {
       await this.callRepo.getCall(callId);
+      const branchId = await this.branchRepo.createBranchFromCall(callId, branchIndex);
+      const branch = await this.branchRepo.getBranch(branchId);
+
+      presenter.present({ branch });
     } catch (e) {
       if (e instanceof NotFoundError) {
-        presenter.presentNotFound(`Call with id ${callId} not found.`);
+        presenter.presentNotFound(e.message);
+        return;
+      }
+
+      if (e instanceof InvalidBranchPointError) {
+        presenter.presentBadRequest(e.message);
         return;
       }
 
       throw e;
     }
-
-    const branchId = await this.branchRepo.createBranchFromCall(callId, branchIndex);
-    const branch = await this.branchRepo.getBranch(branchId);
-
-    presenter.present({ branch });
   }
 }

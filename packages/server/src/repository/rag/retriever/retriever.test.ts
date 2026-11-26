@@ -31,7 +31,7 @@ describe('InMemoryRetriever', () => {
 });
 
 describe('ChromaRetriever', () => {
-  it('formats query results into Document array correctly', async () => {
+  it('queries the configured collection with explicit embeddings and formats the results', async () => {
     const mockQueryResult = {
       ids: [['id-1', 'id-2']],
       embeddings: [],
@@ -47,20 +47,36 @@ describe('ChromaRetriever', () => {
     };
 
     const mockClient = {
-      getOrCreateCollection: vi.fn().mockResolvedValue(mockCollection),
+      getCollection: vi.fn().mockResolvedValue(mockCollection),
     };
+    const embeddings = { embedQuery: vi.fn().mockResolvedValue([0.1, 0.2]) };
 
-    const retriever = new ChromaRetriever(mockClient as unknown as ChromaClient, 'test-collection');
+    const retriever = new ChromaRetriever(
+      mockClient as unknown as ChromaClient,
+      embeddings,
+      'test-collection',
+    );
     const results = await retriever.search('refund', 2);
 
-    expect(mockClient.getOrCreateCollection).toHaveBeenCalledWith({ name: 'test-collection' });
+    expect(mockClient.getCollection).toHaveBeenCalledWith({ name: 'test-collection' });
+    expect(embeddings.embedQuery).toHaveBeenCalledExactlyOnceWith('refund');
     expect(mockCollection.query).toHaveBeenCalledWith({
-      queryTexts: ['refund'],
+      queryEmbeddings: [[0.1, 0.2]],
       nResults: 2,
     });
     expect(results).toEqual([
       { id: 'id-1', content: 'Doc 1 text', metadata: { source: 'manual.pdf' } },
       { id: 'id-2', content: 'Doc 2 text', metadata: { source: 'faq.md' } },
     ]);
+  });
+
+  it('does not embed the query when the configured collection is missing', async () => {
+    const error = new Error('Collection not found');
+    const client = { getCollection: vi.fn().mockRejectedValue(error) };
+    const embeddings = { embedQuery: vi.fn() };
+    const retriever = new ChromaRetriever(client as unknown as ChromaClient, embeddings);
+
+    await expect(retriever.search('refund')).rejects.toBe(error);
+    expect(embeddings.embedQuery).not.toHaveBeenCalled();
   });
 });

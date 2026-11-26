@@ -18,6 +18,16 @@ export interface MessageRepository {
   addMessage(message: Omit<Message, 'id'>): Promise<string>;
 
   /**
+   * Atomically appends only if the latest saved message has the expected ID.
+   * Returns the new message ID, or null if the expected message is no longer last.
+   * This keeps a generated reply from being saved after a different turn arrives.
+   */
+  addMessageIfLastMatches(
+    message: Omit<Message, 'id'>,
+    expectedLastMessageId: string,
+  ): Promise<string | null>;
+
+  /**
    * Appends multiple messages in one batch, automatically
    * generating the ids.
    * @param messages - The messages to append
@@ -25,8 +35,8 @@ export interface MessageRepository {
   addMessages(messages: Omit<Message, 'id'>[]): Promise<void>;
 
   /**
-   * Subscribes to message updates.
-   * @param callback - Called with all messages whenever a message is appended
+   * Delivers the current snapshot, then updates, ordered by creation time ascending.
+   * @param callback - Receives the full message list, including an empty initial snapshot
    * @returns an unsubscribe function
    */
   subscribe(callback: (messages: Message[]) => void): () => void;
